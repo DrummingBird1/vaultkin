@@ -49,7 +49,16 @@ export async function openVault(
   } catch {
     throw new VaultCorruptError("Vault payload is corrupted or not valid JSON");
   }
-  if (payload.version !== 1) throw new VaultCorruptError(`Unsupported vault version: ${payload.version}`);
+  // JSON.parse happily returns non-object values (null, a number, an array,
+  // ...) for input that's valid JSON but not a vault payload. Property access
+  // on most of those (e.g. `(42).version`) just yields undefined and falls
+  // through to the version check below, but `null` throws a raw TypeError —
+  // found via fuzzing arbitrary top-level JSON through openVault().
+  if (payload === null || typeof payload !== "object") {
+    throw new VaultCorruptError("Vault payload is not a valid vault object");
+  }
+  if (payload.version !== 1)
+    throw new VaultCorruptError(`Unsupported vault version: ${payload.version}`);
 
   // A malformed kdf.name would otherwise be silently treated as the
   // PBKDF2-SHA256 branch in engine.ts's deriveRawBytes() (it only special-
@@ -62,7 +71,11 @@ export async function openVault(
   if (payload.kdf?.name !== "Argon2id" && payload.kdf?.name !== "PBKDF2-SHA256") {
     throw new VaultCorruptError(`Unknown KDF: ${payload.kdf?.name}`);
   }
-  if (typeof payload.kdf.iterations !== "number" || !Number.isFinite(payload.kdf.iterations) || payload.kdf.iterations <= 0) {
+  if (
+    typeof payload.kdf.iterations !== "number" ||
+    !Number.isInteger(payload.kdf.iterations) ||
+    payload.kdf.iterations <= 0
+  ) {
     throw new VaultCorruptError("Vault payload has an invalid KDF iteration count");
   }
 
@@ -137,7 +150,9 @@ export async function reEncryptVault(
   try {
     const existing = JSON.parse(existingPayloadJson) as VaultPayload;
     createdAt = existing.createdAt ?? createdAt;
-  } catch { /* fall back to vault meta */ }
+  } catch {
+    /* fall back to vault meta */
+  }
   vault.meta.lastModifiedAt = new Date().toISOString();
   vault.meta.entryCount = vault.entries.length;
   const payload = await encryptVault(JSON.stringify(vault), sessionKeys, createdAt);
