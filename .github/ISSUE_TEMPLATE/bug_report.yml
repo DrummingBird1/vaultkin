@@ -1,0 +1,56 @@
+name: Bug report
+description: Something is broken or behaving incorrectly.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **If this is a security vulnerability, stop — see [SECURITY.md](../../SECURITY.md)
+        and use private vulnerability reporting instead of a public issue.**
+
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Where did this happen?
+      options:
+        - Web (browser tab)
+        - Electron desktop app
+        - Browser extension
+        - Not sure
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: App version (Settings page) or commit hash if running from source.
+      placeholder: "2.0.0"
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      description: Use a throwaway vault, not one with real credentials.
+      placeholder: |
+        1. Create a vault with...
+        2. Add an entry with...
+        3. Click...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected vs. actual behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Console errors / logs (if any)
+      description: Never paste vault contents, master passwords, or TOTP secrets here.
+      render: shell

@@ -1,0 +1,19 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "entryPoints": ["src/core/**/*.ts"],
+  "entryPointStrategy": "expand",
+  "exclude": [
+    "src/core/**/*.test.ts",
+    "src/core/**/*.property.test.ts",
+    "src/core/**/*.fuzz.test.ts"
+  ],
+  "out": "docs/api",
+  "tsconfig": "tsconfig.json",
+  "excludePrivate": true,
+  "excludeInternal": true,
+  "readme": "none",
+  "name": "SecureVault — core crypto/vault API",
+  "githubPages": false,
+  "hideGenerator": true,
+  "blockTags": ["@file"]
+}

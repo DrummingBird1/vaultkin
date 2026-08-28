@@ -1,0 +1,28 @@
+version: 2
+updates:
+  # App dependencies (package.json). Weekly, grouped by minor/patch so
+  # routine bumps land as one PR instead of a dozen — majors still get
+  # their own PR since those need real review (see CLAUDE.md's "Deliberately
+  # not bumped" note for ones already evaluated and intentionally held back).
+  #
+  # package-ecosystem stays "npm" even though this project uses pnpm —
+  # Dependabot's "npm" ecosystem covers package-lock.json, yarn.lock, AND
+  # pnpm-lock.yaml, auto-detected from whichever is present in `directory`.
+  # There is no separate "pnpm" ecosystem value.
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+    groups:
+      minor-and-patch:
+        update-types: ["minor", "patch"]
+    labels: ["dependencies"]
+
+  # Keep the GitHub Actions themselves (actions/checkout, setup-node, ...)
+  # current too — easy to forget since they don't show up in `npm outdated`.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    labels: ["dependencies", "ci"]

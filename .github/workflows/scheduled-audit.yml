@@ -1,0 +1,70 @@
+# .github/workflows/scheduled-audit.yml
+#
+# Reruns the dependency/security audit and full E2E suite on a schedule,
+# independent of any push or PR. ci.yml's equivalent jobs only run when code
+# changes — a newly-disclosed CVE in an unchanged dependency, or an
+# environment-only regression (e.g. a Playwright browser update breaking a
+# selector), would otherwise sit undetected until someone happens to touch
+# the repo. Runs daily at 03:17 UTC (off-peak, deliberately not on the hour
+# to avoid contending with everyone else's :00 cron jobs) and can also be
+# triggered manually from the Actions tab.
+#
+# Findings don't auto-file anything (no GITHUB_TOKEN write permissions are
+# granted) — a failed run just needs a human to look at the Actions tab and
+# decide what to do, same as any other red CI run.
+
+name: Scheduled audit
+
+on:
+  schedule:
+    - cron: '17 3 * * *'
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: '20'
+  PNPM_VERSION: '9'
+
+jobs:
+  dependency-check:
+    name: Dependency policy (scheduled)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+      - name: Lint lockfile (registry / integrity policy)
+        run: pnpm run lockfile:lint
+      - name: pnpm audit (high severity)
+        run: pnpm audit --audit-level=high
+      - name: Generate SBOM (CycloneDX)
+        run: pnpm run sbom
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sbom-scheduled
+          path: sbom.json
+          retention-days: 90
+
+  test-e2e:
+    name: E2E (scheduled)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install --with-deps chromium firefox webkit
+      - name: Start dev server in background
+        run: pnpm run dev &
+      - name: Wait for dev server
+        run: pnpm exec wait-on http://localhost:5173 --timeout 60000
+      - name: Run Playwright tests
+        run: pnpm run test:e2e
+        env:
+          CI: true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report-scheduled
+          path: playwright-report/
+          retention-days: 14

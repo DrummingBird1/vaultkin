@@ -5,10 +5,24 @@
 #   1. Type-check (tsc --noEmit)
 #   2. Lint (ESLint)
 #   3. Unit + integration tests with coverage
-#   4. Build (Vite)
-#   5. Security audit (npm audit)
+#   4. Lockfile / dependency policy checks (lockfile-lint, pnpm audit, SBOM)
+#   5. Build (Vite)
+#   6. Lighthouse (Core Web Vitals on the app shell — advisory, "warn" only)
+#   7. E2E (Playwright, against a real dev server — Chromium/Firefox/WebKit)
+#   8. Extension (esbuild bundle + manifest validation)
 #
-# On release tag (v*.*.*): builds cross-platform Electron distributables.
+# On release tag (v*.*.*): builds cross-platform Electron distributables and
+# publishes a draft GitHub Release with SHA-256 checksums attached.
+#
+# See also: .github/workflows/scheduled-audit.yml — a cron job that reruns
+# the dependency/E2E checks independent of any push, so newly-disclosed CVEs
+# or environment drift get caught even when nobody's touched the code.
+#
+# Package manager: pnpm (see packageManager field in package.json +
+# pnpm-workspace.yaml). CLAUDE.md's global guidelines require pnpm over npm/yarn.
+# Every job's checkout + pnpm/Node setup + install is DRY'd into
+# .github/actions/setup (a local composite action) instead of being
+# copy-pasted per job.
 
 name: CI
 
@@ -23,8 +37,15 @@ concurrency:
   group:  ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+# Least-privilege default: every job only gets read access unless it
+# explicitly needs more (the `release` job below overrides this with
+# `contents: write` because it publishes a GitHub Release).
+permissions:
+  contents: read
+
 env:
   NODE_VERSION: '20'
+  PNPM_VERSION: '9'
   COVERAGE_THRESHOLD: '80'
 
 # ─── Jobs ─────────────────────────────────────────────────────────────────────
@@ -37,14 +58,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-      - run: npm ci
-      - run: npx tsc --noEmit
+      - uses: ./.github/actions/setup
+      - run: pnpm exec tsc --noEmit
       - name: Type-check Electron main process
-        run: npx tsc -p tsconfig.electron.json --noEmit
+        run: pnpm exec tsc -p config/tsconfig.electron.json --noEmit
+      - name: Type-check electron-builder.ts
+        run: pnpm run typecheck:electron-builder
 
   # ── 2. Lint ─────────────────────────────────────────────────────────────────
   lint:
@@ -52,12 +71,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-      - run: npm ci
-      - run: npm run lint
+      - uses: ./.github/actions/setup
+      # Ratchet: pre-existing warnings as of the tooling-upgrade session.
+      # New code should not add to this count — lower it over time instead
+      # of letting it silently grow.
+      - run: pnpm run lint -- --max-warnings=46
 
   # ── 3. Tests ─────────────────────────────────────────────────────────────────
   test:
@@ -70,13 +88,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-      - run: npm ci
+      - uses: ./.github/actions/setup
       - name: Run tests with coverage
-        run: npm run test:coverage -- --reporter=verbose --reporter=junit
+        run: pnpm run test:coverage -- --reporter=verbose --reporter=junit
         env:
           CI: true
 
@@ -95,19 +109,40 @@ jobs:
           path: test-results/junit.xml
           retention-days: 30
 
-  # ── 4. Build (Web/PWA) ────────────────────────────────────────────────────
+  # ── 4. Dependency & supply-chain checks ───────────────────────────────────
+  dependency-check:
+    name: Dependency policy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+      - name: Lint lockfile (registry / integrity policy)
+        run: pnpm run lockfile:lint
+      - name: pnpm audit (high severity)
+        run: pnpm audit --audit-level=high
+      - name: Check crypto dependency versions
+        run: |
+          echo "Checking hash-wasm (Argon2id)..."
+          pnpm list hash-wasm
+          echo "Checking qrcode-generator..."
+          pnpm list qrcode-generator
+      - name: Generate SBOM (CycloneDX)
+        run: pnpm run sbom
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sbom
+          path: sbom.json
+          retention-days: 90
+
+  # ── 5. Build (Web/PWA) ────────────────────────────────────────────────────
   build-web:
     name: Build (PWA)
     runs-on: ubuntu-latest
     needs: [typecheck, lint, test]
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-      - run: npm ci
-      - run: npm run build
+      - uses: ./.github/actions/setup
+      - run: pnpm run build
         env:
           NODE_ENV: production
       - uses: actions/upload-artifact@v4
@@ -116,27 +151,91 @@ jobs:
           path: dist/renderer/
           retention-days: 7
 
-  # ── 5. Security Audit ────────────────────────────────────────────────────
-  audit:
-    name: Security Audit
+  # ── 6. Lighthouse (Core Web Vitals) ───────────────────────────────────────
+  # Audits the app shell only (index.html → unlock/create-vault screen) —
+  # the only thing an anonymous crawl can ever see, since Lighthouse can't
+  # unlock a vault. Assertions are "warn" (see config/lighthouserc.cjs), so
+  # this reports scores without blocking PRs — there's no established
+  # baseline yet to safely gate on.
+  lighthouse:
+    name: Lighthouse
+    runs-on: ubuntu-latest
+    needs: [build-web]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+      - uses: actions/download-artifact@v4
+        with:
+          name: web-dist
+          path: dist/renderer
+      - run: pnpm run lighthouse
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: lighthouse-report
+          path: lighthouse-report/
+          retention-days: 30
+
+  # ── 7. E2E (Playwright) ──────────────────────────────────────────────────
+  # config/playwright.config.ts deliberately disables its own webServer
+  # auto-start when CI=true (Playwright's built-in server lifecycle was less
+  # predictable in CI than just starting it ourselves and waiting on the
+  # port), so this job starts `pnpm run dev` in the background and waits for
+  # it before running tests. Runs the full 3-browser project matrix declared
+  # in playwright.config.ts (chromium/firefox/webkit) to match the
+  # browserslist config in package.json instead of Chromium-only.
+  test-e2e:
+    name: E2E (Playwright)
+    runs-on: ubuntu-latest
+    needs: [typecheck, lint, test]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install --with-deps chromium firefox webkit
+      - name: Start dev server in background
+        run: pnpm run dev &
+      - name: Wait for dev server
+        run: pnpm exec wait-on http://localhost:5173 --timeout 60000
+      - name: Run Playwright tests
+        run: pnpm run test:e2e
+        env:
+          CI: true
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 14
+
+  # ── 8. Extension (build + manifest validation) ───────────────────────────
+  # extension/ is a separate, non-bundled MV3 target (see extension/README.md).
+  # This job bundles it with esbuild (scripts/build-extension.mjs) and
+  # validates manifest.json against Chrome Web Store constraints
+  # (scripts/validate-extension-manifest.mjs) on every change.
+  extension:
+    name: Browser extension
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: ./.github/actions/setup
+      - name: Validate manifest.json
+        run: node scripts/validate-extension-manifest.mjs
+      - name: Build extension bundle
+        run: pnpm run build:extension
+      - uses: actions/upload-artifact@v4
         with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-      - run: npm ci
-      - name: Run npm audit (high severity)
-        run: npm audit --audit-level=high
-      - name: Check for known vulnerabilities in crypto dependencies
-        run: |
-          echo "Checking @noble/ciphers..."
-          npm list @noble/ciphers
-          echo "Checking argon2-browser..."
-          npm list argon2-browser
+          name: extension-dist
+          path: dist/extension/
+          retention-days: 7
 
-  # ── 6. Electron Builds (release tags only) ────────────────────────────────
+  # ── 9. Electron Builds (release tags only) ────────────────────────────────
+  # Packaged by electron-builder.ts (project root) via the electron:dist:*
+  # scripts. Only triggers on `v*.*.*` tag pushes, so it doesn't block normal
+  # PR/push CI. Unsigned on all platforms (no CSC_LINK/CSC_KEY_PASSWORD or
+  # Apple notarization secrets configured yet) — installers will trigger an
+  # OS "unknown publisher" warning until code-signing certs are added.
   build-electron:
     name: Build Electron (${{ matrix.platform }})
     runs-on: ${{ matrix.os }}
@@ -158,27 +257,21 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
+      - uses: ./.github/actions/setup
 
       - name: Build Electron (macOS)
         if: matrix.platform == 'macOS'
-        run: npm run electron:dist:mac
+        run: pnpm run electron:dist:mac
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: false  # Code signing: set CSC_LINK + CSC_KEY_PASSWORD in secrets
 
       - name: Build Electron (Windows)
         if: matrix.platform == 'Windows'
-        run: npm run electron:dist:win
+        run: pnpm run electron:dist:win
 
       - name: Build Electron (Linux)
         if: matrix.platform == 'Linux'
-        run: npm run electron:dist:linux
+        run: pnpm run electron:dist:linux
 
       - name: Upload distributables
         uses: actions/upload-artifact@v4
@@ -187,7 +280,7 @@ jobs:
           path: release/**/*
           retention-days: 90
 
-  # ── 7. GitHub Release (auto-create on tag) ────────────────────────────────
+  # ── 10. GitHub Release (auto-create on tag) ───────────────────────────────
   release:
     name: Create Release
     runs-on: ubuntu-latest
@@ -203,6 +296,15 @@ jobs:
           pattern: electron-*
           merge-multiple: true
           path: release-artifacts/
+
+      # The release body below promises "SHA-256 checksums are attached" —
+      # this step is what actually makes that true. Previously nothing
+      # computed them, so the promise in the body was empty.
+      - name: Generate SHA-256 checksums
+        run: |
+          cd release-artifacts
+          sha256sum * > SHA256SUMS.txt
+          cat SHA256SUMS.txt
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
@@ -220,5 +322,5 @@ jobs:
             | Linux    | SecureVault-*.AppImage / .deb / .rpm |
 
             ### Verification
-            SHA-256 checksums are attached to this release.
-            Verify before installing: `shasum -a 256 <file>`
+            SHA-256 checksums are attached to this release as `SHA256SUMS.txt`.
+            Verify before installing: `shasum -a 256 -c SHA256SUMS.txt`

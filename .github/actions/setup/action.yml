@@ -1,0 +1,27 @@
+name: Setup pnpm + Node + install
+description: >
+  Checks out is NOT included (each job still needs its own actions/checkout@v4
+  first, since composite actions run inside the job's already-checked-out
+  workspace). This just DRYs up the pnpm/Node setup + install steps that were
+  previously copy-pasted verbatim into every job in ci.yml.
+inputs:
+  node-version:
+    description: Node.js version
+    required: false
+    default: '20'
+  pnpm-version:
+    description: pnpm version
+    required: false
+    default: '9'
+runs:
+  using: composite
+  steps:
+    - uses: pnpm/action-setup@v4
+      with:
+        version: ${{ inputs.pnpm-version }}
+    - uses: actions/setup-node@v4
+      with:
+        node-version: ${{ inputs.node-version }}
+        cache: 'pnpm'
+    - run: pnpm install --frozen-lockfile
+      shell: bash
