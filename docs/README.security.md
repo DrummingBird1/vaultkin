@@ -107,43 +107,43 @@ securevault/
 ### Prerequisites
 
 - Node.js 20+
-- npm 10+
+- pnpm 9+ (`corepack enable`)
 
 ### Install dependencies
 
 ```bash
-npm install
+pnpm install
 ```
 
 ### Development (browser PWA)
 
 ```bash
-npm run dev
+pnpm run dev
 # Opens http://localhost:5173
 ```
 
 ### Development (Electron)
 
 ```bash
-npm run electron:dev
+pnpm run electron:dev
 # Starts Vite dev server + Electron simultaneously
 ```
 
 ### Run tests
 
 ```bash
-npm test               # All tests (unit + integration)
-npm run test:watch     # Watch mode
-npm run test:coverage  # With coverage report
+pnpm test               # All tests (unit + integration)
+pnpm run test:watch     # Watch mode
+pnpm run test:coverage  # With coverage report
 ```
 
 ### Build
 
 ```bash
-npm run build              # PWA production build → dist/renderer/
-npm run electron:dist:mac  # macOS DMG (universal: x64 + arm64)
-npm run electron:dist:win  # Windows NSIS installer
-npm run electron:dist:linux # AppImage + deb + rpm
+pnpm run build              # PWA production build → dist/renderer/
+pnpm run electron:dist:mac  # macOS DMG (universal: x64 + arm64)
+pnpm run electron:dist:win  # Windows NSIS installer
+pnpm run electron:dist:linux # AppImage + deb + rpm
 ```
 
 ---

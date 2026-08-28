@@ -1,5 +1,91 @@
 # Changelog
 
+## [Unreleased] — Disaster recovery + reconstruction (2026-08-28, session 7)
+
+The working tree was wiped by something outside this project (not caused by
+any change in session 6) — everything except a `node_modules/.pnpm`
+fragment was gone. The user restored a backup, which turned out to be the
+session 6 snapshot below — missing an entire subsequent session's worth of
+infrastructure and feature work. This entry documents rebuilding forward
+from that backup, with git now initialized as a permanent safety net
+(previously the project had no version control at all).
+
+### Added — feature work rebuilt from the session-6 baseline
+- Nested folders (`VaultFolder.parentId` tree, cascade-delete that unfiles
+  entries rather than deleting them), global tag rename/delete, a Tag
+  Manager modal, and a chip-based `TagInput` with autocomplete (now used
+  in both the Tag Manager and `AddEditEntry.modal.tsx`).
+- Grid / list / "service" (grouped-by-domain) vault views, row-virtualized
+  with `@tanstack/react-virtual`; keyboard arrow navigation, bulk
+  selection, and drag-reorder (list view).
+- Recovery Kit (point-in-time passphrase-protected snapshot) and an
+  in-app KDF upgrade flow for vaults still on PBKDF2-SHA256.
+- Accessibility pass: focus trap on modals, `aria-live` toast region,
+  high-contrast theme, route-level code splitting.
+- i18n infrastructure (`react-i18next`, en/he locales) — deliberately
+  partial, only the Unlock page migrated so far.
+- Browser extension: popup UI (status/search/copy/fill/lock), a shared
+  `constants/shared.json` imported directly by the MV3 service worker,
+  and a build/validate pipeline (`scripts/build-extension.mjs`,
+  `scripts/validate-extension-manifest.mjs`).
+- Full repo tooling: pnpm + React 19, `config/` reorg for every tool
+  config, ESLint flat config, Prettier, husky + lint-staged + commitlint,
+  Changesets, ADRs (`docs/adr/`), a 10-job CI workflow plus a scheduled
+  dependency audit, Lighthouse CI, Stryker mutation config, TypeDoc.
+
+### Fixed — bugs found and closed during reconstruction
+- **Password generator zero-buffer bug**: `crypto.getRandomValues(buf)`
+  was only called inside the "buffer exhausted" refill check, so the
+  first (and normally only) pass over a freshly-allocated buffer read
+  zero-initialized memory — every generated password was the first
+  alphabet character repeated. Now primed immediately after allocation.
+- **Autosave race on lock**: `lockApplication` cleared the in-memory
+  vault before flushing a pending debounced autosave, silently
+  discarding the last edit. Now flushes first.
+- **`ChangePassword.modal.tsx`** still matched `err.message` substrings
+  instead of `instanceof WrongPasswordError`, predating the typed-errors
+  migration. Fixed.
+- **`openVault()` untyped-error leaks**, found by a new fast-check fuzz
+  suite (`serializer.fuzz.test.ts`): a finite-but-non-integer
+  `kdf.iterations` (e.g. `5e-324`) reached `hash-wasm` and threw a raw
+  `Error`; a top-level JSON payload of `null` threw a raw `TypeError` on
+  `payload.version`. Both now surface as `VaultCorruptError`.
+- **Memory hygiene on lock** was missing the browser extension: locking
+  the main vault didn't tell a paired extension to clear its cache,
+  leaving plaintext credentials reachable there for up to its own
+  5-minute idle window. `AppLifecycle.onLock` now calls
+  `ExtensionBridge.lock` when an extension is paired.
+- **Launcher scripts called `npm` directly** (`launch.bat`/`.ps1`/`.sh`),
+  bypassing the project's actual package manager and its
+  `pnpm-workspace.yaml` supply-chain allowlist. Switched to `pnpm`, with
+  a friendly PATH check.
+- Stale docs: `CLAUDE.md`/`AGENTS.md`'s repo layout still described the
+  session-6 "snapshot caveat" (large parts of the tree "not yet
+  restored") even though the tree is now complete; referenced a
+  `VaultPayloadSchema` export that doesn't exist; `README.md` claimed a
+  Markdown notes editor and a Storybook setup that were never built, and
+  gave the KDF's parallelism as `p=2` instead of the actual `p=1`.
+  `AGENTS.md` had the same `p=2` error. All corrected; remaining `npm`
+  command examples across `README.md`/`LAUNCH.md`/`docs/README.security.md`
+  switched to `pnpm`.
+
+### Added — test suite reconstruction
+- Rebuilt from 24 tests (one integration file) to 191, across co-located
+  unit tests for `core/crypto`, `core/vault` (engine, serializer),
+  `core/password` (generator, strength), `core/totp`, and
+  `store/vault.store`'s folder/tag operations; a `fast-check`
+  property-test suite for the password generator; and the
+  `serializer.fuzz.test.ts` fuzz suite above.
+
+### Verified
+- `tsc --noEmit` clean (root + `config/tsconfig.electron.json` +
+  `config/tsconfig.electron-builder.json`). `eslint .` — 0 errors, 43
+  pre-existing warnings (all `no-explicit-any` in error-display catch
+  blocks and test polyfills, none newly introduced). 191/191 tests pass.
+  `vite build` succeeds.
+
+---
+
 ## [Unreleased] — Argon2id, WebDAV, QR, extension UI (2026-05-17, session 6)
 
 ### Added — Argon2id key derivation (now the default)

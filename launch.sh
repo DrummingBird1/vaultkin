@@ -31,10 +31,16 @@ if [ "$node_major" -lt 20 ]; then
 fi
 ok "Node $(node -v)"
 
+# --- Check pnpm ---
+if ! command -v pnpm >/dev/null 2>&1; then
+  err "pnpm not found on PATH. Install it with: corepack enable  (or: npm install -g pnpm)"
+  exit 1
+fi
+
 # --- Install deps on first run ---
 if [ ! -d "node_modules" ]; then
-  info "node_modules missing — running 'npm install'..."
-  npm install
+  info "node_modules missing — running 'pnpm install'..."
+  pnpm install
 fi
 ok "Dependencies ready"
 
@@ -59,15 +65,15 @@ done
 case "$mode" in
   electron)
     info "Starting Electron + Vite (Ctrl+C to stop)..."
-    npm run electron:dev || { warn "electron:dev failed — falling back to web mode."; npm run dev; }
+    pnpm run electron:dev || { warn "electron:dev failed — falling back to web mode."; pnpm run dev; }
     ;;
   web)
     info "Starting Vite dev server at http://localhost:5173..."
-    npm run dev
+    pnpm run dev
     ;;
   build)
     info "Building production Electron app..."
-    npm run electron:build
+    pnpm run electron:build
     case "$(uname -s)" in
       Darwin*) open release/*.dmg 2>/dev/null || open release/mac/*.app 2>/dev/null || true ;;
       Linux*)  xdg-open release/*.AppImage 2>/dev/null || true ;;

@@ -41,12 +41,20 @@ if ($nodeMajor -lt 20) {
 }
 Write-Host "[OK]    Node $nodeVersion" -ForegroundColor Green
 
+# --- Check pnpm ---
+$pnpm = Get-Command pnpm -ErrorAction SilentlyContinue
+if (-not $pnpm) {
+  Write-Host "[ERROR] pnpm not found on PATH." -ForegroundColor Red
+  Write-Host "        Install it with: corepack enable  (or: npm install -g pnpm)" -ForegroundColor Red
+  Read-Host "Press Enter to exit"; exit 1
+}
+
 # --- Install dependencies on first run ---
 if (-not (Test-Path "node_modules")) {
-  Write-Host "[INFO]  node_modules missing - running 'npm install'..." -ForegroundColor Cyan
-  npm install
+  Write-Host "[INFO]  node_modules missing - running 'pnpm install'..." -ForegroundColor Cyan
+  pnpm install
   if ($LASTEXITCODE -ne 0) {
-    Write-Host "[ERROR] npm install failed." -ForegroundColor Red
+    Write-Host "[ERROR] pnpm install failed." -ForegroundColor Red
     Read-Host "Press Enter to exit"; exit 1
   }
 }
@@ -55,7 +63,7 @@ Write-Host "[OK]    Dependencies installed" -ForegroundColor Green
 # --- Launch ---
 if ($Build) {
   Write-Section "Building production Electron app"
-  npm run electron:build
+  pnpm run electron:build
   if ($LASTEXITCODE -ne 0) { Read-Host "Press Enter to exit"; exit 1 }
   $built = Get-ChildItem -Path "release" -Recurse -Filter "*.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
   if ($built) {
@@ -67,14 +75,14 @@ if ($Build) {
 } elseif ($Web) {
   Write-Section "Starting Vite dev server"
   Write-Host "[INFO]  http://localhost:5173" -ForegroundColor Cyan
-  npm run dev
+  pnpm run dev
 } else {
   Write-Section "Starting Electron + Vite"
   Write-Host "[INFO]  Close the Electron window or press Ctrl+C here to stop." -ForegroundColor Cyan
   try {
-    npm run electron:dev
+    pnpm run electron:dev
   } catch {
     Write-Host "[WARN]  electron:dev failed - falling back to web mode." -ForegroundColor Yellow
-    npm run dev
+    pnpm run dev
   }
 }
