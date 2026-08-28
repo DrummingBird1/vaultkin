@@ -8,9 +8,11 @@ import type { VaultData } from "../core/vault/schema";
 import type { SessionKeys } from "../core/vault/vault-types";
 import { AutosaveService } from "./autosave.service";
 import { ClipboardService } from "./clipboard.service";
-import { BreachService }    from "./breach.service";
-import { HistoryService }   from "./history.service";
-import { useSessionStore }  from "../store/session.store";
+import { BreachService } from "./breach.service";
+import { HistoryService } from "./history.service";
+import { ExtensionBridge } from "./extension-bridge.service";
+import { useSessionStore } from "../store/session.store";
+import { EXTENSION_ID_STORAGE_KEY } from "../constants";
 
 export const AppLifecycle = {
   async onUnlock(_vault: VaultData, _keys: SessionKeys, autoLockMs: number): Promise<void> {
@@ -19,10 +21,20 @@ export const AppLifecycle = {
     AutosaveService.start();
   },
   async onLock(): Promise<void> {
-    try { await AutosaveService.flushNow(); } catch { /* best effort */ }
+    try {
+      await AutosaveService.flushNow();
+    } catch {
+      /* best effort */
+    }
     AutosaveService.stop();
     ClipboardService.cancelClear();
     BreachService.clearCache();
     HistoryService.clear();
+    // Tell the paired browser extension to drop its cached entries too —
+    // otherwise a locked main vault would leave plaintext credentials
+    // reachable in the extension for up to its own 5-minute idle timeout.
+    // No-ops if no extension is paired or we're not in a Chromium tab.
+    const extId = localStorage.getItem(EXTENSION_ID_STORAGE_KEY);
+    if (extId) ExtensionBridge.lock(extId);
   },
 };

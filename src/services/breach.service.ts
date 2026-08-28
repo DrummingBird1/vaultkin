@@ -12,6 +12,8 @@
  * Reference: https://haveibeenpwned.com/API/v3#PwnedPasswords
  */
 
+import { HIBP_TIMEOUT_MS, HIBP_CONCURRENCY, HIBP_CACHE_MAX } from "../constants";
+
 const HIBP_RANGE_API = "https://api.pwnedpasswords.com/range/";
 
 export interface BreachResult {
@@ -30,11 +32,6 @@ async function sha1Hex(text: string): Promise<string> {
   for (const b of bytes) hex += b.toString(16).padStart(2, "0");
   return hex.toUpperCase();
 }
-
-// Cap the cache so a power user scanning huge vaults repeatedly can't grow
-// the Map without bound. JS Map preserves insertion order, so dropping the
-// oldest key gives us a basic LRU eviction.
-const CACHE_MAX = 2000;
 
 export const BreachService = {
   /**
@@ -61,10 +58,10 @@ export const BreachService = {
     const prefix = hash.slice(0, 5);
     const suffix = hash.slice(5);
 
-    // 10-second timeout — a stalled HIBP request must not block the Health
-    // dashboard's batch scan indefinitely.
+    // A stalled HIBP request must not block the Health dashboard's batch scan
+    // indefinitely.
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 10_000);
+    const timer = setTimeout(() => controller.abort(), HIBP_TIMEOUT_MS);
     let res: Response;
     try {
       res = await fetch(HIBP_RANGE_API + prefix, {
@@ -89,7 +86,7 @@ export const BreachService = {
 
     const result: BreachResult = { count, isPwned: count > 0 };
     this._cache.set(hash, result);
-    if (this._cache.size > CACHE_MAX) {
+    if (this._cache.size > HIBP_CACHE_MAX) {
       // Drop the oldest entry (Map iteration is insertion order).
       const oldest = this._cache.keys().next().value;
       if (oldest !== undefined) this._cache.delete(oldest);
@@ -103,21 +100,24 @@ export const BreachService = {
     // Bounded concurrency: HIBP's range API has generous rate limits, and
     // requests are pure GET + 5-hex-chars only — but unbounded parallelism
     // would still mean opening N sockets for a vault with hundreds of unique
-    // passwords. 6 is a safe middle ground that cuts wall time ~6x vs serial.
-    const CONCURRENCY = 6;
+    // passwords. HIBP_CONCURRENCY is a safe middle ground that cuts wall time
+    // ~6x vs serial.
     let i = 0;
-    const workers = Array.from({ length: Math.min(CONCURRENCY, passwords.length) }, async () => {
-      while (true) {
-        const idx = i++;
-        if (idx >= passwords.length) return;
-        const pw = passwords[idx];
-        try {
-          out.set(pw, await this.check(pw));
-        } catch {
-          out.set(pw, { count: 0, isPwned: false });
+    const workers = Array.from(
+      { length: Math.min(HIBP_CONCURRENCY, passwords.length) },
+      async () => {
+        while (true) {
+          const idx = i++;
+          if (idx >= passwords.length) return;
+          const pw = passwords[idx];
+          try {
+            out.set(pw, await this.check(pw));
+          } catch {
+            out.set(pw, { count: 0, isPwned: false });
+          }
         }
-      }
-    });
+      },
+    );
     await Promise.all(workers);
     return out;
   },

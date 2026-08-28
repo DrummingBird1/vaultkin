@@ -75,7 +75,7 @@ jobs:
       # Ratchet: pre-existing warnings as of the tooling-upgrade session.
       # New code should not add to this count — lower it over time instead
       # of letting it silently grow.
-      - run: pnpm run lint -- --max-warnings=46
+      - run: pnpm run lint -- --max-warnings=43
 
   # ── 3. Tests ─────────────────────────────────────────────────────────────────
   test:

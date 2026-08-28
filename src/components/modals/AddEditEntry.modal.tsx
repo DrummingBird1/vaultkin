@@ -13,33 +13,34 @@
  * - All inputs sanitized before dispatch to vault.store
  */
 
-import React, { useState, useCallback, useRef, useEffect } from "react";
+import React, { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import { useVaultStore } from "../../store/vault.store";
-import { useUIStore }   from "../../store/ui.store";
+import { useUIStore } from "../../store/ui.store";
 import type { VaultEntry, CategoryType, CustomField } from "../../core/vault/schema";
-import { generatePassword }   from "../../core/password/generator";
-import { analyzeStrength }    from "../../core/password/strength";
+import { generatePassword } from "../../core/password/generator";
+import { analyzeStrength } from "../../core/password/strength";
 import { validateBase32Secret } from "../../core/totp/base32";
+import { TagInput } from "../vault/TagInput";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface Props {
-  entry?:    VaultEntry | null;    // null = create mode
+  entry?: VaultEntry | null; // null = create mode
   folderId?: string;
-  onClose:   () => void;
+  onClose: () => void;
 }
 
 type EntryTab = "login" | "notes" | "card" | "fields";
 
 const CATEGORIES: Array<{ value: CategoryType; label: string; emoji: string }> = [
-  { value: "websites",  label: "Website",  emoji: "🌐" },
-  { value: "apps",      label: "App",      emoji: "📱" },
-  { value: "finance",   label: "Finance",  emoji: "💳" },
-  { value: "gaming",    label: "Gaming",   emoji: "🎮" },
-  { value: "servers",   label: "Server",   emoji: "🖥️"  },
-  { value: "identity",  label: "Identity", emoji: "🪪"  },
-  { value: "email",     label: "Email",    emoji: "📧" },
-  { value: "custom",    label: "Custom",   emoji: "📁"  },
+  { value: "websites", label: "Website", emoji: "🌐" },
+  { value: "apps", label: "App", emoji: "📱" },
+  { value: "finance", label: "Finance", emoji: "💳" },
+  { value: "gaming", label: "Gaming", emoji: "🎮" },
+  { value: "servers", label: "Server", emoji: "🖥️" },
+  { value: "identity", label: "Identity", emoji: "🪪" },
+  { value: "email", label: "Email", emoji: "📧" },
+  { value: "custom", label: "Custom", emoji: "📁" },
 ];
 
 // ─── StrengthBar ──────────────────────────────────────────────────────────────
@@ -47,22 +48,29 @@ const CATEGORIES: Array<{ value: CategoryType; label: string; emoji: string }> =
 function StrengthBar({ password }: { password: string }) {
   if (!password) return null;
   const analysis = analyzeStrength(password);
-  const levels = ["#ef4444","#f97316","#eab308","#22c55e","#10b981"];
-  const labels = ["Very Weak","Weak","Fair","Strong","Very Strong"];
-  const color  = levels[analysis.score] ?? levels[0];
-  const label  = labels[analysis.score] ?? "Unknown";
+  const levels = ["#ef4444", "#f97316", "#eab308", "#22c55e", "#10b981"];
+  const labels = ["Very Weak", "Weak", "Fair", "Strong", "Very Strong"];
+  const color = levels[analysis.score] ?? levels[0];
+  const label = labels[analysis.score] ?? "Unknown";
 
   return (
     <div className="mt-1.5">
       <div className="flex gap-0.5 mb-1">
         {levels.map((c, i) => (
-          <div key={i} className="flex-1 h-1 rounded-full transition-all duration-300"
-            style={{ background: i <= analysis.score ? color : "var(--border-subtle)" }} />
+          <div
+            key={i}
+            className="flex-1 h-1 rounded-full transition-all duration-300"
+            style={{ background: i <= analysis.score ? color : "var(--border-subtle)" }}
+          />
         ))}
       </div>
       <div className="flex justify-between items-center">
-        <span className="text-[11px]" style={{ color }}>{label}</span>
-        <span className="text-[11px] text-[var(--text-tertiary)]">{Math.round(analysis.effectiveEntropy)} bits</span>
+        <span className="text-[11px]" style={{ color }}>
+          {label}
+        </span>
+        <span className="text-[11px] text-[var(--text-tertiary)]">
+          {Math.round(analysis.effectiveEntropy)} bits
+        </span>
       </div>
     </div>
   );
@@ -71,7 +79,9 @@ function StrengthBar({ password }: { password: string }) {
 // ─── CustomFieldRow ───────────────────────────────────────────────────────────
 
 function CustomFieldRow({
-  field, onChange, onRemove,
+  field,
+  onChange,
+  onRemove,
 }: {
   field: CustomField;
   onChange: (patch: Partial<CustomField>) => void;
@@ -84,11 +94,17 @@ function CustomFieldRow({
     <div className="flex gap-2 items-start p-3 bg-[var(--bg-elevated)] rounded-xl border border-[var(--border-subtle)]">
       <div className="flex-1 flex flex-col gap-2">
         <div className="flex gap-2">
-          <input className="sv-input flex-1 text-sm" placeholder="Label"
-            value={field.label} onChange={e => onChange({ label: e.target.value })} />
-          <select className="sv-input text-sm w-28"
+          <input
+            className="sv-input flex-1 text-sm"
+            placeholder="Label"
+            value={field.label}
+            onChange={(e) => onChange({ label: e.target.value })}
+          />
+          <select
+            className="sv-input text-sm w-28"
             value={field.type}
-            onChange={e => onChange({ type: e.target.value as CustomField["type"] })}>
+            onChange={(e) => onChange({ type: e.target.value as CustomField["type"] })}
+          >
             <option value="text">Text</option>
             <option value="password">Secret</option>
             <option value="url">URL</option>
@@ -103,20 +119,24 @@ function CustomFieldRow({
             type={isSecret && !showVal ? "password" : "text"}
             placeholder="Value"
             value={field.value}
-            onChange={e => onChange({ value: e.target.value })}
+            onChange={(e) => onChange({ value: e.target.value })}
           />
           {isSecret && (
-            <button type="button"
+            <button
+              type="button"
               className="absolute right-2 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]"
-              onClick={() => setShowVal(v => !v)}>
+              onClick={() => setShowVal((v) => !v)}
+            >
               {showVal ? "🙈" : "👁️"}
             </button>
           )}
         </div>
       </div>
-      <button type="button"
+      <button
+        type="button"
         onClick={onRemove}
-        className="mt-1 text-[var(--danger)] hover:text-[var(--danger-dim)] p-1 rounded-lg transition-colors">
+        className="mt-1 text-[var(--danger)] hover:text-[var(--danger-dim)] p-1 rounded-lg transition-colors"
+      >
         ✕
       </button>
     </div>
@@ -127,37 +147,45 @@ function CustomFieldRow({
 
 export function AddEditEntryModal({ entry, folderId, onClose }: Props) {
   const isEdit = !!entry;
-  const { addEntry, updateEntry } = useVaultStore();
+  const { vault, addEntry, updateEntry } = useVaultStore();
   const { toastSuccess } = useUIStore();
   const firstInputRef = useRef<HTMLInputElement>(null);
 
+  const allTags = useMemo(() => {
+    const set = new Set<string>();
+    for (const e of vault?.entries ?? []) for (const t of e.tags) set.add(t);
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
+  }, [vault?.entries]);
+
   // ── Form state ────────────────────────────────────────────────────────────
-  const [tab,          setTab]         = useState<EntryTab>("login");
-  const [title,        setTitle]       = useState(entry?.title       ?? "");
-  const [username,     setUsername]    = useState(entry?.username    ?? "");
-  const [password,     setPassword]    = useState(entry?.password    ?? "");
-  const [url,          setUrl]         = useState(entry?.url         ?? "");
-  const [notes,        setNotes]       = useState(entry?.notes       ?? "");
-  const [totpSecret,   setTotpSecret]  = useState(entry?.totpSecret  ?? "");
-  const [category,     setCategory]    = useState<CategoryType>(entry?.category ?? "websites");
-  const [favorite,     setFavorite]    = useState(entry?.favorite    ?? false);
-  const [tags,         setTags]        = useState((entry?.tags ?? []).join(", "));
-  const [customFields, setCustomFields]= useState<CustomField[]>(entry?.customFields ?? []);
+  const [tab, setTab] = useState<EntryTab>("login");
+  const [title, setTitle] = useState(entry?.title ?? "");
+  const [username, setUsername] = useState(entry?.username ?? "");
+  const [password, setPassword] = useState(entry?.password ?? "");
+  const [url, setUrl] = useState(entry?.url ?? "");
+  const [notes, setNotes] = useState(entry?.notes ?? "");
+  const [totpSecret, setTotpSecret] = useState(entry?.totpSecret ?? "");
+  const [category, setCategory] = useState<CategoryType>(entry?.category ?? "websites");
+  const [favorite, setFavorite] = useState(entry?.favorite ?? false);
+  const [tags, setTags] = useState<string[]>(entry?.tags ?? []);
+  const [customFields, setCustomFields] = useState<CustomField[]>(entry?.customFields ?? []);
 
   // Card fields
-  const [cardNumber,  setCardNumber]  = useState(entry?.cardNumber  ?? "");
-  const [cardHolder,  setCardHolder]  = useState(entry?.cardHolder  ?? "");
-  const [cardExpiry,  setCardExpiry]  = useState(entry?.cardExpiry  ?? "");
-  const [cardCVV,     setCardCVV]     = useState(entry?.cardCVV     ?? "");
+  const [cardNumber, setCardNumber] = useState(entry?.cardNumber ?? "");
+  const [cardHolder, setCardHolder] = useState(entry?.cardHolder ?? "");
+  const [cardExpiry, setCardExpiry] = useState(entry?.cardExpiry ?? "");
+  const [cardCVV, setCardCVV] = useState(entry?.cardCVV ?? "");
 
-  const [showPassword,  setShowPassword]  = useState(false);
-  const [showTOTP,      setShowTOTP]      = useState(false);
-  const [totpError,     setTotpError]     = useState("");
-  const [urlError,      setUrlError]      = useState("");
-  const [titleError,    setTitleError]    = useState("");
-  const [submitting,    setSubmitting]    = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showTOTP, setShowTOTP] = useState(false);
+  const [totpError, setTotpError] = useState("");
+  const [urlError, setUrlError] = useState("");
+  const [titleError, setTitleError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
-  useEffect(() => { firstInputRef.current?.focus(); }, []);
+  useEffect(() => {
+    firstInputRef.current?.focus();
+  }, []);
 
   // ── URL scheme autocomplete ────────────────────────────────────────────────
   // Pure helper so we can apply the same normalization on blur AND on submit
@@ -166,7 +194,11 @@ export function AddEditEntryModal({ entry, folderId, onClose }: Props) {
   function normalizeUrl(raw: string): string {
     const trimmed = raw.trim();
     if (!trimmed) return trimmed;
-    if (trimmed.startsWith("http://") || trimmed.startsWith("https://") || trimmed.includes("://")) {
+    if (
+      trimmed.startsWith("http://") ||
+      trimmed.startsWith("https://") ||
+      trimmed.includes("://")
+    ) {
       return trimmed;
     }
     return "https://" + trimmed;
@@ -191,8 +223,12 @@ export function AddEditEntryModal({ entry, folderId, onClose }: Props) {
   // ── Inline password generator ──────────────────────────────────────────────
   function handleGeneratePassword() {
     const pw = generatePassword({
-      length: 20, uppercase: true, lowercase: true,
-      digits: true, symbols: true, excludeAmbiguous: true,
+      length: 20,
+      uppercase: true,
+      lowercase: true,
+      digits: true,
+      symbols: true,
+      excludeAmbiguous: true,
     });
     setPassword(pw);
     setShowPassword(true);
@@ -200,18 +236,24 @@ export function AddEditEntryModal({ entry, folderId, onClose }: Props) {
 
   // ── Custom fields ──────────────────────────────────────────────────────────
   function addCustomField() {
-    setCustomFields(prev => [...prev, {
-      id: crypto.randomUUID(),
-      label: "", value: "", type: "text", protected: false,
-    }]);
+    setCustomFields((prev) => [
+      ...prev,
+      {
+        id: crypto.randomUUID(),
+        label: "",
+        value: "",
+        type: "text",
+        protected: false,
+      },
+    ]);
   }
 
   function updateCustomField(id: string, patch: Partial<CustomField>) {
-    setCustomFields(prev => prev.map(f => f.id === id ? { ...f, ...patch } : f));
+    setCustomFields((prev) => prev.map((f) => (f.id === id ? { ...f, ...patch } : f)));
   }
 
   function removeCustomField(id: string) {
-    setCustomFields(prev => prev.filter(f => f.id !== id));
+    setCustomFields((prev) => prev.filter((f) => f.id !== id));
   }
 
   // ── Validate URL ──────────────────────────────────────────────────────────
@@ -220,72 +262,106 @@ export function AddEditEntryModal({ entry, folderId, onClose }: Props) {
     try {
       const u = new URL(raw);
       return u.protocol === "http:" || u.protocol === "https:";
-    } catch { return false; }
+    } catch {
+      return false;
+    }
   }
 
   // ── Submit ────────────────────────────────────────────────────────────────
-  const handleSubmit = useCallback(async (e: React.FormEvent) => {
-    e.preventDefault();
-    let valid = true;
+  const handleSubmit = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+      let valid = true;
 
-    if (!title.trim()) { setTitleError("Title is required."); valid = false; }
-    else { setTitleError(""); }
+      if (!title.trim()) {
+        setTitleError("Title is required.");
+        valid = false;
+      } else {
+        setTitleError("");
+      }
 
-    // Apply scheme autocomplete here too, so user can type "example.com" and
-    // hit Save without first blurring the URL field.
-    const normalizedUrl = normalizeUrl(url);
-    if (normalizedUrl !== url) setUrl(normalizedUrl);
-    if (normalizedUrl && !validateUrl(normalizedUrl)) { setUrlError("Enter a valid https:// URL."); valid = false; }
-    else { setUrlError(""); }
+      // Apply scheme autocomplete here too, so user can type "example.com" and
+      // hit Save without first blurring the URL field.
+      const normalizedUrl = normalizeUrl(url);
+      if (normalizedUrl !== url) setUrl(normalizedUrl);
+      if (normalizedUrl && !validateUrl(normalizedUrl)) {
+        setUrlError("Enter a valid https:// URL.");
+        valid = false;
+      } else {
+        setUrlError("");
+      }
 
-    if (totpSecret && !validateBase32Secret(totpSecret)) {
-      setTotpError("Invalid TOTP secret."); valid = false;
-    }
+      if (totpSecret && !validateBase32Secret(totpSecret)) {
+        setTotpError("Invalid TOTP secret.");
+        valid = false;
+      }
 
-    if (!valid) return;
-    setSubmitting(true);
+      if (!valid) return;
+      setSubmitting(true);
 
-    const tagArr = tags.split(",").map(t => t.trim()).filter(Boolean);
+      const payload = {
+        type: "login" as const,
+        title: title.trim(),
+        username: username.trim(),
+        password,
+        url: normalizedUrl || undefined,
+        notes: notes.trim() || undefined,
+        totpSecret: totpSecret || undefined,
+        totpAlgorithm: "SHA1" as const,
+        totpDigits: 6 as const,
+        totpPeriod: 30 as const,
+        category,
+        folderId,
+        tags,
+        favorite,
+        customFields,
+        cardNumber: cardNumber.trim() || undefined,
+        cardHolder: cardHolder.trim() || undefined,
+        cardExpiry: cardExpiry.trim() || undefined,
+        cardCVV: cardCVV.trim() || undefined,
+      };
 
-    const payload = {
-      type:         "login" as const,
-      title:        title.trim(),
-      username:     username.trim(),
+      if (isEdit && entry) {
+        updateEntry(entry.id, payload);
+        toastSuccess("Entry updated", `"${title}" saved.`);
+      } else {
+        addEntry(payload);
+        toastSuccess("Entry added", `"${title}" added to vault.`);
+      }
+
+      setSubmitting(false);
+      onClose();
+    },
+    [
+      title,
+      username,
       password,
-      url:          normalizedUrl || undefined,
-      notes:        notes.trim() || undefined,
-      totpSecret:   totpSecret || undefined,
-      totpAlgorithm:"SHA1"  as const,
-      totpDigits:   6       as const,
-      totpPeriod:   30      as const,
+      url,
+      notes,
+      totpSecret,
       category,
       folderId,
-      tags:         tagArr,
+      tags,
       favorite,
       customFields,
-      cardNumber:   cardNumber.trim() || undefined,
-      cardHolder:   cardHolder.trim() || undefined,
-      cardExpiry:   cardExpiry.trim() || undefined,
-      cardCVV:      cardCVV.trim() || undefined,
-    };
-
-    if (isEdit && entry) {
-      updateEntry(entry.id, payload);
-      toastSuccess("Entry updated", `"${title}" saved.`);
-    } else {
-      addEntry(payload);
-      toastSuccess("Entry added", `"${title}" added to vault.`);
-    }
-
-    setSubmitting(false);
-    onClose();
-  }, [title, username, password, url, notes, totpSecret, category, folderId,
-      tags, favorite, customFields, cardNumber, cardHolder, cardExpiry, cardCVV,
-      isEdit, entry, addEntry, updateEntry, toastSuccess, onClose]);
+      cardNumber,
+      cardHolder,
+      cardExpiry,
+      cardCVV,
+      isEdit,
+      entry,
+      addEntry,
+      updateEntry,
+      toastSuccess,
+      onClose,
+    ],
+  );
 
   // ── Keyboard close ─────────────────────────────────────────────────────────
   useEffect(() => {
-    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
   }, [onClose]);
@@ -293,25 +369,33 @@ export function AddEditEntryModal({ entry, folderId, onClose }: Props) {
   // ─────────────────────────────────────────────────────────────────────────
 
   return (
-    <div className="sv-modal-backdrop" onClick={e => e.target === e.currentTarget && onClose()}>
-      <div className="sv-modal" role="dialog" aria-modal="true"
-        aria-label={isEdit ? "Edit entry" : "Add entry"}>
-
+    <div className="sv-modal-backdrop" onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div
+        className="sv-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-label={isEdit ? "Edit entry" : "Add entry"}
+      >
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-lg font-semibold text-[var(--text-primary)]">
             {isEdit ? "Edit Entry" : "Add Entry"}
           </h2>
           <div className="flex items-center gap-3">
-            <button type="button"
+            <button
+              type="button"
               className={`p-1.5 rounded-lg transition-colors ${favorite ? "text-amber-400" : "text-[var(--text-tertiary)] hover:text-amber-400"}`}
-              onClick={() => setFavorite(v => !v)}
-              aria-label={favorite ? "Remove from favorites" : "Add to favorites"}>
+              onClick={() => setFavorite((v) => !v)}
+              aria-label={favorite ? "Remove from favorites" : "Add to favorites"}
+            >
               ★
             </button>
-            <button type="button" onClick={onClose}
+            <button
+              type="button"
+              onClick={onClose}
               className="text-[var(--text-tertiary)] hover:text-[var(--text-primary)] p-1 rounded-lg transition-colors"
-              aria-label="Close">
+              aria-label="Close"
+            >
               ✕
             </button>
           </div>
@@ -321,18 +405,27 @@ export function AddEditEntryModal({ entry, folderId, onClose }: Props) {
         <div className="flex gap-3 mb-5">
           <div className="flex-1">
             <label className="sv-label">Title *</label>
-            <input ref={firstInputRef} className="sv-input w-full"
-              value={title} onChange={e => setTitle(e.target.value)}
+            <input
+              ref={firstInputRef}
+              className="sv-input w-full"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
               aria-label="Title"
-              placeholder="e.g. GitHub Work" />
+              placeholder="e.g. GitHub Work"
+            />
             {titleError && <p className="sv-error">{titleError}</p>}
           </div>
           <div className="w-36">
             <label className="sv-label">Category</label>
-            <select className="sv-input w-full" value={category}
-              onChange={e => setCategory(e.target.value as CategoryType)}>
-              {CATEGORIES.map(c => (
-                <option key={c.value} value={c.value}>{c.emoji} {c.label}</option>
+            <select
+              className="sv-input w-full"
+              value={category}
+              onChange={(e) => setCategory(e.target.value as CategoryType)}
+            >
+              {CATEGORIES.map((c) => (
+                <option key={c.value} value={c.value}>
+                  {c.emoji} {c.label}
+                </option>
               ))}
             </select>
           </div>
@@ -340,14 +433,17 @@ export function AddEditEntryModal({ entry, folderId, onClose }: Props) {
 
         {/* Tabs */}
         <div className="flex gap-1 mb-5 border-b border-[var(--border-subtle)] pb-0">
-          {(["login","notes","card","fields"] as EntryTab[]).map(t => (
-            <button key={t} type="button"
+          {(["login", "notes", "card", "fields"] as EntryTab[]).map((t) => (
+            <button
+              key={t}
+              type="button"
               className={`px-3 py-1.5 text-sm font-medium rounded-t-lg -mb-px border-b-2 transition-colors capitalize ${
                 tab === t
                   ? "text-[var(--accent)] border-[var(--accent)]"
                   : "text-[var(--text-tertiary)] border-transparent hover:text-[var(--text-secondary)]"
               }`}
-              onClick={() => setTab(t)}>
+              onClick={() => setTab(t)}
+            >
               {t === "fields" ? "Custom" : t.charAt(0).toUpperCase() + t.slice(1)}
             </button>
           ))}
@@ -360,17 +456,25 @@ export function AddEditEntryModal({ entry, folderId, onClose }: Props) {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="sv-label">Username / Email</label>
-                  <input className="sv-input w-full" value={username}
-                    onChange={e => setUsername(e.target.value)}
+                  <input
+                    className="sv-input w-full"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
                     aria-label="Username"
-                    placeholder="user@example.com" autoComplete="off" />
+                    placeholder="user@example.com"
+                    autoComplete="off"
+                  />
                 </div>
                 <div>
                   <label className="sv-label">URL</label>
-                  <input className="sv-input w-full" value={url}
-                    onChange={e => setUrl(e.target.value)}
+                  <input
+                    className="sv-input w-full"
+                    value={url}
+                    onChange={(e) => setUrl(e.target.value)}
                     onBlur={handleUrlBlur}
-                    placeholder="https://example.com" autoComplete="off" />
+                    placeholder="https://example.com"
+                    autoComplete="off"
+                  />
                   {urlError && <p className="sv-error">{urlError}</p>}
                 </div>
               </div>
@@ -379,9 +483,11 @@ export function AddEditEntryModal({ entry, folderId, onClose }: Props) {
               <div>
                 <div className="flex items-center justify-between mb-1.5">
                   <label className="sv-label mb-0">Password</label>
-                  <button type="button"
+                  <button
+                    type="button"
                     onClick={handleGeneratePassword}
-                    className="text-xs text-[var(--accent)] hover:underline font-medium">
+                    className="text-xs text-[var(--accent)] hover:underline font-medium"
+                  >
                     Generate
                   </button>
                 </div>
@@ -390,13 +496,15 @@ export function AddEditEntryModal({ entry, folderId, onClose }: Props) {
                     className="sv-input w-full pr-10 font-mono"
                     type={showPassword ? "text" : "password"}
                     value={password}
-                    onChange={e => setPassword(e.target.value)}
+                    onChange={(e) => setPassword(e.target.value)}
                     autoComplete="new-password"
                     aria-label="Password"
                   />
-                  <button type="button"
+                  <button
+                    type="button"
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] transition-colors"
-                    onClick={() => setShowPassword(v => !v)}>
+                    onClick={() => setShowPassword((v) => !v)}
+                  >
                     {showPassword ? "🙈" : "👁️"}
                   </button>
                 </div>
@@ -407,9 +515,11 @@ export function AddEditEntryModal({ entry, folderId, onClose }: Props) {
               <div>
                 <div className="flex items-center justify-between mb-1.5">
                   <label className="sv-label mb-0">TOTP Secret (2FA)</label>
-                  <button type="button"
+                  <button
+                    type="button"
                     className="text-xs text-[var(--text-tertiary)] hover:text-[var(--accent)] transition-colors"
-                    onClick={() => setShowTOTP(v => !v)}>
+                    onClick={() => setShowTOTP((v) => !v)}
+                  >
                     {showTOTP ? "Hide" : "Show"}
                   </button>
                 </div>
@@ -417,7 +527,7 @@ export function AddEditEntryModal({ entry, folderId, onClose }: Props) {
                   className={`sv-input w-full font-mono text-sm ${totpError ? "border-[var(--danger)]" : ""}`}
                   type={showTOTP ? "text" : "password"}
                   value={totpSecret}
-                  onChange={e => handleTOTPChange(e.target.value)}
+                  onChange={(e) => handleTOTPChange(e.target.value)}
                   placeholder="JBSWY3DPEHPK3PXP (Base32)"
                   autoComplete="off"
                 />
@@ -430,9 +540,7 @@ export function AddEditEntryModal({ entry, folderId, onClose }: Props) {
               {/* Tags */}
               <div>
                 <label className="sv-label">Tags</label>
-                <input className="sv-input w-full" value={tags}
-                  onChange={e => setTags(e.target.value)}
-                  placeholder="work, dev, important (comma-separated)" />
+                <TagInput value={tags} onChange={setTags} suggestions={allTags} />
               </div>
             </>
           )}
@@ -441,10 +549,13 @@ export function AddEditEntryModal({ entry, folderId, onClose }: Props) {
           {tab === "notes" && (
             <div>
               <label className="sv-label">Secure Notes</label>
-              <textarea className="sv-input w-full resize-none font-mono text-sm"
-                rows={10} value={notes}
-                onChange={e => setNotes(e.target.value)}
-                placeholder="Store any sensitive text here..." />
+              <textarea
+                className="sv-input w-full resize-none font-mono text-sm"
+                rows={10}
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Store any sensitive text here..."
+              />
             </div>
           )}
 
@@ -453,30 +564,43 @@ export function AddEditEntryModal({ entry, folderId, onClose }: Props) {
             <div className="grid grid-cols-2 gap-3">
               <div className="col-span-2">
                 <label className="sv-label">Card Number</label>
-                <input className="sv-input w-full font-mono tracking-widest"
+                <input
+                  className="sv-input w-full font-mono tracking-widest"
                   value={cardNumber}
-                  onChange={e => setCardNumber(e.target.value.replace(/\s/g,""))}
+                  onChange={(e) => setCardNumber(e.target.value.replace(/\s/g, ""))}
                   placeholder="4242 4242 4242 4242"
-                  maxLength={19} />
+                  maxLength={19}
+                />
               </div>
               <div className="col-span-2">
                 <label className="sv-label">Cardholder Name</label>
-                <input className="sv-input w-full" value={cardHolder}
-                  onChange={e => setCardHolder(e.target.value)}
-                  placeholder="JANE DOE" />
+                <input
+                  className="sv-input w-full"
+                  value={cardHolder}
+                  onChange={(e) => setCardHolder(e.target.value)}
+                  placeholder="JANE DOE"
+                />
               </div>
               <div>
                 <label className="sv-label">Expiry</label>
-                <input className="sv-input w-full font-mono" value={cardExpiry}
-                  onChange={e => setCardExpiry(e.target.value)}
-                  placeholder="MM/YY" maxLength={5} />
+                <input
+                  className="sv-input w-full font-mono"
+                  value={cardExpiry}
+                  onChange={(e) => setCardExpiry(e.target.value)}
+                  placeholder="MM/YY"
+                  maxLength={5}
+                />
               </div>
               <div>
                 <label className="sv-label">CVV</label>
-                <input className="sv-input w-full font-mono" type="password"
+                <input
+                  className="sv-input w-full font-mono"
+                  type="password"
                   value={cardCVV}
-                  onChange={e => setCardCVV(e.target.value)}
-                  placeholder="•••" maxLength={4} />
+                  onChange={(e) => setCardCVV(e.target.value)}
+                  placeholder="•••"
+                  maxLength={4}
+                />
               </div>
             </div>
           )}
@@ -489,13 +613,19 @@ export function AddEditEntryModal({ entry, folderId, onClose }: Props) {
                   No custom fields yet. Add fields for SSH keys, recovery codes, etc.
                 </p>
               )}
-              {customFields.map(field => (
-                <CustomFieldRow key={field.id} field={field}
-                  onChange={p => updateCustomField(field.id, p)}
-                  onRemove={() => removeCustomField(field.id)} />
+              {customFields.map((field) => (
+                <CustomFieldRow
+                  key={field.id}
+                  field={field}
+                  onChange={(p) => updateCustomField(field.id, p)}
+                  onRemove={() => removeCustomField(field.id)}
+                />
               ))}
-              <button type="button" onClick={addCustomField}
-                className="sv-btn-secondary text-sm py-2">
+              <button
+                type="button"
+                onClick={addCustomField}
+                className="sv-btn-secondary text-sm py-2"
+              >
                 + Add Custom Field
               </button>
             </div>
