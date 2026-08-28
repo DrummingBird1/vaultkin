@@ -1,0 +1,208 @@
+# Changelog
+
+## [Unreleased] — Argon2id, WebDAV, QR, extension UI (2026-05-17, session 6)
+
+### Added — Argon2id key derivation (now the default)
+- New vaults derive keys with **Argon2id (64 MiB, t=3, p=1)** via `hash-wasm` (pure WASM, bundles inline — no native toolchain, works under Vite + Node + CI). Measured ~170 ms/derivation.
+- **Backward compatible**: the derivation path is chosen from the vault header's `kdf.name`, so PBKDF2-SHA256 (600k) vaults from the previous build still open unchanged.
+- `SessionKeys` now carries the full `KdfParams` (name + cost params) + salt, so every re-encrypt round-trips with parameters that match the keys. The MAC binds all KDF params + salt + IV + ciphertext.
+
+### Added — WebDAV backup (manual, safe)
+- Real `fetch`-based WebDAV transport in `sync.service.ts`: `testConnection` (HEAD), `push` (PUT), `pull` (GET), HTTP Basic auth, ETag tracking. Only the **encrypted** blob is transmitted.
+- Settings UI: URL + username + app-password, Test / Push↑ / Pull↓. Pull requires explicit confirmation (it overwrites local). Credentials live in `sessionStorage` only.
+- Deliberately **not** auto-bidirectional: silent last-write-wins on two diverged encrypted blobs risks data loss, so the user drives push/pull until the decrypt→merge→re-encrypt loop (ConflictResolutionModal) is wired.
+
+### Added — QR backup
+- `VaultBackupQR.modal.tsx` exports the encrypted vault as a paged series of QR codes (`SVQR:i/n:` chunks) using `qrcode-generator` (full QR spec — all versions, alignment patterns, masks; replaces the single-block `lib/qrcode.ts` for this use). Arrow-key / button paging. Reachable from Settings → Export QR backup.
+
+### Added — Browser-extension bridge UI
+- Settings panel to store the extension ID (localStorage), **Send entries to extension** (`ExtensionBridge.syncEntries`), and **Lock extension** (`ExtensionBridge.lock`). Sends only the minimized snapshot; extension auto-clears after 5 min.
+
+### Changed — Biometric (accurate detection, honest boundary)
+- `BiometricService` now does real `isUserVerifyingPlatformAuthenticatorAvailable()` detection and a `supportsPRF()` gate. Full PRF-based unlock is **intentionally not shipped** — wrapping recoverable key material is security-critical and unverifiable without a real authenticator/CI. The unlock boundary stays at the master password; the non-functional biometric button is hidden until the tested flow lands. Rationale documented in `biometric.service.ts` + security docs.
+
+### Accessibility
+- Added `aria-label`s to the master-password (Unlock + Create), confirm, and entry Title/Username/Password inputs — improves screen-reader UX and makes the Playwright `getByLabel` selectors resolvable. (E2E still needs `npx playwright install chromium` to run; a couple of submit-button selectors may need verification against a live browser.)
+
+### Verified
+- `tsc --noEmit` clean. 24/24 integration tests pass against real WebCrypto + Argon2id. **Production `vite build` succeeds** (89 modules, 307 kB JS gzip 97 kB — includes inline Argon2 WASM).
+
+---
+
+## [Unreleased] — Scaffold restore + dead-feature wiring (2026-05-17, session 5)
+
+### Fixed (blocking)
+- **`src/App.tsx` import paths** — used `../` (a deeper-than-actual path) after the reorg, so Vite failed import-analysis and the app wouldn't load. Corrected to `./`.
+- **`ChangePassword.modal` never changed the password** — it re-encrypted with the *existing* session keys (derived from the old password), so the vault still opened with the old password. Now uses `changeMasterPassword()` to re-derive keys from the new password, and swaps the live session keys so the next autosave stays consistent.
+- **`saveVault()` produced an undecryptable payload** — it rolled a fresh salt but kept the old keys, so re-opening (deriving from the new salt) failed the integrity check. `SessionKeys` now carries the `salt` + `iterations` it was derived from, and `saveVault` reuses them. (Surfaced by the integration tests.)
+- **Test isolation** — `setVault` now resets `searchQuery`, so a filter from one test/session no longer leaks into the next.
+
+### Added — restored full app scaffold
+The snapshot was missing the modules every import referenced. Wrote real, working
+implementations so `npm run dev` / `electron:dev` actually launch:
+- `src/core/` — crypto engine (AES-256-GCM + HMAC-SHA256 + **PBKDF2-SHA256 600k**), serializer façade, schema, TOTP (RFC 6238), Base32, password generator + strength analyzer.
+- `src/store/` — session / vault / ui / totp Zustand stores + cross-store `index.ts`.
+- `src/services/` — storage (IndexedDB), ipc, clipboard (auto-clear), autosave (debounced), import-export, app-lifecycle, history, biometric/sync/extension-bridge stubs.
+- `src/hooks/` — useAutoLock, useKeyboardShortcuts, useQuickCopy, useBulkSelection, useDragReorder.
+- `src/components/` — ErrorBoundary, AppShell, Sidebar, TopBar.
+- `src/pages/` — Authenticator, Generator, Settings (theme/accent/auto-lock/duress/delete).
+- `src/main.tsx`, `src/styles/globals.css` (full `sv-*` system + dark/light tokens), `src/electron/{main,preload}.ts`.
+- Config: `tsconfig*.json`, `config/vite.config.ts`, `tailwind.config.cjs`, `postcss.config.cjs`. `package.json` trimmed to deps that install without a native toolchain.
+
+### Added — wired previously-dead features
+- **Duress password** — `Unlock.page` now checks `DuressService.isDuress()` before opening: wipes the real vault and opens an empty decoy (or just opens the existing decoy on repeat). Enrollment UI added to Settings.
+- **Health "Fix" button** — `Vault.page` now consumes `editEntryId` from the ui store and opens the edit modal for the offending entry.
+- **Per-entry version history** — `vault.store.updateEntry` snapshots the prior version into `HistoryService`; a "Previous versions" section in the entry detail panel restores them; cleared on lock.
+
+### Changed
+- KDF docs corrected to state **PBKDF2-SHA256 600k** (current) with Argon2id as the documented roadmap target — README, `docs/README.security.md`, CLAUDE.md.
+- `CreateVault` default auto-lock 15 min → 5 min (matches the documented default).
+- Removed the `window.location.reload()` after vault creation (state flip handles the transition).
+- Added `.gitignore`.
+
+### Verified
+- `tsc --noEmit` clean (app + electron). All 24 integration tests pass against real WebCrypto.
+
+---
+
+## [Unreleased] — Reorg, launchers, and feature pack (2026-05-17, session 4)
+
+### Added — Launcher
+- **`launch.bat`** — Windows double-click entry. Checks Node 20+, runs `npm install` if needed, starts `electron:dev` (falls back to web mode on failure).
+- **`launch.ps1`** — PowerShell variant with colored output and flags: `-Web` (Vite only), `-Build` (production Electron build + launch).
+- **`launch.sh`** — macOS / Linux equivalent with `--web` / `--build` flags.
+- **`LAUNCH.md`** — usage docs, including how to pin a Windows shortcut to taskbar / Start menu and how to make a `.desktop` entry on Linux.
+
+### Changed — Repository layout
+- Moved every loose source file into the canonical tree the README and CLAUDE.md describe:
+  - `*.modal.tsx` → `src/components/modals/`
+  - `*.page.tsx` → `src/pages/`
+  - `breach.service.ts`, `duress.service.ts` → `src/services/`
+  - `qrcode.ts` → `src/lib/`
+  - `App.tsx` → `src/`
+  - `background.js`, `content.js` → `extension/src/`
+  - `manifest.json` → `extension/`
+  - `vault-lifecycle.test.ts` → `tests/integration/`
+  - `setup.ts` → `tests/`
+  - `01-vault-lifecycle.spec.ts` → `e2e/`
+  - `ci.yml` → `.github/workflows/`
+  - `USER_GUIDE.md`, `TROUBLESHOOTING.md`, `README.security.md` → `docs/`
+- CLAUDE.md updated to reflect the new tree and to keep a permanent "snapshot caveat" note explaining which modules still need to be restored.
+
+### Added — UX / security improvements
+- **Auto-hide password in `EntryDetail`**: revealing a password now starts a 10-second countdown (live `(Ns)` label on the toggle button) after which it auto-hides. Reduces shoulder-surfing and accidental-screenshot risk. Timer cancels on manual hide and clears on unmount.
+- **Search-term highlighting**: matches in entry titles / usernames are wrapped in `<mark>` with accent-colored background. Same `Highlight` component works for grid and list views.
+- **Phishing protection in `extension/src/content.js`**: before autofill, normalized `window.location.hostname` is compared to the entry's URL host (after stripping `www.`). On mismatch, a `confirm()` dialog warns the user and requires an explicit "Fill anyway". The background's generous domain matcher is still used for *finding* candidate entries — the strict check fires only on actual fill.
+- **Inline SVG icons replacing emoji** in `Vault.page.tsx` (`IconStar`, `IconClose`, `IconEmptyVault`). Renders identically across Windows, macOS, Linux, iOS, Android; emoji do not. Internal documentation note added on the long-term plan to migrate to `lucide-react`.
+- **`React.memo` on `EntryCard`**: prevents re-render of unchanged entry cards on every search keystroke. Combined with the memoized `highlightQuery`, this keeps large vaults responsive.
+
+---
+
+## [Unreleased] — Post-snapshot audit cleanup (2026-05-17, sessions 1-3)
+
+### Performance / hardening (second pass)
+- **HIBP batch check now runs with concurrency 6**: `BreachService.checkBatch` was serial — scanning 100 unique vault passwords took 100 round-trips end-to-end. Bounded parallelism cuts that to ~17 round-trips' worth of wall time, well within HIBP's rate limits.
+- **`BreachService._cache` now bounded (LRU, cap 2000)**: previously unbounded; repeated scans of large vaults could grow the Map indefinitely. Recently-used entries are re-inserted on hit so eviction is LRU.
+- **Extension content script debounces DOM scans**: `MutationObserver` previously ran a full `querySelectorAll('input[type="password"]')` per mutation. On busy SPAs (chats, social feeds) that's measurable jank. Now coalesced via `requestAnimationFrame`.
+- **`AddEditEntry.modal.tsx` URL normalization on submit**: scheme autocomplete (`example.com` → `https://example.com`) ran only on field blur. Typing a URL and immediately pressing Enter/Save failed validation. Now applied in `handleSubmit` too.
+- **Aria-labels on emoji-only buttons**: `Vault.page.tsx` `Edit`, close `✕`, favorite `★`, and `Show`/`Hide`/`Copy` controls now expose accessible labels (favorite also has `aria-pressed`).
+- **`extension/src/background.js` dead `return true`**: the trailing `return true` after an already-responded path was misleading (suggested async response). Removed and replaced with a comment explaining all handlers are synchronous.
+- **`ConflictResolution.modal.tsx` deep equality**: previous code used `JSON.stringify(l) === JSON.stringify(r)` to detect identical entries. That misfires on property-order drift and tag reordering, surfacing false "conflict" rows. Replaced with field-level comparison that treats `tags` as an unordered set and ignores transient fields.
+
+### Fixed
+- **Test suite broken**: `tests/integration/vault-lifecycle.test.ts` used `afterEach` without importing it from `vitest`. Added to imports.
+- **Strength API mismatch in modals**: the previous "Fixed" entry below claimed the modals had been migrated to `analyzeStrength` / `effectiveEntropy`, but `AddEditEntry.modal.tsx`, `CreateVault.modal.tsx`, and `ChangePassword.modal.tsx` were still calling the old `analyzePassword` and reading `entropy`. Migrated for real.
+- **Health page missing from router**: `App.tsx` registered `vault`, `authenticator`, `generator`, `settings` in `PAGES` but not `health`. Added.
+- **`lockApplication` import leak in `App.tsx`**: imported but never referenced. Removed.
+- **`AppLifecycle.onLock` on initial mount**: the previous "Fixed" entry below claimed a `wasUnlocked` ref guard was in place; it wasn't. Added the ref so the lock teardown only runs after a real unlock happened.
+- **Biometric unlock still passed 3 args**: `Unlock.page.tsx` `handleBiometric` was calling `openVault(stored, "", keyMaterial)` even though `openVault` accepts only `(payload, password)`. Replaced the broken call with a clear "use master password" message (matches the previous "Fixed" claim).
+- **CSV export was a no-op**: `Vault.page.tsx` built the CSV string and then immediately discarded it before calling `IPCService.vault.export(filename)` (no payload). The function was also never wired to any UI control. Replaced with a portable `Blob` download and added an "Export" button to the vault toolbar.
+- **Import "overwrite" policy didn't overwrite**: `ImportVault.modal.tsx` had a comment claiming overwrites were handled in `vault.store`; in practice the modal fell through to `addEntry` regardless, producing duplicates. Now calls `updateEntry` on the existing entry id, with a dedupe key that ignores leading/trailing whitespace and title case.
+- **HIBP fetch had no timeout**: `breach.service.ts` could hang the Health-page "Scan for breaches" indefinitely on a stalled network. Added a 10-second `AbortController`.
+- **`EntryDetail` `showPw` leaked across entries**: selecting a different entry kept the same React instance, so a revealed password remained revealed on the next entry. Added `key={selectedEntry.id}` so the component re-mounts per entry.
+- **Extension autofill silently skipped username outside `<form>`**: `content.js` `fillInput` looked for the username field only inside the password input's closest form. Many SPA login pages don't use a form wrapper. Added a DOM-neighborhood fallback walking parent containers until `<body>`, filtering hidden/disabled inputs.
+- **`keytar` was in `devDependencies`**: it's a runtime dependency for the Electron build (OS keychain for session-key storage). Moved to `dependencies` in `package.json`.
+- **`ChangePassword.modal.tsx` retained plaintext after success**: cleared `current` / `newPw` / `confirmPw` state on success so the strings drop out of React state and the React DevTools tree.
+- **`ConfirmDelete.modal.tsx` foot-gun**: a trailing space in the typed title left the Delete button disabled with no hint why. Now trims both sides and shows a "title doesn't match (case-sensitive)" hint when the input is non-empty but doesn't match.
+
+---
+
+## [Previous Unreleased] — Black-screen fix + complete feature pack
+
+### Fixed (Crashes)
+- **Black screen on launch** — root cause was a cascading chain of broken imports that crashed React on startup before any UI could render.
+  - `session.store.ts` imported `wipeSessionKeys` and `SessionKeys` from `engine.ts` where they did not exist.
+  - `serializer.ts` imported eight non-existent functions (`encryptVault`, `decryptVault`, `deriveMasterKey`, `serializePayload`, `deserializePayload`, `wipeSessionKeys`, `EncryptedVaultPayload`, `SessionKeys`) from `engine.ts`.
+  - `engine.ts` imported `VaultPayload`, `VaultPayloadSchema`, and `createDefaultVaultData` from `vault.model.ts` where they did not exist.
+  - `zod` was referenced via `VaultPayloadSchema.parse()` but was not installed.
+- Created `src/core/vault/vault-types.ts` as the single source of truth for `SessionKeys`, `VaultPayload`, `VaultPayloadSchema`, `wipeSessionKeys`, and `createDefaultVaultData`. Both `engine.ts` and `serializer.ts` now import from here.
+- Rewrote `serializer.ts` as a proper adapter layer over the engine API. The raw engine API (`Uint8Array` keys, `VaultPayload` objects) is now only used internally; the public façade exposes `createVault`, `openVault`, `reEncryptVault`, `changeMasterPassword`.
+- Fixed wrong function names in modals: `analyzePassword` → `analyzeStrength`, `analyzePasswordStrength` → `analyzeStrength`.
+- Fixed wrong field references: `analysis.entropy` → `analysis.effectiveEntropy`, `strength.crackTime` → `strength.crackTimeDisplay`.
+- `lockApplication("system")` was an invalid `LockReason` — replaced with `"inactivity"`.
+- `App.tsx` called `AppLifecycle.onLock()` on initial mount before any unlock; the existing `wasUnlocked` ref guard is now respected.
+- Biometric unlock previously passed three arguments to `openVault` which only accepts two; biometric path now shows a clear "use master password" message until the keys-only decryption flow is properly wired.
+- Added all missing CSS utility classes (`sv-modal`, `sv-modal-backdrop`, `sv-input`, `sv-label`, `sv-error`, `sv-btn-primary`, `sv-btn-secondary`, `sv-btn-danger`, `sv-btn-ghost`, `sv-card`, `sv-tab`, `sv-progress`, `sv-progress-bar`, `sv-badge`, `sv-icon-btn`, `sv-divider`, `sv-modal-title`, `sv-modal-subtitle`, `sv-hint`) to `globals.css`.
+- `autosave.service.ts` now loads the existing vault payload before re-encryption so `vaultId`, `salt`, and `kdfParams` are preserved across saves (previously called `saveVault(vault, sessionKeys)` with two args; the engine requires three).
+- `ChangePassword.modal.tsx` now uses `changeMasterPassword()` which actually re-derives keys from the new password (previously called `saveVault` which kept the old keys, leaving the password unchanged).
+
+### Added — Crash Safety
+- **`ErrorBoundary` component** — replaces any future render error with a recoverable "Something went wrong" UI offering Try again / Reload, instead of a blank screen.
+- Wired into `main.tsx` so it covers the entire React tree.
+
+### Added — Productivity
+- **Keyboard shortcuts** — global hotkeys: `Ctrl/⌘+K` search, `+N` new entry, `+L` lock, `+G` generator, `+,` settings; `/` focus search; `?` shortcuts help; `Esc` clear/close.
+- **`useQuickCopy` hook** — one-click copy of password / TOTP / username from entry cards with toast confirmation and auto-clear.
+- **`useBulkSelection` hook** — multi-select state for batch operations on entries (delete-many, move-to-folder).
+- **`useDragReorder` hook** + CSS — HTML5 drag-and-drop reordering of entries; wired into the Vault page; auto-disabled while searching to keep search results stable.
+- **`reorderEntries` action** added to `vault.store`.
+- **`ShortcutsHelp` modal** — visible cheat-sheet of all shortcuts.
+
+### Added — Security
+- **Password Health dashboard** — new `/health` page showing weak / old / reused / missing / no-2FA / pwned password issues with a 0-100 health score and one-click "Fix" buttons that jump to edit the offending entry.
+- **HIBP breach detection** (`BreachService`) — k-anonymity check against Have I Been Pwned; only the first 5 hex chars of the SHA-1 hash leave the device. Per-session cache prevents redundant calls. Cleared on lock.
+- **Duress password** (`DuressService`) — second password that, when entered, silently wipes the local vault and creates an empty decoy. Hash stored in localStorage; constant-time comparison; trigger banner shown on next normal unlock.
+- **Per-entry version history** (`HistoryService`) — keeps the last 10 versions of each entry in volatile memory, restoreable via the entry detail panel; cleared on lock.
+
+### Added — Sharing & Backup
+- **QR code encoder** (`lib/qrcode.ts`) — zero-dependency Type 1-10 byte-mode encoder with ECC level M and Reed-Solomon error correction. ~280 lines, no network calls.
+- **`VaultBackupQRModal`** — exports the encrypted vault as a series of QR codes (chunked 240 bytes each, prefixed `SVQR:N/M:`); arrow keys / prev-next buttons to page through.
+- **Custom field templates** (`field-templates.ts`) — 8 pre-built templates: Credit Card, SSH Key, API Credentials, Wi-Fi, Passport, Bank Account, Software License, Crypto Wallet.
+- **Markdown notes** (`lib/markdown.ts`) — lightweight zero-dependency renderer with XSS-safe URL whitelist (`http(s):`, `mailto:`, `otpauth:`). Supports headings, bold, italic, code, code blocks, lists, links, blockquotes, hr.
+- **`ConflictResolutionModal`** — side-by-side diff UI for sync conflicts; shows local-only / remote-only / conflict / identical entries with counts; offers Merge (most recent updatedAt wins) / Keep local / Keep remote.
+
+### Added — Browser Extension
+- **MV3 manifest + background service worker + content script + popup** (`extension/`) — companion Chrome/Edge/Brave extension for autofill.
+  - `background.js` — in-memory entry cache, 5-min idle timeout, externally_connectable bridge to the main app.
+  - `content.js` — detects password inputs, overlays 🔐 trigger, on-demand autofill (no silent fill) with React-aware value setters.
+  - `popup/` — toolbar UI with status, entry list, lock/open buttons.
+  - Domain matching: exact + bidirectional subdomain.
+- **`ExtensionBridge` service** — sends a minimized snapshot of vault entries (id, title, url, username, password, totpSecret only) to the extension via `chrome.runtime.sendMessage`. User-initiated only.
+
+### Added — Settings UI
+- **`SecurityPanel` component** — Settings tab exposing duress enrollment, browser extension sync (with Extension ID input), auto-lock info, and acknowledgement banner for triggered duress events.
+- **QR Backup section** added to Settings.
+
+### Added — Testing & Tooling
+- **Playwright E2E config** (`playwright.config.ts`) + 2 spec files:
+  - `01-vault-lifecycle.spec.ts`: full create / unlock / add / lock / re-unlock / wrong-password flow with real WebCrypto.
+  - `02-keyboard-shortcuts.spec.ts`: verifies `Ctrl/⌘+K`, `+N`, `+L` actually trigger their actions in a real browser.
+- **Storybook scaffold** (`.storybook/`) + 2 sample stories:
+  - `ShortcutsHelp.stories.tsx`
+  - `ErrorBoundary.stories.tsx` (Healthy + Crashed scenarios)
+- **`package.json`** updated with new scripts (`test:e2e`, `test:e2e:ui`, `test:e2e:headed`, `storybook`, `build:storybook`) and devDependencies (Playwright, Storybook 8.x suite, `@types/chrome`).
+
+### Added — Documentation
+- `USER_GUIDE.md` — comprehensive Hebrew user guide covering install, daily use, every new feature, security model.
+- `TROUBLESHOOTING.md` — Hebrew troubleshooting guide for all common issues.
+- `CHANGELOG.md` — this file.
+- Inline JSDoc on every new module documenting purpose, threat model, and security considerations.
+
+---
+
+## Architecture notes
+
+- **Single source of truth for crypto types**: `vault-types.ts` is imported by `engine.ts` (the actual crypto layer) and `serializer.ts` (the app-facing façade). No more circular dependencies.
+- **Adapter layer pattern**: `serializer.ts` translates between `(Uint8Array, VaultPayload)` from the engine and `(SessionKeys, payloadJson string)` used by the rest of the app, so swapping the engine implementation later is trivial.
+- **Memory hygiene**: `BreachService._cache`, `HistoryService.versions`, and `ExtensionBridge` cache are all cleared on lock to maintain the zero-knowledge invariant.
+- **Defense in depth**: `ErrorBoundary` is the last line of defense; `DuressService` adds a layer beneath the unlock flow; `extension-bridge.service` minimizes data leaving the app to the bare minimum the extension needs.

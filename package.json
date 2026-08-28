@@ -1,0 +1,59 @@
+{
+  "name": "securevault",
+  "version": "2.0.0",
+  "description": "Zero-knowledge password manager & 2FA authenticator",
+  "main": "dist/electron/main.js",
+  "homepage": "https://github.com/securevault/securevault",
+  "private": true,
+  "scripts": {
+    "build": "tsc --noEmit && vite build --config config/vite.config.ts",
+    "build:electron": "tsc -p tsconfig.electron.json",
+    "dev": "vite --config config/vite.config.ts",
+    "electron:build": "npm run build && npm run build:electron",
+    "electron:dev": "concurrently -k \"npm:dev\" \"npm:electron:wait\"",
+    "electron:wait": "wait-on tcp:5173 && npm run build:electron && cross-env VITE_DEV_SERVER_URL=http://localhost:5173 electron .",
+    "lint": "eslint src --ext .ts,.tsx",
+    "preview": "vite preview --config config/vite.config.ts",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:e2e": "playwright test",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:ui": "playwright test --ui",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "hash-wasm": "^4.12.0",
+    "qrcode-generator": "^2.0.4",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "zustand": "^4.5.2"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.45.0",
+    "@types/chrome": "^0.0.268",
+    "@types/node": "^20.14.0",
+    "@types/qrcode-generator": "^0.0.16",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.3.1",
+    "@vitest/coverage-v8": "^1.6.0",
+    "autoprefixer": "^10.4.19",
+    "concurrently": "^8.2.2",
+    "cross-env": "^7.0.3",
+    "electron": "^31.0.0",
+    "eslint": "^9.5.0",
+    "jsdom": "^29.1.1",
+    "postcss": "^8.4.38",
+    "tailwindcss": "^3.4.4",
+    "typescript": "^5.5.2",
+    "vite": "^5.3.1",
+    "vitest": "^1.6.0",
+    "wait-on": "^7.2.0"
+  },
+  "browserslist": [
+    "last 2 Chrome versions",
+    "last 2 Firefox versions",
+    "last 2 Safari versions"
+  ]
+}
