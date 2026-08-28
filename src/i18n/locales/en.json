@@ -1,0 +1,47 @@
+{
+  "common": {
+    "loading": "Loading"
+  },
+  "app": {
+    "name": "SecureVault",
+    "tagline": "Zero-knowledge password manager",
+    "footer": "AES-256-GCM · Argon2id · HMAC-SHA256 · Zero-knowledge"
+  },
+  "unlock": {
+    "biometricButton": "Unlock with Biometrics",
+    "biometricPromptReason": "Unlock SecureVault",
+    "or": "or",
+    "passwordLabel": "Master Password",
+    "passwordPlaceholder": "Enter master password…",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
+    "errors": {
+      "emptyPassword": "Please enter your master password.",
+      "tooManyAttempts": "Too many attempts. Try again in {{countdown}}.",
+      "noVaultFound": "No vault found.",
+      "incorrectPasswordLocked": "Incorrect master password. Too many attempts — try again in {{countdown}}.",
+      "incorrectPassword": "Incorrect master password. Please try again.",
+      "vaultCorrupt": "Failed to unlock vault. The file may be corrupted.",
+      "biometricFailed": "Biometric authentication failed.",
+      "biometricNotSupported": "Biometric unlock not yet supported in this session. Please use your master password.",
+      "biometricError": "Biometric unlock failed. Use master password."
+    },
+    "progress": {
+      "deriving": "Deriving key…",
+      "decrypting": "Decrypting…",
+      "almostDone": "Almost done…"
+    },
+    "unlocking": "Unlocking…",
+    "locked": "Locked · {{countdown}}",
+    "submit": "Unlock Vault",
+    "firstRun": {
+      "heading": "No vault found",
+      "description": "Create your first SecureVault to get started. Your data stays encrypted on your device.",
+      "createButton": "Create New Vault"
+    }
+  },
+  "countdown": {
+    "seconds": "{{count}}s",
+    "minutesSeconds": "{{minutes}}m {{seconds}}s"
+  }
+}

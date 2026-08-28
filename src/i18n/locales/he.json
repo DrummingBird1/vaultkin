@@ -1,0 +1,47 @@
+{
+  "common": {
+    "loading": "טוען"
+  },
+  "app": {
+    "name": "SecureVault",
+    "tagline": "מנהל סיסמאות עם ידע אפס",
+    "footer": "AES-256-GCM · Argon2id · HMAC-SHA256 · ידע אפס"
+  },
+  "unlock": {
+    "biometricButton": "פתיחה באמצעות ביומטריה",
+    "biometricPromptReason": "פתח את SecureVault",
+    "or": "או",
+    "passwordLabel": "סיסמת ראשית",
+    "passwordPlaceholder": "הזן סיסמה ראשית…",
+    "showPassword": "הצג סיסמה",
+    "hidePassword": "הסתר סיסמה",
+    "errors": {
+      "emptyPassword": "יש להזין את הסיסמה הראשית.",
+      "tooManyAttempts": "יותר מדי ניסיונות. נסה שוב בעוד {{countdown}}.",
+      "noVaultFound": "לא נמצאה כספת.",
+      "incorrectPasswordLocked": "סיסמה ראשית שגויה. יותר מדי ניסיונות — נסה שוב בעוד {{countdown}}.",
+      "incorrectPassword": "סיסמה ראשית שגויה. נסה שוב.",
+      "vaultCorrupt": "פתיחת הכספת נכשלה. ייתכן שהקובץ פגום.",
+      "biometricFailed": "האימות הביומטרי נכשל.",
+      "biometricNotSupported": "פתיחה ביומטרית עדיין אינה נתמכת בסשן הזה. יש להשתמש בסיסמה הראשית.",
+      "biometricError": "פתיחה ביומטרית נכשלה. יש להשתמש בסיסמה הראשית."
+    },
+    "progress": {
+      "deriving": "מפיק מפתח…",
+      "decrypting": "מפענח…",
+      "almostDone": "כמעט סיימנו…"
+    },
+    "unlocking": "פותח…",
+    "locked": "נעול · {{countdown}}",
+    "submit": "פתח כספת",
+    "firstRun": {
+      "heading": "לא נמצאה כספת",
+      "description": "צור את הכספת הראשונה שלך כדי להתחיל. הנתונים שלך נשארים מוצפנים במכשיר שלך.",
+      "createButton": "צור כספת חדשה"
+    }
+  },
+  "countdown": {
+    "seconds": "{{count}} שנ'",
+    "minutesSeconds": "{{minutes}} דק' {{seconds}} שנ'"
+  }
+}

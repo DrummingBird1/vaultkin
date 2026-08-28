@@ -4,8 +4,7 @@
  */
 
 export type CategoryType =
-  | "websites" | "apps" | "finance" | "gaming"
-  | "servers"  | "identity" | "email" | "custom";
+  "websites" | "apps" | "finance" | "gaming" | "servers" | "identity" | "email" | "custom";
 
 export type EntryType = "login" | "note" | "card" | "totp" | "identity";
 
@@ -52,9 +51,14 @@ export interface VaultFolder {
 export interface VaultSettings {
   autoLockMs: number;
   defaultCategory: CategoryType;
-  theme: "dark" | "light";
+  theme: "dark" | "light" | "high-contrast";
   accentColor: string;
-  viewMode: "grid" | "list";
+  viewMode: "grid" | "list" | "service";
+  /** Lock immediately when the tab/window is hidden (document.hidden), not
+   *  just after the auto-lock idle timeout. Opt-in, off by default — the
+   *  idle timer already covers most of this, and instant lock-on-blur would
+   *  surprise users who just alt-tab briefly. */
+  lockOnHide?: boolean;
 }
 
 export interface VaultMeta {

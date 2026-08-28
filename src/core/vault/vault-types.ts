@@ -10,9 +10,9 @@ import type { VaultData } from "./schema";
 /** KDF descriptor — non-secret parameters needed to re-derive the key. */
 export interface KdfParams {
   name: "PBKDF2-SHA256" | "Argon2id";
-  iterations: number;     // PBKDF2 iterations OR Argon2 time cost (t)
-  memoryKiB?: number;     // Argon2 only
-  parallelism?: number;   // Argon2 only
+  iterations: number; // PBKDF2 iterations OR Argon2 time cost (t)
+  memoryKiB?: number; // Argon2 only
+  parallelism?: number; // Argon2 only
 }
 
 export interface SessionKeys {
@@ -33,10 +33,10 @@ export interface SessionKeys {
 export interface VaultPayload {
   version: 1;
   kdf: KdfParams;
-  salt: string;             // base64
-  iv: string;               // base64 — 12 bytes for AES-GCM
-  data: string;             // base64 ciphertext
-  mac: string;              // base64 HMAC-SHA256 over (kdf params || iv || data)
+  salt: string; // base64
+  iv: string; // base64 — 12 bytes for AES-GCM
+  data: string; // base64 ciphertext
+  mac: string; // base64 HMAC-SHA256 over (kdf params || iv || data)
   createdAt: string;
   updatedAt: string;
 }
@@ -59,6 +59,7 @@ export function createDefaultVaultData(): Omit<VaultData, "schemaVersion"> {
       theme: "dark",
       accentColor: "#6366F1",
       viewMode: "grid",
+      lockOnHide: false,
     },
     meta: {
       createdAt: now,
