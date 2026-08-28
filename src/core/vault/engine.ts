@@ -13,6 +13,7 @@
 import { argon2id } from "hash-wasm";
 import { utf8, bytesToBase64, base64ToBytes, constantTimeEqual } from "../crypto/encoding";
 import type { SessionKeys, VaultPayload, KdfParams } from "./vault-types";
+import { WrongPasswordError } from "../errors";
 
 const SALT_BYTES = 16;
 const IV_BYTES   = 12;
@@ -129,7 +130,11 @@ export async function decryptVault(payload: VaultPayload, keys: SessionKeys): Pr
     await crypto.subtle.sign("HMAC", keys.macKey, macInput(payload.kdf, payload.salt, payload.iv, payload.data)),
   );
   if (!constantTimeEqual(givenMac, computedMac)) {
-    throw new Error("Vault integrity check failed (wrong master password or tampered file)");
+    // By design we can't distinguish "wrong password" from "tampered file" —
+    // both fail the same MAC check. Message stays generic; callers that want
+    // to special-case corruption vs. wrong-password use VaultCorruptError at
+    // the JSON-parse layer in serializer.ts instead.
+    throw new WrongPasswordError("Vault integrity check failed (wrong master password or tampered file)");
   }
 
   try {
@@ -138,7 +143,7 @@ export async function decryptVault(payload: VaultPayload, keys: SessionKeys): Pr
     );
     return new TextDecoder().decode(plain);
   } catch {
-    throw new Error("Failed to decrypt vault (wrong master password or corrupt data)");
+    throw new WrongPasswordError("Failed to decrypt vault (wrong master password or corrupt data)");
   }
 }
 

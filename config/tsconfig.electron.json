@@ -8,11 +8,11 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "resolveJsonModule": true,
-    "outDir": "dist/electron",
-    "rootDir": "src/electron",
+    "outDir": "../dist/electron",
+    "rootDir": "../src/electron",
     "sourceMap": true,
     "types": ["node", "electron"]
   },
-  "include": ["src/electron"],
-  "exclude": ["node_modules", "dist", "release"]
+  "include": ["../src/electron"],
+  "exclude": ["../node_modules", "../dist", "../release"]
 }

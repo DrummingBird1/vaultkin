@@ -5,11 +5,13 @@
  * against a Vite dev server. No mocks; uses the actual WebCrypto stack.
  */
 import { defineConfig, devices } from "@playwright/test";
+import path from "path";
 
 const BASE_URL = process.env.BASE_URL ?? "http://localhost:5173";
+const root = path.resolve(__dirname, "..");
 
 export default defineConfig({
-  testDir: "./e2e",
+  testDir: path.resolve(root, "e2e"),
   timeout: 60_000,        // crypto ops can be slow; allow 60s per test
   expect: { timeout: 5_000 },
   fullyParallel: false,   // tests share IndexedDB; serialize for safety
@@ -24,11 +26,12 @@ export default defineConfig({
   },
   projects: [
     { name: "chromium", use: { ...devices["Desktop Chrome"] } },
-    // { name: "firefox",  use: { ...devices["Desktop Firefox"] } },
-    // { name: "webkit",   use: { ...devices["Desktop Safari"] } },
+    { name: "firefox",  use: { ...devices["Desktop Firefox"] } },
+    { name: "webkit",   use: { ...devices["Desktop Safari"] } },
   ],
   webServer: process.env.CI ? undefined : {
-    command: "npm run dev",
+    command: "pnpm run dev",
+    cwd: root,
     url: BASE_URL,
     reuseExistingServer: true,
     timeout: 60_000,

@@ -1,5 +1,5 @@
 /**
- * @file vitest.config.ts
+ * @file config/vitest.config.ts
  * @description Vitest configuration for unit + integration tests.
  *
  * Environment: jsdom (simulates browser APIs for Web Crypto, DOM, etc.)
@@ -11,18 +11,19 @@ import react from "@vitejs/plugin-react";
 import path from "path";
 
 export default defineConfig({
+  root: path.resolve(__dirname, ".."),
   plugins: [react()],
 
   test: {
     globals:     true,
     environment: "jsdom",
-    setupFiles:  ["./tests/setup.ts"],
+    setupFiles:  [path.resolve(__dirname, "../tests/setup.ts")],
 
     // Coverage
     coverage: {
       provider:   "v8",
       reporter:   ["text", "html", "lcov", "json-summary"],
-      reportsDirectory: "./coverage",
+      reportsDirectory: path.resolve(__dirname, "../coverage"),
       include:    ["src/**/*.{ts,tsx}"],
       exclude:    [
         "src/**/*.stories.*",
@@ -49,17 +50,17 @@ export default defineConfig({
 
     // Reporter
     reporter: process.env.CI ? ["verbose", "junit"] : ["verbose"],
-    outputFile: process.env.CI ? "./test-results/junit.xml" : undefined,
+    outputFile: process.env.CI ? path.resolve(__dirname, "../test-results/junit.xml") : undefined,
   },
 
   resolve: {
     alias: {
-      "@core":       path.resolve(__dirname, "src/core"),
-      "@services":   path.resolve(__dirname, "src/services"),
-      "@store":      path.resolve(__dirname, "src/store"),
-      "@components": path.resolve(__dirname, "src/components"),
-      "@hooks":      path.resolve(__dirname, "src/hooks"),
-      "@pages":      path.resolve(__dirname, "src/pages"),
+      "@core":       path.resolve(__dirname, "../src/core"),
+      "@services":   path.resolve(__dirname, "../src/services"),
+      "@store":      path.resolve(__dirname, "../src/store"),
+      "@components": path.resolve(__dirname, "../src/components"),
+      "@hooks":      path.resolve(__dirname, "../src/hooks"),
+      "@pages":      path.resolve(__dirname, "../src/pages"),
     },
   },
 });

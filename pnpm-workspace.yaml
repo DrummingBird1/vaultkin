@@ -1,0 +1,24 @@
+# pnpm-only config that used to live under package.json's "pnpm" key —
+# pnpm 10+ moved these settings here (see https://pnpm.io/settings).
+#
+# allowBuilds: explicit allowlist of packages permitted to run
+# install/postinstall scripts. pnpm blocks all lifecycle scripts by default
+# (supply-chain hardening) unless a package is listed here. electron-winstaller
+# is a legitimate need — electron-builder's Windows NSIS/Squirrel packaging
+# path depends on it. esbuild's postinstall just selects/downloads its own
+# platform-specific binary — no network fetch of arbitrary code, same trust
+# level as any other native-binary devDependency here (electron itself, etc).
+allowBuilds:
+  electron-winstaller: true
+  esbuild: true
+
+# This isn't a real multi-package pnpm workspace — the file only exists for
+# allowBuilds above. But its mere presence makes pnpm-aware tooling (notably
+# Changesets — see .changeset/) treat the repo as a workspace ROOT and look
+# for a `packages:` glob to know what's versionable, finding none, and
+# reporting "No versionable packages found" instead of falling back to
+# "the root package.json is the package" the way it would with no
+# pnpm-workspace.yaml at all. Declaring the root itself as the sole package
+# fixes that without turning this into an actual monorepo.
+packages:
+  - "."

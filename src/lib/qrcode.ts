@@ -223,7 +223,7 @@ export function encodeQR(text: string): boolean[][] {
   // Terminator (up to 4 zero bits)
   buf.put(0, Math.min(4, totalDataCodewords * 8 - buf.length));
 
-  let dataBytes = buf.toBytes();
+  const dataBytes = buf.toBytes();
   // Pad with 0xEC, 0x11 alternating
   const PAD = [0xec, 0x11];
   let padIdx = 0;
