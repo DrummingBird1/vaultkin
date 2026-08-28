@@ -1,0 +1,122 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  width: 320px;
+  min-height: 200px;
+  margin: 0;
+  background: #0d0d12;
+  color: #f2f2f5;
+  font:
+    13px/1.4 -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+}
+
+.sv-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-bottom: 1px solid #26262f;
+}
+.sv-title {
+  font-weight: 600;
+  font-size: 14px;
+}
+.sv-icon-btn {
+  border: none;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font-size: 15px;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+.sv-icon-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.sv-locked {
+  padding: 24px 16px;
+  text-align: center;
+}
+
+.sv-hint {
+  color: #9a9aa8;
+  font-size: 11.5px;
+  padding: 0 16px;
+}
+
+.sv-search {
+  display: block;
+  width: calc(100% - 24px);
+  margin: 10px 12px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: 1px solid #26262f;
+  background: #17171f;
+  color: inherit;
+  font: inherit;
+}
+.sv-search:focus {
+  outline: none;
+  border-color: #6366f1;
+}
+
+.sv-entry-list {
+  list-style: none;
+  margin: 0;
+  padding: 0 6px 10px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.sv-entry {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 6px;
+}
+.sv-entry:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.sv-entry-info {
+  min-width: 0;
+}
+.sv-entry-title {
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sv-entry-user {
+  color: #9a9aa8;
+  font-size: 11.5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sv-entry-actions {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.sv-entry-actions button {
+  border: none;
+  background: #1c1c26;
+  color: inherit;
+  border-radius: 5px;
+  padding: 4px 7px;
+  cursor: pointer;
+  font-size: 12px;
+}
+.sv-entry-actions button:hover {
+  background: #26262f;
+}

@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self';" />
+  <title>SecureVault</title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <header class="sv-header">
+    <span class="sv-title">SecureVault</span>
+    <button id="lockBtn" class="sv-icon-btn" title="Lock" type="button">🔒</button>
+  </header>
+
+  <div id="lockedView" class="sv-locked" hidden>
+    <p>SecureVault is locked.</p>
+    <p class="sv-hint">Open the app and click "Send entries to extension" after unlocking.</p>
+  </div>
+
+  <div id="unlockedView" hidden>
+    <input id="searchInput" class="sv-search" type="text" placeholder="Search…" autocomplete="off" />
+    <ul id="entryList" class="sv-entry-list"></ul>
+    <p id="emptyState" class="sv-hint" hidden>No matching entries.</p>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

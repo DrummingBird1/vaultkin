@@ -26,7 +26,7 @@
     btn.textContent = "🔐";
     wrapper.appendChild(btn);
 
-    btn.addEventListener("click", e => {
+    btn.addEventListener("click", (e) => {
       e.preventDefault();
       e.stopPropagation();
       handleTriggerClick(input, btn);
@@ -89,11 +89,16 @@
   // www.), require the user to confirm. This protects against opening a phish
   // tab that visually looks like github.com but is hosted at github.com.evil.io.
   function normalizeHost(h) {
-    return String(h || "").toLowerCase().replace(/^www\./, "");
+    return String(h || "")
+      .toLowerCase()
+      .replace(/^www\./, "");
   }
   function urlHost(u) {
-    try { return normalizeHost(new URL(u).hostname); }
-    catch { return ""; }
+    try {
+      return normalizeHost(new URL(u).hostname);
+    } catch {
+      return "";
+    }
   }
   function isExactDomainMatch(entry) {
     if (!entry?.url) return false;
@@ -102,14 +107,14 @@
 
   function fillInput(passwordInput, entry) {
     if (!isExactDomainMatch(entry)) {
-      const pageHost  = normalizeHost(window.location.hostname);
+      const pageHost = normalizeHost(window.location.hostname);
       const entryHost = urlHost(entry.url) || "(no URL set)";
       const proceed = window.confirm(
         "⚠ SecureVault — Possible phishing\n\n" +
-        `You're on: ${pageHost}\n` +
-        `Entry was saved for: ${entryHost}\n\n` +
-        "Domains don't match. This may be a phishing page.\n\n" +
-        "Fill anyway?"
+          `You're on: ${pageHost}\n` +
+          `Entry was saved for: ${entryHost}\n\n` +
+          "Domains don't match. This may be a phishing page.\n\n" +
+          "Fill anyway?",
       );
       if (!proceed) return;
     }
@@ -122,38 +127,41 @@
     const proto = Object.getPrototypeOf(el);
     const setter = Object.getOwnPropertyDescriptor(proto, "value")?.set;
     setter?.call(el, value);
-    el.dispatchEvent(new Event("input",  { bubbles: true }));
+    el.dispatchEvent(new Event("input", { bubbles: true }));
     el.dispatchEvent(new Event("change", { bubbles: true }));
   }
 
   function showTooltip(anchor, message) {
-    document.querySelectorAll(".sv-tooltip").forEach(t => t.remove());
+    document.querySelectorAll(".sv-tooltip").forEach((t) => t.remove());
     const tip = document.createElement("div");
     tip.className = "sv-tooltip";
     tip.textContent = message;
     document.body.appendChild(tip);
     const rect = anchor.getBoundingClientRect();
-    tip.style.top  = (rect.bottom + window.scrollY + 4) + "px";
-    tip.style.left = (rect.left   + window.scrollX) + "px";
+    tip.style.top = rect.bottom + window.scrollY + 4 + "px";
+    tip.style.left = rect.left + window.scrollX + "px";
     setTimeout(() => tip.remove(), 2500);
   }
 
   function showPicker(anchor, input, matches) {
-    document.querySelectorAll(".sv-picker").forEach(el => el.remove());
+    document.querySelectorAll(".sv-picker").forEach((el) => el.remove());
     const picker = document.createElement("div");
     picker.className = "sv-picker";
-    matches.forEach(m => {
+    matches.forEach((m) => {
       const item = document.createElement("button");
       item.type = "button";
       item.className = "sv-picker-item";
       item.innerHTML = `<strong>${esc(m.title)}</strong><br><span>${esc(m.username || "")}</span>`;
-      item.addEventListener("click", () => { fillInput(input, m); picker.remove(); });
+      item.addEventListener("click", () => {
+        fillInput(input, m);
+        picker.remove();
+      });
       picker.appendChild(item);
     });
     document.body.appendChild(picker);
     const rect = anchor.getBoundingClientRect();
-    picker.style.top  = (rect.bottom + window.scrollY + 4) + "px";
-    picker.style.left = (rect.left   + window.scrollX) + "px";
+    picker.style.top = rect.bottom + window.scrollY + 4 + "px";
+    picker.style.left = rect.left + window.scrollX + "px";
     setTimeout(() => {
       document.addEventListener("click", function close(e) {
         if (!picker.contains(e.target)) {
@@ -166,8 +174,11 @@
 
   function esc(s) {
     return String(s ?? "")
-      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
   }
 
   function scan() {
@@ -188,5 +199,24 @@
   }
 
   scan();
-  new MutationObserver(queueScan).observe(document.documentElement, { childList: true, subtree: true });
+  new MutationObserver(queueScan).observe(document.documentElement, {
+    childList: true,
+    subtree: true,
+  });
+
+  // Fill requested from the popup (as opposed to the inline 🔐 trigger
+  // above) — same fillInput() path, so it gets the same exact-domain-match
+  // phishing confirmation. Falls back to the first password field on the
+  // page since the popup doesn't know which input the user meant.
+  chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
+    if (msg?.type === "SV_FILL_ENTRY") {
+      const passwordInput = document.querySelector('input[type="password"]');
+      if (!passwordInput) {
+        sendResponse({ ok: false, error: "No password field on this page." });
+        return;
+      }
+      fillInput(passwordInput, msg.entry);
+      sendResponse({ ok: true });
+    }
+  });
 })();
