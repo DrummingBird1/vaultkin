@@ -6,19 +6,15 @@ description: >
   previously copy-pasted verbatim into every job in ci.yml.
 inputs:
   node-version:
-    description: Node.js version
+    description: Node.js version (pnpm 11, pinned in package.json, needs Node 22)
     required: false
-    default: '20'
-  pnpm-version:
-    description: pnpm version
-    required: false
-    default: '9'
+    default: '22'
 runs:
   using: composite
   steps:
+    # No version here: it comes from package.json's packageManager field.
+    # Passing one too fails with "Multiple versions of pnpm specified".
     - uses: pnpm/action-setup@v4
-      with:
-        version: ${{ inputs.pnpm-version }}
     - uses: actions/setup-node@v4
       with:
         node-version: ${{ inputs.node-version }}
