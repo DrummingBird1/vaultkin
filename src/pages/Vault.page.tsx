@@ -313,7 +313,7 @@ export function VaultPage() {
             </button>
             <button
               onClick={handleAdd}
-              className="flex items-center gap-1.5 text-sm font-medium px-4 py-2 rounded-xl bg-[var(--accent)] text-white hover:opacity-90 transition-opacity"
+              className="flex items-center gap-1.5 text-sm font-medium px-4 py-2 rounded-xl bg-[var(--accent-solid)] text-white hover:opacity-90 transition-opacity"
             >
               + Add Entry
             </button>
@@ -337,7 +337,7 @@ export function VaultPage() {
                 {vault?.entries.length === 0 && (
                   <button
                     onClick={handleAdd}
-                    className="text-sm font-medium px-5 py-2.5 rounded-xl bg-[var(--accent)] text-white hover:opacity-90 transition-opacity"
+                    className="text-sm font-medium px-5 py-2.5 rounded-xl bg-[var(--accent-solid)] text-white hover:opacity-90 transition-opacity"
                   >
                     + Add Entry
                   </button>

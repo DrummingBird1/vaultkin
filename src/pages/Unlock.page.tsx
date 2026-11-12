@@ -329,7 +329,7 @@ export function UnlockPage() {
                   <button
                     type="submit"
                     disabled={isLoading || !password || lockStatus.locked}
-                    className="w-full bg-[var(--accent)] text-white font-semibold py-3 rounded-xl hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    className="w-full bg-[var(--accent-solid)] text-white font-semibold py-3 rounded-xl hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
                     {isLoading ? (
                       <>
@@ -368,9 +368,9 @@ export function UnlockPage() {
                 <IconConstruction className="w-10 h-10" />
               </div>
               <div>
-                <h3 className="font-semibold text-[var(--text-primary)] mb-1">
+                <h2 className="font-semibold text-[var(--text-primary)] mb-1">
                   {t("unlock.firstRun.heading")}
-                </h3>
+                </h2>
                 <p className="text-sm text-[var(--text-tertiary)] leading-relaxed">
                   {t("unlock.firstRun.description")}
                 </p>
@@ -378,7 +378,7 @@ export function UnlockPage() {
               <button
                 type="button"
                 onClick={() => setShowCreate(true)}
-                className="w-full bg-[var(--accent)] text-white font-semibold py-3 rounded-xl hover:opacity-90 transition-opacity"
+                className="w-full bg-[var(--accent-solid)] text-white font-semibold py-3 rounded-xl hover:opacity-90 transition-opacity"
               >
                 {t("unlock.firstRun.createButton")}
               </button>

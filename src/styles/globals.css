@@ -11,13 +11,14 @@
 
   --text-primary: #f4f4f6;
   --text-secondary: #b5b5be;
-  --text-tertiary: #6e6e78;
+  --text-tertiary: #8c8c96; /* 4.5:1 on every dark surface (was #6e6e78, 3.35) */
 
   --border-subtle: #1f1f28;
   --border-default: #2a2a36;
   --border-strong: #3a3a48;
 
   --accent: #6366f1;
+  --accent-solid: #6063f0; /* set at runtime from the chosen accent, see src/lib/contrast.ts */
   --accent-rgb: 99, 102, 241;
   --accent-dim: rgba(99, 102, 241, 0.12);
 
@@ -37,13 +38,14 @@
 
   --text-primary: #15151b;
   --text-secondary: #45454e;
-  --text-tertiary: #888892;
+  --text-tertiary: #676771; /* 4.5:1 on every light surface (was #888892, 3.51) */
 
   --border-subtle: #ededf1;
   --border-default: #dddde3;
   --border-strong: #bfbfc8;
 
   --accent: #6366f1;
+  --accent-solid: #6063f0; /* set at runtime from the chosen accent, see src/lib/contrast.ts */
   --accent-rgb: 99, 102, 241;
   --accent-dim: rgba(99, 102, 241, 0.1);
 
@@ -161,7 +163,7 @@ body {
 
   .sv-btn-primary {
     @apply px-4 py-2 rounded-xl text-sm font-medium transition-opacity;
-    background: var(--accent);
+    background: var(--accent-solid, var(--accent));
     color: white;
   }
   .sv-btn-primary:hover:not(:disabled) {

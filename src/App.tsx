@@ -11,6 +11,7 @@ import { AppShell } from "./components/layout/AppShell";
 import { UnlockPage } from "./pages/Unlock.page";
 import { VaultPage } from "./pages/Vault.page";
 
+import { solidAccent } from "./lib/contrast";
 // Route-based code splitting: Vault/Unlock stay eager (the pages basically
 // everyone hits every session), the rest lazy-load on first visit. Shaves
 // real weight off the initial bundle for a page most sessions never open.
@@ -57,6 +58,8 @@ export function App() {
     document.documentElement.setAttribute("data-theme", theme);
     const hex = accentColor.hex;
     document.documentElement.style.setProperty("--accent", hex);
+    // Filled buttons put white text on the accent; keep that at 4.5:1 for any chosen color.
+    document.documentElement.style.setProperty("--accent-solid", solidAccent(hex));
     const rgb = hex
       .replace("#", "")
       .match(/.{2}/g)!
