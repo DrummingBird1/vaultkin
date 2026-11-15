@@ -3,7 +3,6 @@
 This file gives AI coding agents (Codex, Claude Code, Copilot, Cursor, Gemini and others) essential context for working in this repo. Keep it short and durable; link out to canonical docs instead of duplicating them.
 
 <!-- BEGIN core-rules v1 (generated from the shared core-rules.md; do not edit by hand) -->
-
 ## Core rules (apply to every agent)
 
 - Read this file first. If `HANDOFF.local.md` exists next to it, read it too (local only, not in git).
@@ -14,7 +13,6 @@ This file gives AI coding agents (Codex, Claude Code, Copilot, Cursor, Gemini an
 - Do not delete or overwrite user data. Move it to an archive folder or ask first, and do a dry run before bulk changes.
 - Make the smallest change that solves the task. Run this project's own check and test commands (see Run and Test in this file) and say what you ran and what you could not verify.
 - If you have no access to the repository (a chat-only agent), return a unified diff or complete files, and list what the owner should verify.
-
 <!-- END core-rules -->
 
 ## What this is
