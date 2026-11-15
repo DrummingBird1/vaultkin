@@ -1,6 +1,6 @@
 # AGENTS.md
 
-This file gives Codex essential context for working in this repo. Keep it short and durable; link out to canonical docs instead of duplicating them.
+This file gives AI coding agents (Codex, Claude Code, Copilot, Cursor, Gemini and others) essential context for working in this repo. Keep it short and durable; link out to canonical docs instead of duplicating them.
 
 <!-- BEGIN core-rules v1 (generated from the shared core-rules.md; do not edit by hand) -->
 
@@ -92,8 +92,9 @@ Load-bearing for the zero-knowledge model. Breaking them is a security regressio
 - Icons are inline SVG components in [src/components/icons.tsx](src/components/icons.tsx) — prefer these over emoji (emoji renders differently per OS). Long-term plan: `lucide-react`.
 - Typed errors (`src/core/errors.ts`: `WrongPasswordError`, `VaultCorruptError`, `DuressTriggeredError`) are caught with `instanceof`, never by matching `err.message` substrings.
 
-## Testing
+## Testing (Run and Test)
 
+- Commands (script names taken from `package.json`; not executed in the 2026-11-15 normalization, so not verified / לא אומת): `pnpm test` (Vitest), `pnpm test:coverage`, `pnpm test:e2e` (Playwright), `pnpm lint`, `pnpm typecheck`, `pnpm format:check`.
 - **Vitest** (`config/vitest.config.ts`) with jsdom; polyfills in [tests/setup.ts](tests/setup.ts).
 - Unit tests are co-located next to the source they cover (`src/core/**/*.test.ts`, `src/store/**/*.test.ts`); `*.property.test.ts` / `*.fuzz.test.ts` use `fast-check` (password generator, vault serializer's malformed-payload handling).
 - Integration tests in [tests/integration/](tests/integration/) exercise real WebCrypto end-to-end (no crypto mocks anywhere in this repo).
