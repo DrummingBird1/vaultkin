@@ -121,4 +121,4 @@ No accounts, no telemetry, no servers of our own. See [PRIVACY.md](PRIVACY.md) f
 
 ## License
 
-MIT
+GPL-3.0-only. See [LICENSE](LICENSE).

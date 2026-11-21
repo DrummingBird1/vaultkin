@@ -46,30 +46,31 @@ then run `release/win-unpacked/Vaultkin.exe` and check:
   carry the host); `lipo`, `codesign` and running it are checked by the
   macOS CI job, which has not run yet. Signed with hardened runtime, the host
   needs the JIT entitlements Electron's default entitlements already grant.
-- **Code signing.** There are no certificates yet, so Windows SmartScreen and
-  macOS Gatekeeper will warn:
-  - Windows: Authenticode or Azure Trusted Signing (`CSC_LINK` /
-    `CSC_KEY_PASSWORD` or the Trusted Signing action). Sign
-    `resources/bridge-host/vaultkin-bridge-host.exe` too: it's a Node binary
-    with the host injected, so Node's original signature is no longer valid.
-  - macOS: Developer ID and notarization (`APPLE_ID`,
-    `APPLE_APP_SPECIFIC_PASSWORD`, `APPLE_TEAM_ID`).
-- **`publish` target.** `electron-builder.ts` points at
-  `github.com/vaultkin/vaultkin`, a placeholder. Set the real
-  owner/repo.
-- **CI has never run on GitHub.** It's blocked by account billing. The
-  release workflow changes are validated as YAML only.
+- **Code signing.** Decided: Windows first, with Azure Trusted Signing;
+  macOS waits until there is demand (Apple Developer, $99/year), so
+  Gatekeeper warns until then. Owner steps for Windows:
+  1. Create an Azure Trusted Signing account and certificate profile
+     (identity validation takes a few days).
+  2. Add the repo secrets `AZURE_TENANT_ID`, `AZURE_CLIENT_ID`,
+     `AZURE_CLIENT_SECRET`, and set `win.azureSignOptions` (endpoint,
+     account, profile) in `electron-builder.ts`.
+  3. Sign `resources/bridge-host/vaultkin-bridge-host.exe` too: it's a Node
+     binary with the host injected, so Node's original signature is no
+     longer valid.
+- **CI has never run on GitHub.** Decided: the repo goes public at
+  `github.com/DrummingBird1/vaultkin` (`publish` already points there),
+  where Actions minutes are free, macOS included. Not pushed yet.
 - **Browser tests run only in Chromium locally.** Install the others with
   `pnpm exec playwright install firefox webkit`, then run the full matrix once.
 - **External security audit** before 1.0 (see `docs/THREAT_MODEL.md`).
 
 ## Decisions only the owner can make
 
-- **License.** README says MIT, but there is no `LICENSE` file. The plan
-  recommended GPL-3.0 or AGPL-3.0 for an open-source password manager.
+- **License.** Decided: GPL-3.0-only (`LICENSE`).
 - **Name and brand.** Check that "Vaultkin" can be used: trademarks, store
-  listings, domain. Then decide on the final logo (the current lock icon is
-  generic) and on store screenshots.
+  listings, domain. The logo is `assets/logo.svg` (a vault door with a V);
+  `node scripts/generate-icons.cjs` renders every PNG from it. Store
+  screenshots are still to do.
 - **Public repository.** Make the repo public, enable Private Vulnerability
   Reporting (SECURITY.md), and set up the Web Store, Edge Add-ons and AMO
   developer accounts.

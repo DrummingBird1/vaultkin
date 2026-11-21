@@ -133,7 +133,7 @@ const config: Configuration = {
   // header comment for why auto-polling is deliberately not wired in).
   publish: {
     provider: "github",
-    owner: "vaultkin",
+    owner: "DrummingBird1",
     repo: "vaultkin",
   },
 };

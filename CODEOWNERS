@@ -1,6 +1,6 @@
 # CODEOWNERS
 #
-# Placeholder — @vaultkin/maintainers is not a real GitHub team yet. Same
+# Placeholder — @DrummingBird1 is not a real GitHub team yet. Same
 # situation as extension/manifest.json's your-securevault-host.com placeholder
 # (see CLAUDE.md's known gotchas): this file works as documentation of intent
 # now, and starts actually requesting reviews the moment the handles below
@@ -9,23 +9,23 @@
 # GitHub reads the LAST matching pattern, so more specific rules further down
 # override earlier general ones.
 
-* @vaultkin/maintainers
+* @DrummingBird1
 
 # Crypto core — changes here are load-bearing for the zero-knowledge model
 # (see CLAUDE.md's "Architectural invariants"). Route through someone who
 # owns the security review, not just general code review.
-/src/core/vault/       @vaultkin/security-reviewers
-/src/core/totp/        @vaultkin/security-reviewers
-/src/core/password/    @vaultkin/security-reviewers
-/docs/README.security.md @vaultkin/security-reviewers
+/src/core/vault/       @DrummingBird1
+/src/core/totp/        @DrummingBird1
+/src/core/password/    @DrummingBird1
+/docs/README.security.md @DrummingBird1
 
 # Electron main process / preload — sandbox + IPC surface.
-/src/electron/          @vaultkin/security-reviewers
-/electron-builder.ts    @vaultkin/security-reviewers
+/src/electron/          @DrummingBird1
+/electron-builder.ts    @DrummingBird1
 
 # Browser extension — separate trust boundary (message-passing to web pages).
-/extension/              @vaultkin/security-reviewers
+/extension/              @DrummingBird1
 
 # CI/CD and release pipeline.
-/.github/workflows/     @vaultkin/maintainers
-/.github/actions/       @vaultkin/maintainers
+/.github/workflows/     @DrummingBird1
+/.github/actions/       @DrummingBird1
