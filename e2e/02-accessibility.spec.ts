@@ -10,7 +10,17 @@ const MASTER = "correct-horse-battery-staple-77!";
 
 async function audit(page: Page, label: string) {
   // Let entry animations finish so contrast is measured on final colors.
-  await page.waitForTimeout(400);
+  // A fixed delay was not enough on slow CI WebKit (axe caught a dialog
+  // mid-fade), so wait for every running animation to actually end.
+  await page.waitForTimeout(100);
+  await page.evaluate(() =>
+    Promise.all(
+      document
+        .getAnimations()
+        .filter((a) => a.effect?.getTiming().iterations !== Infinity)
+        .map((a) => a.finished.catch(() => {})),
+    ),
+  );
   const results = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"])
     .analyze();

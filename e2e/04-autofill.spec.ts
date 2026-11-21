@@ -13,6 +13,11 @@ import { execSync } from "child_process";
 const CONTENT = path.resolve(__dirname, "..", "dist", "extension", "src", "content.js");
 const SITE = "https://github.com";
 
+// The overlay is reached through the DevTools protocol (closed shadow root),
+// which only Chromium exposes; the extension itself is a Chromium/Firefox MV3
+// build, so the WebKit/Firefox page projects have nothing extra to cover here.
+test.skip(({ browserName }) => browserName !== "chromium", "needs the Chromium DevTools protocol");
+
 test.beforeAll(() => {
   if (!fs.existsSync(CONTENT))
     execSync("node scripts/build-extension.mjs", { cwd: path.resolve(__dirname, "..") });
