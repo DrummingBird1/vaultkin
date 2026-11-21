@@ -21,6 +21,7 @@ import { generatePassword } from "../../core/password/generator";
 import { analyzeStrength } from "../../core/password/strength";
 import { validateBase32Secret } from "../../core/totp/base32";
 import { TagInput } from "../vault/TagInput";
+import { Modal } from "../ui/Modal";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -357,291 +358,275 @@ export function AddEditEntryModal({ entry, folderId, onClose }: Props) {
     ],
   );
 
-  // ── Keyboard close ─────────────────────────────────────────────────────────
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
-  }, [onClose]);
-
   // ─────────────────────────────────────────────────────────────────────────
 
   return (
-    <div className="sv-modal-backdrop" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div
-        className="sv-modal"
-        role="dialog"
-        aria-modal="true"
-        aria-label={isEdit ? "Edit entry" : "Add entry"}
-      >
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-lg font-semibold text-(--text-primary)">
-            {isEdit ? "Edit Entry" : "Add Entry"}
-          </h2>
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              className={`p-1.5 rounded-lg transition-colors ${favorite ? "text-amber-400" : "text-(--text-tertiary) hover:text-amber-400"}`}
-              onClick={() => setFavorite((v) => !v)}
-              aria-label={favorite ? "Remove from favorites" : "Add to favorites"}
-            >
-              ★
-            </button>
-            <button
-              type="button"
-              onClick={onClose}
-              className="text-(--text-tertiary) hover:text-(--text-primary) p-1 rounded-lg transition-colors"
-              aria-label="Close"
-            >
-              ✕
-            </button>
-          </div>
+    <Modal onClose={onClose} label={isEdit ? "Edit entry" : "Add entry"}>
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-lg font-semibold text-(--text-primary)">
+          {isEdit ? "Edit Entry" : "Add Entry"}
+        </h2>
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            className={`p-1.5 rounded-lg transition-colors ${favorite ? "text-amber-400" : "text-(--text-tertiary) hover:text-amber-400"}`}
+            onClick={() => setFavorite((v) => !v)}
+            aria-label={favorite ? "Remove from favorites" : "Add to favorites"}
+          >
+            ★
+          </button>
+          <button
+            type="button"
+            onClick={onClose}
+            className="text-(--text-tertiary) hover:text-(--text-primary) p-1 rounded-lg transition-colors"
+            aria-label="Close"
+          >
+            ✕
+          </button>
         </div>
+      </div>
 
-        {/* Title + Category */}
-        <div className="flex gap-3 mb-5">
-          <div className="flex-1">
-            <label className="sv-label">Title *</label>
-            <input
-              ref={firstInputRef}
-              className="sv-input w-full"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              aria-label="Title"
-              placeholder="e.g. GitHub Work"
-            />
-            {titleError && <p className="sv-error">{titleError}</p>}
-          </div>
-          <div className="w-36">
-            <label className="sv-label">Category</label>
-            <select
-              className="sv-input w-full"
-              value={category}
-              onChange={(e) => setCategory(e.target.value as CategoryType)}
-            >
-              {CATEGORIES.map((c) => (
-                <option key={c.value} value={c.value}>
-                  {c.emoji} {c.label}
-                </option>
-              ))}
-            </select>
-          </div>
+      {/* Title + Category */}
+      <div className="flex gap-3 mb-5">
+        <div className="flex-1">
+          <label className="sv-label">Title *</label>
+          <input
+            ref={firstInputRef}
+            className="sv-input w-full"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            aria-label="Title"
+            placeholder="e.g. GitHub Work"
+          />
+          {titleError && <p className="sv-error">{titleError}</p>}
         </div>
-
-        {/* Tabs */}
-        <div className="flex gap-1 mb-5 border-b border-(--border-subtle) pb-0">
-          {(["login", "notes", "card", "fields"] as EntryTab[]).map((t) => (
-            <button
-              key={t}
-              type="button"
-              className={`px-3 py-1.5 text-sm font-medium rounded-t-lg -mb-px border-b-2 transition-colors capitalize ${
-                tab === t
-                  ? "text-(--accent) border-(--accent)"
-                  : "text-(--text-tertiary) border-transparent hover:text-(--text-secondary)"
-              }`}
-              onClick={() => setTab(t)}
-            >
-              {t === "fields" ? "Custom" : t.charAt(0).toUpperCase() + t.slice(1)}
-            </button>
-          ))}
+        <div className="w-36">
+          <label className="sv-label">Category</label>
+          <select
+            className="sv-input w-full"
+            value={category}
+            onChange={(e) => setCategory(e.target.value as CategoryType)}
+          >
+            {CATEGORIES.map((c) => (
+              <option key={c.value} value={c.value}>
+                {c.emoji} {c.label}
+              </option>
+            ))}
+          </select>
         </div>
+      </div>
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          {/* ── Login Tab ── */}
-          {tab === "login" && (
-            <>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="sv-label">Username / Email</label>
-                  <input
-                    className="sv-input w-full"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    aria-label="Username"
-                    placeholder="user@example.com"
-                    autoComplete="off"
-                  />
-                </div>
-                <div>
-                  <label className="sv-label">URL</label>
-                  <input
-                    className="sv-input w-full"
-                    value={url}
-                    onChange={(e) => setUrl(e.target.value)}
-                    onBlur={handleUrlBlur}
-                    placeholder="https://example.com"
-                    autoComplete="off"
-                  />
-                  {urlError && <p className="sv-error">{urlError}</p>}
-                </div>
-              </div>
+      {/* Tabs */}
+      <div className="flex gap-1 mb-5 border-b border-(--border-subtle) pb-0">
+        {(["login", "notes", "card", "fields"] as EntryTab[]).map((t) => (
+          <button
+            key={t}
+            type="button"
+            className={`px-3 py-1.5 text-sm font-medium rounded-t-lg -mb-px border-b-2 transition-colors capitalize ${
+              tab === t
+                ? "text-(--accent) border-(--accent)"
+                : "text-(--text-tertiary) border-transparent hover:text-(--text-secondary)"
+            }`}
+            onClick={() => setTab(t)}
+          >
+            {t === "fields" ? "Custom" : t.charAt(0).toUpperCase() + t.slice(1)}
+          </button>
+        ))}
+      </div>
 
-              {/* Password */}
-              <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <label className="sv-label mb-0">Password</label>
-                  <button
-                    type="button"
-                    onClick={handleGeneratePassword}
-                    className="text-xs text-(--accent) hover:underline font-medium"
-                  >
-                    Generate
-                  </button>
-                </div>
-                <div className="relative">
-                  <input
-                    className="sv-input w-full pr-10 font-mono"
-                    type={showPassword ? "text" : "password"}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    autoComplete="new-password"
-                    aria-label="Password"
-                  />
-                  <button
-                    type="button"
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-(--text-tertiary) hover:text-(--text-secondary) transition-colors"
-                    onClick={() => setShowPassword((v) => !v)}
-                  >
-                    {showPassword ? "🙈" : "👁️"}
-                  </button>
-                </div>
-                <StrengthBar password={password} />
-              </div>
-
-              {/* TOTP */}
-              <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <label className="sv-label mb-0">TOTP Secret (2FA)</label>
-                  <button
-                    type="button"
-                    className="text-xs text-(--text-tertiary) hover:text-(--accent) transition-colors"
-                    onClick={() => setShowTOTP((v) => !v)}
-                  >
-                    {showTOTP ? "Hide" : "Show"}
-                  </button>
-                </div>
-                <input
-                  className={`sv-input w-full font-mono text-sm ${totpError ? "border-(--danger)" : ""}`}
-                  type={showTOTP ? "text" : "password"}
-                  value={totpSecret}
-                  onChange={(e) => handleTOTPChange(e.target.value)}
-                  placeholder="JBSWY3DPEHPK3PXP (Base32)"
-                  autoComplete="off"
-                />
-                {totpError && <p className="sv-error">{totpError}</p>}
-                {totpSecret && !totpError && (
-                  <p className="text-[11px] text-(--success) mt-1">✓ Valid TOTP secret</p>
-                )}
-              </div>
-
-              {/* Tags */}
-              <div>
-                <label className="sv-label">Tags</label>
-                <TagInput value={tags} onChange={setTags} suggestions={allTags} />
-              </div>
-            </>
-          )}
-
-          {/* ── Notes Tab ── */}
-          {tab === "notes" && (
-            <div>
-              <label className="sv-label">Secure Notes</label>
-              <textarea
-                className="sv-input w-full resize-none font-mono text-sm"
-                rows={10}
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                placeholder="Store any sensitive text here..."
-              />
-            </div>
-          )}
-
-          {/* ── Card Tab ── */}
-          {tab === "card" && (
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        {/* ── Login Tab ── */}
+        {tab === "login" && (
+          <>
             <div className="grid grid-cols-2 gap-3">
-              <div className="col-span-2">
-                <label className="sv-label">Card Number</label>
-                <input
-                  className="sv-input w-full font-mono tracking-widest"
-                  value={cardNumber}
-                  onChange={(e) => setCardNumber(e.target.value.replace(/\s/g, ""))}
-                  placeholder="4242 4242 4242 4242"
-                  maxLength={19}
-                />
-              </div>
-              <div className="col-span-2">
-                <label className="sv-label">Cardholder Name</label>
+              <div>
+                <label className="sv-label">Username / Email</label>
                 <input
                   className="sv-input w-full"
-                  value={cardHolder}
-                  onChange={(e) => setCardHolder(e.target.value)}
-                  placeholder="JANE DOE"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  aria-label="Username"
+                  placeholder="user@example.com"
+                  autoComplete="off"
                 />
               </div>
               <div>
-                <label className="sv-label">Expiry</label>
+                <label className="sv-label">URL</label>
                 <input
-                  className="sv-input w-full font-mono"
-                  value={cardExpiry}
-                  onChange={(e) => setCardExpiry(e.target.value)}
-                  placeholder="MM/YY"
-                  maxLength={5}
+                  className="sv-input w-full"
+                  value={url}
+                  onChange={(e) => setUrl(e.target.value)}
+                  onBlur={handleUrlBlur}
+                  placeholder="https://example.com"
+                  autoComplete="off"
                 />
-              </div>
-              <div>
-                <label className="sv-label">CVV</label>
-                <input
-                  className="sv-input w-full font-mono"
-                  type="password"
-                  value={cardCVV}
-                  onChange={(e) => setCardCVV(e.target.value)}
-                  placeholder="•••"
-                  maxLength={4}
-                />
+                {urlError && <p className="sv-error">{urlError}</p>}
               </div>
             </div>
-          )}
 
-          {/* ── Custom Fields Tab ── */}
-          {tab === "fields" && (
-            <div className="flex flex-col gap-3">
-              {customFields.length === 0 && (
-                <p className="text-sm text-(--text-tertiary) text-center py-4">
-                  No custom fields yet. Add fields for SSH keys, recovery codes, etc.
-                </p>
+            {/* Password */}
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="sv-label mb-0">Password</label>
+                <button
+                  type="button"
+                  onClick={handleGeneratePassword}
+                  className="text-xs text-(--accent) hover:underline font-medium"
+                >
+                  Generate
+                </button>
+              </div>
+              <div className="relative">
+                <input
+                  className="sv-input w-full pr-10 font-mono"
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  autoComplete="new-password"
+                  aria-label="Password"
+                />
+                <button
+                  type="button"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-(--text-tertiary) hover:text-(--text-secondary) transition-colors"
+                  onClick={() => setShowPassword((v) => !v)}
+                >
+                  {showPassword ? "🙈" : "👁️"}
+                </button>
+              </div>
+              <StrengthBar password={password} />
+            </div>
+
+            {/* TOTP */}
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="sv-label mb-0">TOTP Secret (2FA)</label>
+                <button
+                  type="button"
+                  className="text-xs text-(--text-tertiary) hover:text-(--accent) transition-colors"
+                  onClick={() => setShowTOTP((v) => !v)}
+                >
+                  {showTOTP ? "Hide" : "Show"}
+                </button>
+              </div>
+              <input
+                className={`sv-input w-full font-mono text-sm ${totpError ? "border-(--danger)" : ""}`}
+                type={showTOTP ? "text" : "password"}
+                value={totpSecret}
+                onChange={(e) => handleTOTPChange(e.target.value)}
+                placeholder="JBSWY3DPEHPK3PXP (Base32)"
+                autoComplete="off"
+              />
+              {totpError && <p className="sv-error">{totpError}</p>}
+              {totpSecret && !totpError && (
+                <p className="text-[11px] text-(--success) mt-1">✓ Valid TOTP secret</p>
               )}
-              {customFields.map((field) => (
-                <CustomFieldRow
-                  key={field.id}
-                  field={field}
-                  onChange={(p) => updateCustomField(field.id, p)}
-                  onRemove={() => removeCustomField(field.id)}
-                />
-              ))}
-              <button
-                type="button"
-                onClick={addCustomField}
-                className="sv-btn-secondary text-sm py-2"
-              >
-                + Add Custom Field
-              </button>
             </div>
-          )}
 
-          {/* Footer buttons */}
-          <div className="flex justify-end gap-3 mt-2 pt-4 border-t border-(--border-subtle)">
-            <button type="button" onClick={onClose} className="sv-btn-secondary px-5">
-              Cancel
-            </button>
-            <button type="submit" className="sv-btn-primary px-5" disabled={submitting}>
-              {submitting ? "Saving…" : isEdit ? "Save Changes" : "Add Entry"}
+            {/* Tags */}
+            <div>
+              <label className="sv-label">Tags</label>
+              <TagInput value={tags} onChange={setTags} suggestions={allTags} />
+            </div>
+          </>
+        )}
+
+        {/* ── Notes Tab ── */}
+        {tab === "notes" && (
+          <div>
+            <label className="sv-label">Secure Notes</label>
+            <textarea
+              className="sv-input w-full resize-none font-mono text-sm"
+              rows={10}
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Store any sensitive text here..."
+            />
+          </div>
+        )}
+
+        {/* ── Card Tab ── */}
+        {tab === "card" && (
+          <div className="grid grid-cols-2 gap-3">
+            <div className="col-span-2">
+              <label className="sv-label">Card Number</label>
+              <input
+                className="sv-input w-full font-mono tracking-widest"
+                value={cardNumber}
+                onChange={(e) => setCardNumber(e.target.value.replace(/\s/g, ""))}
+                placeholder="4242 4242 4242 4242"
+                maxLength={19}
+              />
+            </div>
+            <div className="col-span-2">
+              <label className="sv-label">Cardholder Name</label>
+              <input
+                className="sv-input w-full"
+                value={cardHolder}
+                onChange={(e) => setCardHolder(e.target.value)}
+                placeholder="JANE DOE"
+              />
+            </div>
+            <div>
+              <label className="sv-label">Expiry</label>
+              <input
+                className="sv-input w-full font-mono"
+                value={cardExpiry}
+                onChange={(e) => setCardExpiry(e.target.value)}
+                placeholder="MM/YY"
+                maxLength={5}
+              />
+            </div>
+            <div>
+              <label className="sv-label">CVV</label>
+              <input
+                className="sv-input w-full font-mono"
+                type="password"
+                value={cardCVV}
+                onChange={(e) => setCardCVV(e.target.value)}
+                placeholder="•••"
+                maxLength={4}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* ── Custom Fields Tab ── */}
+        {tab === "fields" && (
+          <div className="flex flex-col gap-3">
+            {customFields.length === 0 && (
+              <p className="text-sm text-(--text-tertiary) text-center py-4">
+                No custom fields yet. Add fields for SSH keys, recovery codes, etc.
+              </p>
+            )}
+            {customFields.map((field) => (
+              <CustomFieldRow
+                key={field.id}
+                field={field}
+                onChange={(p) => updateCustomField(field.id, p)}
+                onRemove={() => removeCustomField(field.id)}
+              />
+            ))}
+            <button
+              type="button"
+              onClick={addCustomField}
+              className="sv-btn-secondary text-sm py-2"
+            >
+              + Add Custom Field
             </button>
           </div>
-        </form>
-      </div>
-    </div>
+        )}
+
+        {/* Footer buttons */}
+        <div className="flex justify-end gap-3 mt-2 pt-4 border-t border-(--border-subtle)">
+          <button type="button" onClick={onClose} className="sv-btn-secondary px-5">
+            Cancel
+          </button>
+          <button type="submit" className="sv-btn-primary px-5" disabled={submitting}>
+            {submitting ? "Saving…" : isEdit ? "Save Changes" : "Add Entry"}
+          </button>
+        </div>
+      </form>
+    </Modal>
   );
 }

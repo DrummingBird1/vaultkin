@@ -10,6 +10,7 @@ import React, { useState } from "react";
 import { openVault } from "../../core/vault/serializer";
 import { WrongPasswordError } from "../../core/errors";
 import type { VaultData } from "../../core/vault/schema";
+import { Modal } from "../ui/Modal";
 
 interface Props {
   payload: string;
@@ -42,40 +43,37 @@ export function RemoteUnlockModal({ payload, onOpened, onCancel }: Props) {
   };
 
   return (
-    <div className="sv-modal-backdrop" onKeyDown={(e) => e.key === "Escape" && onCancel()}>
-      <form
-        className="sv-modal"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="remote-unlock-title"
-        onSubmit={submit}
-      >
-        <h2 id="remote-unlock-title" className="sv-modal-title mb-1">
-          Unlock remote vault
-        </h2>
-        <p className="sv-modal-subtitle mb-4">
-          Enter the master password of the WebDAV copy. Usually it is the same as this vault's.
-        </p>
-        <input
-          type="password"
-          className="sv-input mb-2"
-          autoFocus
-          autoComplete="current-password"
-          value={pw}
-          onChange={(e) => setPw(e.target.value)}
-          aria-label="Remote master password"
-        />
-        {err && <p className="sv-error mb-2">{err}</p>}
-        <div className="flex gap-3 justify-end mt-4">
-          <button type="button" onClick={onCancel} className="sv-btn-secondary">
-            Cancel
-          </button>
-          <button type="submit" disabled={busy || !pw} className="sv-btn-primary">
-            {busy ? "Decrypting…" : "Continue"}
-          </button>
-        </div>
-      </form>
-    </div>
+    <Modal
+      onClose={onCancel}
+      dismissable={!busy}
+      labelledBy="remote-unlock-title"
+      onSubmit={submit}
+    >
+      <h2 id="remote-unlock-title" className="sv-modal-title mb-1">
+        Unlock remote vault
+      </h2>
+      <p className="sv-modal-subtitle mb-4">
+        Enter the master password of the WebDAV copy. Usually it is the same as this vault's.
+      </p>
+      <input
+        type="password"
+        className="sv-input mb-2"
+        autoFocus
+        autoComplete="current-password"
+        value={pw}
+        onChange={(e) => setPw(e.target.value)}
+        aria-label="Remote master password"
+      />
+      {err && <p className="sv-error mb-2">{err}</p>}
+      <div className="flex gap-3 justify-end mt-4">
+        <button type="button" onClick={onCancel} className="sv-btn-secondary">
+          Cancel
+        </button>
+        <button type="submit" disabled={busy || !pw} className="sv-btn-primary">
+          {busy ? "Decrypting…" : "Continue"}
+        </button>
+      </div>
+    </Modal>
   );
 }
 

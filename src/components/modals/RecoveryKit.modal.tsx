@@ -10,13 +10,12 @@
 import React, { useState } from "react";
 import { useVaultStore } from "../../store/vault.store";
 import { useUIStore } from "../../store/ui.store";
-import { useFocusTrap } from "../../hooks/useFocusTrap";
 import { generatePassphrase } from "../../core/password/generator";
 import { createVault } from "../../core/vault/serializer";
 import { IconClose, IconCopy, IconShield } from "../icons";
+import { Modal } from "../ui/Modal";
 
 export function RecoveryKitModal({ onClose }: { onClose: () => void }) {
-  const containerRef = useFocusTrap<HTMLDivElement>(true);
   const { vault } = useVaultStore();
   const { toastSuccess, toastError } = useUIStore();
   const [recoveryKey, setRecoveryKey] = useState<string | null>(null);
@@ -70,70 +69,58 @@ export function RecoveryKitModal({ onClose }: { onClose: () => void }) {
   };
 
   return (
-    <div className="sv-modal-backdrop" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div
-        ref={containerRef}
-        className="sv-modal max-w-md"
-        role="dialog"
-        aria-modal="true"
-        aria-label="Recovery Kit"
-      >
-        <div className="flex items-center justify-between mb-5">
-          <h2 className="sv-modal-title flex items-center gap-2">
-            <IconShield className="w-5 h-5" /> Recovery Kit
-          </h2>
-          <button onClick={onClose} aria-label="Close" className="sv-icon-btn">
-            <IconClose />
-          </button>
-        </div>
-
-        {!recoveryKey ? (
-          <>
-            <p className="text-sm text-(--text-secondary) mb-4">
-              Generates a random recovery passphrase, independent of your master password, and a
-              snapshot of your current vault that opens only with it. Use this if you ever forget
-              your master password — there is no other way to recover a zero-knowledge vault.
-            </p>
-            <p className="sv-hint mb-5">
-              This is a point-in-time snapshot — entries added after today won't be in it.
-              Regenerate periodically to keep it useful.
-            </p>
-            <button
-              onClick={handleGenerate}
-              disabled={generating}
-              className="sv-btn-primary w-full"
-            >
-              {generating ? "Generating…" : "Generate Recovery Kit"}
-            </button>
-          </>
-        ) : (
-          <>
-            <div className="p-3 bg-(--warning-dim) border border-(--warning)/30 rounded-xl text-sm text-(--warning) mb-4">
-              This passphrase is shown once and never saved anywhere. Write it down or store it in a
-              separate password manager — not next to the downloaded file.
-            </div>
-            <div className="mb-4">
-              <label className="sv-label">Recovery passphrase</label>
-              <div className="flex items-center gap-2">
-                <code className="sv-input flex-1 font-mono text-sm select-all">{recoveryKey}</code>
-                <button
-                  onClick={handleCopy}
-                  aria-label="Copy recovery passphrase"
-                  className="sv-btn-secondary px-3"
-                >
-                  {copied ? "Copied" : <IconCopy className="w-4 h-4" />}
-                </button>
-              </div>
-            </div>
-            <button onClick={handleDownload} className="sv-btn-primary w-full mb-3">
-              Download Recovery File
-            </button>
-            <button onClick={onClose} className="sv-btn-secondary w-full">
-              Done
-            </button>
-          </>
-        )}
+    <Modal onClose={onClose} className="max-w-md" label="Recovery Kit">
+      <div className="flex items-center justify-between mb-5">
+        <h2 className="sv-modal-title flex items-center gap-2">
+          <IconShield className="w-5 h-5" /> Recovery Kit
+        </h2>
+        <button onClick={onClose} aria-label="Close" className="sv-icon-btn">
+          <IconClose />
+        </button>
       </div>
-    </div>
+
+      {!recoveryKey ? (
+        <>
+          <p className="text-sm text-(--text-secondary) mb-4">
+            Generates a random recovery passphrase, independent of your master password, and a
+            snapshot of your current vault that opens only with it. Use this if you ever forget your
+            master password — there is no other way to recover a zero-knowledge vault.
+          </p>
+          <p className="sv-hint mb-5">
+            This is a point-in-time snapshot — entries added after today won't be in it. Regenerate
+            periodically to keep it useful.
+          </p>
+          <button onClick={handleGenerate} disabled={generating} className="sv-btn-primary w-full">
+            {generating ? "Generating…" : "Generate Recovery Kit"}
+          </button>
+        </>
+      ) : (
+        <>
+          <div className="p-3 bg-(--warning-dim) border border-(--warning)/30 rounded-xl text-sm text-(--warning) mb-4">
+            This passphrase is shown once and never saved anywhere. Write it down or store it in a
+            separate password manager — not next to the downloaded file.
+          </div>
+          <div className="mb-4">
+            <label className="sv-label">Recovery passphrase</label>
+            <div className="flex items-center gap-2">
+              <code className="sv-input flex-1 font-mono text-sm select-all">{recoveryKey}</code>
+              <button
+                onClick={handleCopy}
+                aria-label="Copy recovery passphrase"
+                className="sv-btn-secondary px-3"
+              >
+                {copied ? "Copied" : <IconCopy className="w-4 h-4" />}
+              </button>
+            </div>
+          </div>
+          <button onClick={handleDownload} className="sv-btn-primary w-full mb-3">
+            Download Recovery File
+          </button>
+          <button onClick={onClose} className="sv-btn-secondary w-full">
+            Done
+          </button>
+        </>
+      )}
+    </Modal>
   );
 }

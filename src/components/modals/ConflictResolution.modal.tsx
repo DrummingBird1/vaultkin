@@ -14,6 +14,7 @@
 import React, { useMemo, useState } from "react";
 import type { VaultData, VaultEntry } from "../../core/vault/schema";
 import { mergeVaults } from "../../core/vault/merge";
+import { Modal } from "../ui/Modal";
 
 // Compare two entries for "meaningful" equality so the conflict UI doesn't
 // flag false positives because of property-order differences in JSON.stringify
@@ -124,93 +125,89 @@ export function ConflictResolutionModal({ local, remote, onResolve, onCancel }: 
   }
 
   return (
-    <div className="sv-modal-backdrop">
-      <div className="sv-modal" style={{ maxWidth: 720 }}>
-        <h2 className="sv-modal-title mb-1">Sync Conflict</h2>
-        <p className="sv-modal-subtitle mb-5">
-          The local and remote vaults have diverged. Choose how to merge.
-        </p>
+    <Modal onClose={onCancel} className="max-w-[720px]" label="Sync conflict">
+      <h2 className="sv-modal-title mb-1">Sync Conflict</h2>
+      <p className="sv-modal-subtitle mb-5">
+        The local and remote vaults have diverged. Choose how to merge.
+      </p>
 
-        {/* Stats */}
-        <div className="grid grid-cols-4 gap-2 mb-5 text-center">
-          <Stat label="Conflicts" value={counts.conflicts} color="var(--danger)" />
-          <Stat label="Local only" value={counts.localOnly} color="var(--warning)" />
-          <Stat label="Remote only" value={counts.remoteOnly} color="var(--accent)" />
-          <Stat label="Identical" value={counts.identical} color="var(--text-tertiary)" />
-        </div>
-
-        {/* Diff list */}
-        <div
-          style={{
-            maxHeight: 280,
-            overflowY: "auto",
-            border: "1px solid var(--border-default)",
-            borderRadius: 8,
-            marginBottom: 20,
-          }}
-        >
-          {diffs.length === 0 ? (
-            <p className="text-sm text-(--text-tertiary) p-4 text-center">
-              No differences detected.
-            </p>
-          ) : (
-            <ul>
-              {diffs.map((d) => (
-                <li
-                  key={d.id}
-                  className="flex items-center gap-3 px-4 py-2 border-b border-(--border-subtle) last:border-b-0"
-                >
-                  <span className="sv-badge" style={statusBadgeStyle(d.status)}>
-                    {statusLabel(d.status)}
-                  </span>
-                  <span className="text-sm flex-1 truncate">{d.title}</span>
-                  {d.status === "conflict" && (
-                    <span className="text-xs text-(--text-tertiary)">
-                      L: {fmt(d.local?.updatedAt)} · R: {fmt(d.remote?.updatedAt)}
-                    </span>
-                  )}
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-
-        {/* Strategy picker */}
-        <fieldset className="mb-5">
-          <legend className="sv-label">Resolution strategy</legend>
-          <StrategyOption
-            value="merge"
-            current={strategy}
-            onChange={setStrategy}
-            title="Merge (recommended)"
-            description="Keep all entries. For conflicts, use the most recently updated version."
-          />
-          <StrategyOption
-            value="local"
-            current={strategy}
-            onChange={setStrategy}
-            title="Keep local"
-            description="Discard the remote version. Re-uploads on next sync."
-          />
-          <StrategyOption
-            value="remote"
-            current={strategy}
-            onChange={setStrategy}
-            title="Keep remote"
-            description="Replace local with remote. Local changes will be lost."
-          />
-        </fieldset>
-
-        <div className="flex gap-3 justify-end">
-          <button onClick={onCancel} className="sv-btn-secondary">
-            Cancel
-          </button>
-          <button onClick={handleApply} className="sv-btn-primary">
-            Apply resolution
-          </button>
-        </div>
+      {/* Stats */}
+      <div className="grid grid-cols-4 gap-2 mb-5 text-center">
+        <Stat label="Conflicts" value={counts.conflicts} color="var(--danger)" />
+        <Stat label="Local only" value={counts.localOnly} color="var(--warning)" />
+        <Stat label="Remote only" value={counts.remoteOnly} color="var(--accent)" />
+        <Stat label="Identical" value={counts.identical} color="var(--text-tertiary)" />
       </div>
-    </div>
+
+      {/* Diff list */}
+      <div
+        style={{
+          maxHeight: 280,
+          overflowY: "auto",
+          border: "1px solid var(--border-default)",
+          borderRadius: 8,
+          marginBottom: 20,
+        }}
+      >
+        {diffs.length === 0 ? (
+          <p className="text-sm text-(--text-tertiary) p-4 text-center">No differences detected.</p>
+        ) : (
+          <ul>
+            {diffs.map((d) => (
+              <li
+                key={d.id}
+                className="flex items-center gap-3 px-4 py-2 border-b border-(--border-subtle) last:border-b-0"
+              >
+                <span className="sv-badge" style={statusBadgeStyle(d.status)}>
+                  {statusLabel(d.status)}
+                </span>
+                <span className="text-sm flex-1 truncate">{d.title}</span>
+                {d.status === "conflict" && (
+                  <span className="text-xs text-(--text-tertiary)">
+                    L: {fmt(d.local?.updatedAt)} · R: {fmt(d.remote?.updatedAt)}
+                  </span>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      {/* Strategy picker */}
+      <fieldset className="mb-5">
+        <legend className="sv-label">Resolution strategy</legend>
+        <StrategyOption
+          value="merge"
+          current={strategy}
+          onChange={setStrategy}
+          title="Merge (recommended)"
+          description="Keep all entries. For conflicts, use the most recently updated version."
+        />
+        <StrategyOption
+          value="local"
+          current={strategy}
+          onChange={setStrategy}
+          title="Keep local"
+          description="Discard the remote version. Re-uploads on next sync."
+        />
+        <StrategyOption
+          value="remote"
+          current={strategy}
+          onChange={setStrategy}
+          title="Keep remote"
+          description="Replace local with remote. Local changes will be lost."
+        />
+      </fieldset>
+
+      <div className="flex gap-3 justify-end">
+        <button onClick={onCancel} className="sv-btn-secondary">
+          Cancel
+        </button>
+        <button onClick={handleApply} className="sv-btn-primary">
+          Apply resolution
+        </button>
+      </div>
+    </Modal>
   );
 }
 
