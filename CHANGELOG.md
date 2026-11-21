@@ -12,6 +12,10 @@
 - Attachments: add files to any entry (up to 25 MB each). Each file is
   encrypted with its own key, kept inside the vault; deleting the vault (or
   the duress password) removes them too. Attachments don't sync yet.
+- Secure sharing without a server: share an entry as an encrypted
+  `.svshare` file plus a separate code (send them over two channels), with
+  an expiry of 1 hour, 1 day or 7 days and only the fields you pick. The
+  recipient opens it in SecureVault and adds it to their vault.
 
 ### Fixed
 - New entries silently dropped fields the store didn't list (found while

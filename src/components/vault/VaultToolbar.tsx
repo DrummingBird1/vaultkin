@@ -11,6 +11,7 @@ export function VaultToolbar({
   onSearch,
   onTags,
   onImport,
+  onOpenShare,
   onExport,
   onAdd,
 }: {
@@ -19,6 +20,7 @@ export function VaultToolbar({
   onSearch: (text: string) => void;
   onTags: () => void;
   onImport: () => void;
+  onOpenShare: () => void;
   onExport: () => void;
   onAdd: () => void;
 }) {
@@ -45,6 +47,9 @@ export function VaultToolbar({
       </button>
       <button onClick={onImport} className={ghost}>
         {t("vault.import")}
+      </button>
+      <button onClick={onOpenShare} className={ghost}>
+        {t("share.openButton")}
       </button>
       <button onClick={onExport} className={ghost}>
         {t("vault.export")}

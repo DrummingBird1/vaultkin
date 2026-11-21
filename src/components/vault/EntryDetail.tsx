@@ -2,6 +2,7 @@
  * @file src/components/vault/EntryDetail.tsx
  * Right-hand detail panel for the selected entry.
  */
+import { ShareEntryModal } from "../modals/ShareEntry.modal";
 import { AttachmentsPanel } from "./AttachmentsPanel";
 import { useTranslation } from "react-i18next";
 import React, { useState, useCallback, useEffect, useRef } from "react";
@@ -33,6 +34,7 @@ export function EntryDetail({
   const tickTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const { toastSuccess } = useUIStore();
   const updateEntry = useVaultStore((s) => s.updateEntry);
+  const [sharing, setSharing] = useState(false);
 
   // Past versions for this entry (in-memory, cleared on lock).
   const versions = HistoryService.get(entry.id);
@@ -115,6 +117,12 @@ export function EntryDetail({
           </div>
         </div>
         <div className="flex items-center gap-1 shrink-0">
+          <button
+            onClick={() => setSharing(true)}
+            className="p-1.5 rounded-lg text-(--text-tertiary) hover:text-(--accent-text) hover:bg-(--accent-dim) transition-colors text-xs"
+          >
+            {t("share.button")}
+          </button>
           <button
             onClick={onEdit}
             aria-label={t("entry.edit")}
@@ -244,6 +252,7 @@ export function EntryDetail({
         )}
 
         <AttachmentsPanel entry={entry} />
+        {sharing && <ShareEntryModal entry={entry} onClose={() => setSharing(false)} />}
 
         {/* TOTP badge */}
         {entry.totpSecret && (

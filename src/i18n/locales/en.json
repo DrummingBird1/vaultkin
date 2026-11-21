@@ -923,5 +923,36 @@
     "failed": "Couldn't add the file",
     "missing": "This file isn't on this device (attachments don't sync yet)",
     "damaged": "This file is damaged and can't be opened"
+  },
+  "share": {
+    "button": "Share",
+    "title": "Share securely",
+    "intro": "Creates an encrypted file for “{{title}}” and a separate code. Send them over two different channels (e.g. the file by email, the code by message).",
+    "includePassword": "Password",
+    "includeTotp": "2FA secret",
+    "includeNotes": "Notes",
+    "expiry": "Expires after",
+    "expiryOptions": {
+      "hour": "1 hour",
+      "day": "1 day",
+      "week": "7 days"
+    },
+    "from": "Your name (shown to the recipient, optional)",
+    "create": "Create share file",
+    "done": "The file was saved. This is its code; it's shown only now:",
+    "copyCode": "Copy code",
+    "expires": "Expires {{date}}.",
+    "separately": "Send the code separately from the file. Anyone with both can open it until it expires.",
+    "close": "Done",
+    "openButton": "Open shared item",
+    "openTitle": "Open a shared item",
+    "file": "Share file (.svshare)",
+    "code": "Code",
+    "open": "Open",
+    "invalid": "Wrong code, or not a valid share file",
+    "expired": "This share has expired",
+    "fromLabel": "From {{from}}",
+    "addToVault": "Add to my vault",
+    "added": "Added to your vault"
   }
 }

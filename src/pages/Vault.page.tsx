@@ -12,6 +12,7 @@ import { useUIStore } from "../store/ui.store";
 import { ImportExportService } from "../services/import-export.service";
 import { AddEditEntryModal } from "../components/modals/AddEditEntry.modal";
 import { ImportVaultModal } from "../components/modals/ImportVault.modal";
+import { OpenShareModal } from "../components/modals/OpenShare.modal";
 import { ConfirmDeleteModal } from "../components/modals/ConfirmDelete.modal";
 import { PlaintextExportWarningModal } from "../components/modals/PlaintextExportWarning.modal";
 import { TagManagerModal } from "../components/modals/TagManager.modal";
@@ -33,6 +34,7 @@ import type { VaultEntry } from "../core/vault/schema";
 type Dialog =
   | { kind: "edit"; entry: VaultEntry | null }
   | { kind: "import" }
+  | { kind: "openShare" }
   | { kind: "export" }
   | { kind: "tags" }
   | { kind: "delete"; entry: VaultEntry }
@@ -159,6 +161,7 @@ export function VaultPage() {
         <AddEditEntryModal entry={dialog.entry} folderId={searchQuery.folderId} onClose={close} />
       )}
       {dialog?.kind === "import" && <ImportVaultModal onClose={close} />}
+      {dialog?.kind === "openShare" && <OpenShareModal onClose={close} />}
       {dialog?.kind === "export" && (
         <PlaintextExportWarningModal onConfirm={exportCsv} onCancel={close} />
       )}
@@ -182,6 +185,7 @@ export function VaultPage() {
             onSearch={(text) => setSearchQuery({ text })}
             onTags={() => setDialog({ kind: "tags" })}
             onImport={() => setDialog({ kind: "import" })}
+            onOpenShare={() => setDialog({ kind: "openShare" })}
             onExport={() => setDialog({ kind: "export" })}
             onAdd={add}
           />
