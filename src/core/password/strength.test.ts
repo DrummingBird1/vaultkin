@@ -78,3 +78,28 @@ describe("analyzeStrength", () => {
     expect(analyzePassword).toBe(analyzeStrength);
   });
 });
+
+import { toCrackTime } from "./strength";
+
+describe("toCrackTime", () => {
+  const Y = 31_536_000;
+  it("buckets seconds into units", () => {
+    expect(toCrackTime(0.5)).toEqual({ kind: "instant" });
+    expect(toCrackTime(NaN)).toEqual({ kind: "instant" });
+    expect(toCrackTime(42)).toEqual({ kind: "duration", unit: "second", value: 42 });
+    expect(toCrackTime(120)).toEqual({ kind: "duration", unit: "minute", value: 2 });
+    expect(toCrackTime(7200)).toEqual({ kind: "duration", unit: "hour", value: 2 });
+    expect(toCrackTime(3 * 86400)).toEqual({ kind: "duration", unit: "day", value: 3 });
+    expect(toCrackTime(500 * Y)).toEqual({ kind: "duration", unit: "year", value: 500 });
+  });
+  it("keeps real magnitudes instead of collapsing them to 'centuries'", () => {
+    expect(toCrackTime(5e6 * Y)).toEqual({ kind: "duration", unit: "year", value: 5_000_000 });
+    expect(toCrackTime(2e9 * Y)).toEqual({ kind: "eternity" });
+  });
+  it("feedback keys line up with feedback text", () => {
+    const a = analyzeStrength("1234");
+    expect(a.feedbackKeys).toContain("length");
+    expect(a.feedbackKeys).toContain("sequence");
+    expect(a.feedbackKeys.length).toBe(a.feedback.length);
+  });
+});

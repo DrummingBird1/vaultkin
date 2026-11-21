@@ -705,5 +705,19 @@
       "showMore_many": "Show {{count}} more",
       "showMore_other": "Show {{count}} more"
     }
+  },
+  "strength": {
+    "crack": {
+      "instant": "instantly",
+      "eternity": "effectively never",
+      "label": "Time to crack offline: {{time}}"
+    },
+    "feedback": {
+      "empty": "Enter a password.",
+      "length": "Aim for 12+ characters.",
+      "common": "This is a commonly leaked password.",
+      "repeated": "Repeated characters add little entropy.",
+      "sequence": "Avoid sequences like 1234 or abcd."
+    }
   }
 }

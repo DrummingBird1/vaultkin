@@ -230,7 +230,9 @@ export function CreateVaultModal({ onClose }: Props) {
                   </span>
                 </div>
                 {strength.feedback.length > 0 && (
-                  <p className="text-xs text-(--text-tertiary) mt-1">{strength.feedback[0]}</p>
+                  <p className="text-xs text-(--text-tertiary) mt-1">
+                    {t(`strength.feedback.${strength.feedbackKeys[0]}`)}
+                  </p>
                 )}
               </div>
             )}

@@ -6,10 +6,11 @@ import React, { useState, useEffect } from "react";
 import { generatePassword } from "../core/password/generator";
 import { analyzeStrength } from "../core/password/strength";
 import { useQuickCopy } from "../hooks/useQuickCopy";
+import { formatCrackTime } from "../lib/crack-time";
 import { useTranslation } from "react-i18next";
 
 export function GeneratorPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [length, setLength] = useState(20);
   const [uppercase, setUppercase] = useState(true);
   const [lowercase, setLowercase] = useState(true);
@@ -57,7 +58,7 @@ export function GeneratorPage() {
           <span>{strength ? t(`entry.strength.${strength.score}`) : ""}</span>
           <span>
             {strength
-              ? `${t("entry.strength.bits", { bits: Math.round(strength.effectiveEntropy) })} · ${strength.crackTimeDisplay}`
+              ? `${t("entry.strength.bits", { bits: Math.round(strength.effectiveEntropy) })} · ${t("strength.crack.label", { time: formatCrackTime(strength.crackTime, t, i18n.language) })}`
               : ""}
           </span>
         </div>

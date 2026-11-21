@@ -705,5 +705,19 @@
       "showMore_many": "עוד {{count}}",
       "showMore_other": "עוד {{count}}"
     }
+  },
+  "strength": {
+    "crack": {
+      "instant": "מיידית",
+      "eternity": "למעשה אף פעם",
+      "label": "זמן פריצה במחשב תוקף: {{time}}"
+    },
+    "feedback": {
+      "empty": "הזינו סיסמה.",
+      "length": "מומלץ 12 תווים ומעלה.",
+      "common": "זו סיסמה נפוצה שכבר דלפה.",
+      "repeated": "תווים חוזרים כמעט לא מוסיפים חוזק.",
+      "sequence": "הימנעו מרצפים כמו 1234 או abcd."
+    }
   }
 }
