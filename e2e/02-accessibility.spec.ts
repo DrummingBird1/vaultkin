@@ -62,6 +62,15 @@ for (const lang of ["en", "he"] as const) {
       await page.locator('[role="dialog"] button').last().click();
       await expect(page.locator("main")).toBeVisible({ timeout: 30_000 });
 
+      // First-run guide: audit each step, then finish it.
+      const guide = page.getByRole("dialog");
+      await expect(guide).toBeVisible();
+      for (let i = 0; i < 3; i++) {
+        await audit(page, `onboarding step ${i + 1}`);
+        await guide.locator("button").last().click();
+      }
+      await expect(guide).toHaveCount(0);
+
       for (const p of ["vault", "authenticator", "generator", "health", "settings"]) {
         await page.evaluate((h) => (location.hash = h), `#/${p}`);
         await audit(page, `page ${p}`);

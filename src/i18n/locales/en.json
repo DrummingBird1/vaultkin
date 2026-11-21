@@ -719,5 +719,31 @@
       "repeated": "Repeated characters add little entropy.",
       "sequence": "Avoid sequences like 1234 or abcd."
     }
+  },
+  "onboarding": {
+    "progress": "Step {{current}} of {{total}}",
+    "skip": "Skip for now",
+    "back": "Back",
+    "next": "Next",
+    "finish": "Start using SecureVault",
+    "recovery": {
+      "title": "Save your Recovery Kit",
+      "body": "Your master password never leaves this device, so nobody — including us — can reset it. A Recovery Kit is an encrypted copy of your vault with its own passphrase. Print it or store it somewhere safe and offline.",
+      "action": "Create Recovery Kit",
+      "again": "Create another Recovery Kit"
+    },
+    "import": {
+      "title": "Bring your passwords over",
+      "body": "Import from Bitwarden (JSON), LastPass or any CSV export. Everything is decrypted and re-encrypted locally; delete the export file afterwards.",
+      "action": "Import passwords"
+    },
+    "shortcuts": {
+      "title": "Work faster",
+      "body": "Everything is a few keystrokes away. Pick your language too — you can change it later in Settings.",
+      "palette": "Search entries and run any command",
+      "newEntry": "New entry",
+      "lock": "Lock the vault",
+      "search": "Search the vault list"
+    }
   }
 }

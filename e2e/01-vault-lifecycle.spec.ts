@@ -47,6 +47,7 @@ test.describe.serial("Vault lifecycle", () => {
 
     // Step 3: vault opens → we should be on the Vault page
     await expect(page.getByText(/your vault is empty/i)).toBeVisible({ timeout: 30_000 });
+    await page.getByRole("button", { name: /skip for now/i }).click();
 
     // Step 4: add an entry
     await page
@@ -87,6 +88,7 @@ test.describe.serial("Vault lifecycle", () => {
       // Wait for the vault to open before locking; a shortcut pressed earlier is lost
       // (Firefox and WebKit got there before the vault page existed).
       await expect(page.getByText(/your vault is empty/i)).toBeVisible({ timeout: 30_000 });
+      await page.getByRole("button", { name: /skip for now/i }).click();
       await page.getByRole("button", { name: /lock vault/i }).click();
     }
 

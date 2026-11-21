@@ -24,6 +24,7 @@ import { AppLifecycle } from "../../services/app-lifecycle.service";
 import { onVaultUnlocked } from "../../store";
 import { useSessionStore } from "../../store/session.store";
 import { Modal } from "../ui/Modal";
+import { useUIStore } from "../../store/ui.store";
 
 interface Props {
   onClose?: () => void;
@@ -130,7 +131,8 @@ export function CreateVaultModal({ onClose }: Props) {
 
       setProgress(95);
 
-      // Unlock application
+      // Unlock application; the first-run guide opens in the app shell.
+      useUIStore.getState().setOnboardingOpen(true);
       unlock(sessionKeys, vault.settings.autoLockMs);
       onVaultUnlocked(vault);
       await AppLifecycle.onUnlock(vault, sessionKeys, vault.settings.autoLockMs);

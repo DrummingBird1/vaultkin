@@ -29,6 +29,8 @@ interface UIState {
   /** Bumped to ask the Vault page to open the Add Entry dialog (palette, Ctrl+N). */
   newEntryRequest: number;
   paletteOpen: boolean;
+  /** First-run guide, opened once after a vault is created. */
+  onboardingOpen: boolean;
 
   setTheme: (t: Theme) => void;
   setAccent: (hex: string, name?: string) => void;
@@ -45,6 +47,7 @@ interface UIState {
   openEditEntry: (id: string) => void;
   requestNewEntry: () => void;
   setPaletteOpen: (open: boolean) => void;
+  setOnboardingOpen: (open: boolean) => void;
   consumeEditEntry: () => string | null;
 }
 
@@ -60,6 +63,7 @@ export const useUIStore = create<UIState>((set, get) => ({
   editEntryId: null,
   newEntryRequest: 0,
   paletteOpen: false,
+  onboardingOpen: false,
 
   setTheme: (t) => set({ theme: t }),
   setAccent: (hex, name) => set({ accentColor: { hex, name: name ?? hex } }),
@@ -90,6 +94,7 @@ export const useUIStore = create<UIState>((set, get) => ({
     set({ newEntryRequest: get().newEntryRequest + 1 });
   },
   setPaletteOpen: (open) => set({ paletteOpen: open }),
+  setOnboardingOpen: (open) => set({ onboardingOpen: open }),
   consumeEditEntry: () => {
     const id = get().editEntryId;
     if (id) set({ editEntryId: null });
