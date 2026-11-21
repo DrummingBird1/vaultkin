@@ -118,9 +118,10 @@ export function DeviceUnlockControl() {
       </label>
       <p className="text-xs text-(--text-tertiary) mt-1">
         {state.kind === "on"
-          ? t("settings.security.device.until", {
-              date: new Date(state.expiresAt).toLocaleDateString(i18n.language),
-            })
+          ? `${t(`settings.security.device.protection.${state.protection}`)} ${t(
+              "settings.security.device.until",
+              { date: new Date(state.expiresAt).toLocaleDateString(i18n.language) },
+            )}`
           : t(isMac ? "settings.security.device.hintMac" : "settings.security.device.hint")}
       </p>
     </div>

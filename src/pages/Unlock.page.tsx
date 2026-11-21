@@ -46,6 +46,9 @@ export function UnlockPage() {
   const [showCreate, setShowCreate] = useState(false);
   const [showPw, setShowPw] = useState(false);
   const [bioAvail, setBioAvail] = useState(false);
+  const [deviceProtection, setDeviceProtection] = useState<"hello" | "touchid" | "account" | null>(
+    null,
+  );
   const [shake, setShake] = useState(false);
   const [lockStatus, setLockStatus] = useState<LockStatus>(() => UnlockThrottleService.getStatus());
   const hint =
@@ -71,6 +74,7 @@ export function UnlockPage() {
       // a key for THIS vault's current master password is in the OS keystore.
       const dev = await DeviceUnlockService.state(stored).catch(() => null);
       setBioAvail(dev?.kind === "on");
+      setDeviceProtection(dev?.kind === "on" ? dev.protection : null);
       if (stored) setTimeout(() => inputRef.current?.focus(), 50);
     })();
   }, []);
@@ -274,9 +278,11 @@ export function UnlockPage() {
                     className="w-full flex items-center justify-center gap-3 py-3 rounded-xl border border-(--border-default) bg-(--bg-elevated) hover:border-(--accent) hover:bg-(--accent-dim) transition-all text-sm font-medium text-(--text-primary)"
                   >
                     <IconIdCard className="w-5 h-5" />{" "}
-                    {window.electron?.platform === "darwin"
+                    {deviceProtection === "touchid"
                       ? t("unlock.touchIdButton")
-                      : t("unlock.deviceButton")}
+                      : deviceProtection === "hello"
+                        ? t("unlock.helloButton")
+                        : t("unlock.deviceButton")}
                   </button>
                 )}
                 {bioAvail && (

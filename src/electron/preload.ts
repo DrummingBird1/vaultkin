@@ -44,6 +44,8 @@ contextBridge.exposeInMainWorld("electron", {
     status: () => ipcRenderer.invoke("sv-device-unlock-status"),
     save: (salt: string, rawB64: string): Promise<boolean> =>
       ipcRenderer.invoke("sv-device-unlock-save", salt, rawB64),
+    refresh: (salt: string): Promise<boolean> =>
+      ipcRenderer.invoke("sv-device-unlock-refresh", salt),
     load: (salt: string): Promise<string | null> =>
       ipcRenderer.invoke("sv-device-unlock-load", salt),
     clear: (): Promise<void> => ipcRenderer.invoke("sv-device-unlock-clear"),

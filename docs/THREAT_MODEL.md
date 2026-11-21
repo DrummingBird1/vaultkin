@@ -36,7 +36,7 @@ bridge between them (ADR 0007), and optional WebDAV sync. Cryptography details a
 | I | Clipboard history or cloud clipboard keeps copied passwords | Windows: copies carry `ExcludeClipboardContentFromMonitorProcessing`, `CanIncludeInClipboardHistory=0` and `CanUploadToCloudClipboard=0` (written through the OS PowerShell, secret on stdin); auto-clear after 30 s and on lock, but only if the clipboard still holds our copy | Done (M4). macOS/Linux have no history API; there it is the clear only |
 | I | Plaintext WebDAV credentials in browser storage | Kept inside the encrypted vault (`settings.sync`); only readable while unlocked; legacy `sessionStorage` copy migrated and deleted; https-only | Done (M4) |
 | I | Plaintext cached in the extension | Data minimization; 5-minute idle wipe; wiped on lock | Done |
-| I | Stolen remembered device key | Opt-in; OS keystore (DPAPI / Keychain), bound to the OS user; tied to the current master-password salt; expires 14 days after the last master-password unlock; Touch ID on macOS | Done (M4). Windows Hello prompt not yet (needs native module) |
+| I | Stolen remembered device key | Opt-in; OS keystore (DPAPI / Keychain), bound to the OS user; tied to the current master-password salt; expires 14 days after the last master-password unlock; Touch ID on macOS, Windows Hello on Windows | Done (M4). Windows: also wrapped under a Windows Hello signature when Hello is set up, so another process as the same user can't unwrap it with DPAPI alone; DPAPI only when Hello isn't set up |
 | **D**enial of service | Duress wipes the local vault | By design; synced copies are untouched (documented) | Accepted |
 | **E**levation of privilege | Renderer compromise reaches Node | `sandbox`, `contextIsolation`, no `nodeIntegration`; IPC handlers check the sender and validate input | Done |
 | E | A site gains camera, mic, HID or similar | Every permission request and check is denied | Done (M4) |
@@ -51,7 +51,6 @@ bridge between them (ADR 0007), and optional WebDAV sync. Cryptography details a
 
 ## Still to do (M4 remainder and later)
 
-- A Windows Hello prompt before releasing the remembered device key (native module).
 - WebAuthn PRF unlock.
 - Optional Secret Key.
 - Fuses, signing, SBOM and provenance in the release pipeline.

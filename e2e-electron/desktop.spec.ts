@@ -26,7 +26,14 @@ test.beforeAll(async () => {
   profile = fs.mkdtempSync(path.join(os.tmpdir(), "sv-e2e-"));
   app = await electron.launch({
     args: [root, `--user-data-dir=${profile}`],
-    env: { ...process.env, VITE_DEV_SERVER_URL: "http://localhost:5173", SV_NO_DEVTOOLS: "1" },
+    env: {
+      ...process.env,
+      VITE_DEV_SERVER_URL: "http://localhost:5173",
+      SV_NO_DEVTOOLS: "1",
+      // A Hello prompt can't be answered in CI; the Hello path is covered by
+      // the unit-tested wrap/unwrap and a manual check.
+      SV_DEVICE_UNLOCK_NO_HELLO: "1",
+    },
   });
   win = await app.firstWindow();
   await win.waitForLoadState("domcontentloaded");

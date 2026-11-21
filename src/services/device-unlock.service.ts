@@ -17,7 +17,9 @@ import { bytesToBase64, base64ToBytes } from "../core/crypto/encoding";
 import { WrongPasswordError } from "../core/errors";
 
 export type DeviceUnlockState =
-  { kind: "unsupported" } | { kind: "off" } | { kind: "on"; expiresAt: number };
+  | { kind: "unsupported" }
+  | { kind: "off" }
+  | { kind: "on"; expiresAt: number; protection: "hello" | "touchid" | "account" };
 
 const api = () => (typeof window !== "undefined" ? window.electron?.deviceUnlock : undefined);
 
@@ -32,7 +34,7 @@ export const DeviceUnlockService = {
     if (!s.enrolled || !storedPayload) return { kind: "off" };
     try {
       return s.salt === payloadSalt(storedPayload)
-        ? { kind: "on", expiresAt: s.expiresAt }
+        ? { kind: "on", expiresAt: s.expiresAt, protection: s.protection }
         : { kind: "off" };
     } catch {
       return { kind: "off" };
@@ -56,20 +58,18 @@ export const DeviceUnlockService = {
   },
 
   /**
-   * Master-password unlock. When this device is remembered, the stored key is
-   * refreshed (restarting its 14-day window) using the same single KDF run.
+   * Master-password unlock. When this device is remembered for this vault, its
+   * 14-day window restarts (no Hello / Touch ID prompt: the key is unchanged).
    */
   async openWithPassword(
     storedPayload: string,
     password: string,
     onProgress?: (p: number) => void,
   ): Promise<OpenVaultResult> {
+    const res = await openVault(storedPayload, password, onProgress);
     const a = api();
-    const st = await this.state(storedPayload);
-    if (!a || st.kind !== "on") return openVault(storedPayload, password, onProgress);
-    const raw = await exportDeviceKey(storedPayload, password, onProgress);
-    await a.save(payloadSalt(storedPayload), bytesToBase64(raw));
-    return openVaultWithDeviceKey(storedPayload, raw); // wipes raw
+    if (a) await a.refresh(payloadSalt(storedPayload)).catch(() => false);
+    return res;
   },
 
   /** Unlock without the master password. Null when the user cancelled or the

@@ -27,6 +27,9 @@
   (Win+V) and cloud clipboard sync, and are wiped when the vault locks. The
   30-second auto-clear no longer erases something you copied yourself
   afterwards.
+- Remember this device on Windows now uses Windows Hello (face, fingerprint or
+  PIN) when it's set up: the stored key can only be unwrapped after a Hello
+  check, not just by being signed in to Windows.
 
 ## [Unreleased] — M3 integrations (2026-11-21)
 

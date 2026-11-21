@@ -271,6 +271,9 @@ function startApp(): void {
     if (typeof raw !== "string" || raw.length !== 88 || !B64.test(raw)) return false;
     return deviceUnlock.save(salt, raw);
   });
+  ipcMain.handle("sv-device-unlock-refresh", (event, salt: unknown) =>
+    fromMainWindow(event) && isSalt(salt) ? deviceUnlock.refresh(salt) : false,
+  );
   ipcMain.handle("sv-device-unlock-load", (event, salt: unknown) =>
     fromMainWindow(event) && isSalt(salt) ? deviceUnlock.load(salt) : null,
   );

@@ -40,7 +40,8 @@
       "createButton": "Create New Vault"
     },
     "deviceButton": "Unlock with this device",
-    "touchIdButton": "Unlock with Touch ID"
+    "touchIdButton": "Unlock with Touch ID",
+    "helloButton": "Unlock with Windows Hello"
   },
   "countdown": {
     "seconds": "{{count}}s",
@@ -255,13 +256,18 @@
         "title": "Remember this device",
         "label": "Remember this device (unlock without the master password)",
         "labelMac": "Unlock with Touch ID",
-        "hint": "The vault key is kept encrypted by Windows for your account on this computer. You'll still need the master password at least every 14 days.",
+        "hint": "Uses Windows Hello (face, fingerprint or PIN) when it's set up; otherwise the key is protected by your Windows account. You'll still need the master password at least every 14 days.",
         "hintMac": "The vault key is kept in the macOS Keychain and released with Touch ID. You'll still need the master password at least every 14 days.",
         "until": "On. Master password needed again after {{date}}.",
         "confirm": "Enter your master password once to turn this on.",
         "turnOn": "Turn on",
         "enabled": "This device will be remembered",
-        "failed": "Couldn't turn this on on this device."
+        "failed": "Couldn't turn this on on this device.",
+        "protection": {
+          "hello": "Protected by Windows Hello.",
+          "touchid": "Protected by Touch ID.",
+          "account": "Protected by your Windows account (Windows Hello isn't set up)."
+        }
       }
     },
     "duress": {

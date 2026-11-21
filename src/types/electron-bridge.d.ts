@@ -36,9 +36,16 @@ export interface ElectronBridge {
     status: () => Promise<
       | { supported: false }
       | { supported: true; enrolled: false }
-      | { supported: true; enrolled: true; salt: string; expiresAt: number }
+      | {
+          supported: true;
+          enrolled: true;
+          salt: string;
+          expiresAt: number;
+          protection: "hello" | "touchid" | "account";
+        }
     >;
     save: (salt: string, rawB64: string) => Promise<boolean>;
+    refresh: (salt: string) => Promise<boolean>;
     load: (salt: string) => Promise<string | null>;
     clear: () => Promise<void>;
   };
