@@ -113,6 +113,10 @@ describe("generatePassphrase", () => {
     }
   });
 
+  it("has no word that contains the default separator or a non-letter", () => {
+    expect(WORDLIST.filter((w) => !/^[a-z]+$/.test(w))).toEqual([]);
+  });
+
   it("does not capitalize when capitalize: false", () => {
     const words = generatePassphrase({ words: 6, capitalize: false, includeNumber: false }).split(
       "-",

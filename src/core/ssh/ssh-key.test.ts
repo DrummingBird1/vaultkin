@@ -62,6 +62,12 @@ describe("SSH keys", () => {
       const k = await generateSshKey("interop");
       const f = path.join(dir, "ours");
       fs.writeFileSync(f, k.privateKey, { mode: 0o600 });
+      // Windows ignores the mode; Win32-OpenSSH then rejects the key if the
+      // temp folder's inherited ACL lets any other account read it.
+      if (process.platform === "win32")
+        execFileSync("icacls", [f, "/inheritance:r", "/grant:r", `${os.userInfo().username}:F`], {
+          stdio: "ignore",
+        });
       const pub = execFileSync("ssh-keygen", ["-y", "-f", f], { encoding: "utf8" }).trim();
       expect(pub.split(" ").slice(0, 2).join(" ")).toBe(
         k.publicKey.split(" ").slice(0, 2).join(" "),
