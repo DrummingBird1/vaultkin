@@ -127,6 +127,9 @@ const config: Configuration = {
       { target: "rpm", arch: ["x64"] },
     ],
     category: "Utility",
+    // deb/rpm require a maintainer with an email; use the project's public
+    // GitHub noreply address, never a personal mailbox.
+    maintainer: "Vaultkin <1979036+DrummingBird1@users.noreply.github.com>",
   },
 
   afterPack: hardenElectronFuses,
