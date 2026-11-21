@@ -53,7 +53,13 @@ async function hardenElectronFuses(context: AfterPackContext): Promise<void> {
       ? path.join(appOutDir, `${productName}.app`, "Contents", "MacOS", productName)
       : electronPlatformName === "win32"
         ? path.join(appOutDir, `${productName}.exe`)
-        : path.join(appOutDir, productName);
+        : // Linux names the binary after linux.executableName, which defaults to
+          // the lowercased package name ("vaultkin"), not the product name.
+          path.join(
+            appOutDir,
+            (packager as unknown as { executableName?: string }).executableName ??
+              packager.appInfo.sanitizedName,
+          );
 
   await flipFuses(electronBinaryPath, {
     version: FuseVersion.V1,
