@@ -53,6 +53,7 @@ securevault/
 │   ├── components/{modals,vault,layout}/     # *.modal.tsx, vault views (grid/list/service), app shell
 │   ├── hooks/
 │   ├── pages/                                # *.page.tsx — Vault, Unlock, Authenticator, Generator, Health, Settings
+│   ├── cli/                                  # `sv` CLI (read-only, bundled by scripts/build-cli.mjs → dist/cli/sv.cjs)
 │   ├── i18n/                                 # react-i18next setup, en/he locales (partial migration — see gotchas)
 │   ├── electron/                             # main process, preload, updater
 │   └── styles/globals.css                    # sv-* design-system layer
@@ -104,6 +105,7 @@ Load-bearing for the zero-knowledge model. Breaking them is a security regressio
 - [LAUNCH.md](LAUNCH.md) — launcher usage and how to make a Start-menu / dock shortcut.
 - [docs/USER_GUIDE.md](docs/USER_GUIDE.md) — comprehensive end-user guide (Hebrew).
 - [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) — known issues + recovery paths (Hebrew).
+- [docs/CLI.md](docs/CLI.md) — the `sv` command line tool.
 - [docs/adr/](docs/adr/) — architecture decision records (KDF choice, Recovery Kit snapshot design, no-PSL-dependency).
 - [extension/README.md](extension/README.md) — extension dev install.
 

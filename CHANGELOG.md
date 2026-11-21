@@ -20,6 +20,9 @@
   vault in a folder another tool syncs (Syncthing, OneDrive, Dropbox, NAS),
   updated after every change. A copy changed on another device is never
   overwritten: pull it and merge first.
+- `sv` command line tool (read-only): list entries, print a field or the
+  current 2FA code, and fill `.env`-style templates from the vault file in
+  the sync folder. See docs/CLI.md.
 
 ### Fixed
 - New entries silently dropped fields the store didn't list (found while

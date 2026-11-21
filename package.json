@@ -15,6 +15,7 @@
     "build:analyze": "cross-env BUILD_ANALYZE=true pnpm run build",
     "build:electron": "tsc -p config/tsconfig.electron.json",
     "build:extension": "node scripts/build-extension.mjs",
+    "build:cli": "node scripts/build-cli.mjs",
     "validate:extension": "node scripts/validate-extension-manifest.mjs",
     "dev": "vite --config config/vite.config.ts",
     "electron:build": "pnpm run build && pnpm run build:electron",
@@ -122,5 +123,8 @@
     "*.{json,css,md}": [
       "prettier --write"
     ]
+  },
+  "bin": {
+    "sv": "dist/cli/sv.cjs"
   }
 }
