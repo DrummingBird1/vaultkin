@@ -76,6 +76,7 @@ export function TagInput({
           onKeyDown={handleKeyDown}
           onFocus={() => setShowSuggestions(true)}
           onBlur={() => setShowSuggestions(false)}
+          aria-label="Tags"
           placeholder={value.length === 0 ? "Add tags…" : ""}
           className="flex-1 min-w-[80px] bg-transparent outline-hidden text-sm text-(--text-primary) placeholder-(--text-tertiary)"
         />
