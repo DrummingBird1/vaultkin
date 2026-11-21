@@ -1,5 +1,41 @@
 # Changelog
 
+## [Unreleased] — M2 design, UX and desktop (2026-11-21)
+
+### Added
+- Command palette (Ctrl/⌘+K): search entries (never by password or notes),
+  copy password / username / 2FA code, open or edit entries, jump to pages and
+  Settings sections, lock, theme.
+- Quick Access hotkey Ctrl/⌘+Shift+Space on desktop: brings the window forward
+  and opens the palette (ADR 0006).
+- Complete Hebrew interface with right-to-left layout (579 strings, Hebrew dual
+  plurals); password crack time and strength tips localized via Intl.
+- First-run guide after creating a vault: Recovery Kit, import, shortcuts and
+  language.
+- Desktop: frameless window with native caption buttons that follow the theme;
+  works with caption buttons on either side (right-to-left Windows).
+- Design tokens v2 (radius, shadow, motion, focus ring, semantic Tailwind
+  colors), lucide icons, thin themed scrollbars.
+- Tests: axe accessibility E2E on every page, dialog and onboarding step in
+  English and Hebrew; Electron E2E suite (`pnpm test:e2e:electron`) on the real
+  desktop app with a throwaway profile.
+
+### Changed
+- Fonts are bundled (@fontsource) instead of loaded from Google Fonts: no
+  third-party request on launch, works offline.
+
+### Fixed
+- Accent-colored text below 4.5:1 contrast (new runtime `--accent-text`).
+- Show/hide password buttons below the 24px touch-target size.
+- Buttons whose accessible name didn't match their visible text.
+- Generator length slider had no label.
+- Crack-time estimates above a million years were shown as "centuries".
+- First keystrokes after the first Ctrl+K were lost while the palette loaded.
+
+### Verified
+- The Electron desktop app runs and renders (the "black screen" item from the
+  old roadmap is fixed).
+
 ## [Unreleased] — M0/M1 foundation (2026-11-21)
 
 ### Added

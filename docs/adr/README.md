@@ -23,6 +23,7 @@ existing ADR.
 | [0003](0003-no-psl-dependency.md) | Hand-curated multi-part-TLD list instead of the `psl` package | Accepted |
 | [0004](0004-vault-schema-migrations.md) | Versioned vault schema with forward-only migrations | Accepted |
 | [0005](0005-hash-routing.md) | Typed hash routing on the UI store instead of a router library | Accepted |
+| [0006](0006-quick-access-in-main-window.md) | Quick Access reuses the main window instead of a second window | Accepted |
 
 ## Numbering
 
