@@ -113,6 +113,7 @@ Load-bearing for the zero-knowledge model. Breaking them is a security regressio
 - **i18n is a proof of concept.** Real infrastructure (`src/i18n/`, en/he locales), but only the Unlock page is migrated to `useTranslation()` — every other page/component still has hardcoded English regardless of the language setting. Deliberately partial, not half-finished.
 - **Extension `externally_connectable.matches` contains a placeholder** (`https://*.your-securevault-host.com/*` in [extension/manifest.json](extension/manifest.json)). Replace before shipping.
 - **Extension PNG icons are placeholders.** Generate real ones before Web Store submission.
-- **QR encoder ([src/lib/qrcode.ts](src/lib/qrcode.ts)) is single-block / single-mask** and omits alignment patterns. Fine for v1; v2+ may not scan reliably. Verify with real scanners or swap for `qrcode-generator`.
+- **QR backup** uses `qrcode-generator` (full spec) in `VaultBackupQR.modal.tsx`; the old hand-rolled `src/lib/qrcode.ts` was removed. Still verify with a real scanner.
+- **WebDAV pull never overwrites blindly**: pull → `RemoteUnlockModal` (remote master password) → `ConflictResolutionModal` (merge / keep local / keep remote) → autosave re-encrypts under the current session keys.
 - **`ImportVault` 50 MB cap reads the full file into memory.** Streaming parser preferred for large LastPass exports.
 - **`BulkActionBar` only supports delete**, not move-to-folder or add-tag — a known, scoped limitation, not an oversight.

@@ -30,10 +30,45 @@ function refreshTimeout() {
   }
 }
 
+// Defense in depth: Chrome already restricts onMessageExternal to the
+// externally_connectable.matches origins, but we re-check the sender origin
+// against the same list so a manifest slip (e.g. a broad wildcard) can't
+// silently widen who may push credentials into the cache.
+const ALLOWED_ORIGIN_PATTERNS = (
+  chrome.runtime.getManifest().externally_connectable?.matches ?? []
+).map(
+  (m) =>
+    new RegExp(
+      "^" +
+        m
+          .replace(/\/\*$/, "")
+          .replace(/[.+?^${}()|[\]\\]/g, "\\$&")
+          .replace(/\*/g, "[^/]*") +
+        "$",
+    ),
+);
+
+function isAllowedSender(sender) {
+  const origin = sender?.origin ?? (sender?.url ? new URL(sender.url).origin : "");
+  return !!origin && ALLOWED_ORIGIN_PATTERNS.some((re) => re.test(origin));
+}
+
+// Invariant 9 (AGENTS.md): only these fields may ever be cached.
+const ALLOWED_FIELDS = ["id", "title", "url", "username", "password", "totpSecret"];
+function sanitizeEntry(e) {
+  const out = {};
+  for (const k of ALLOWED_FIELDS) if (typeof e?.[k] === "string") out[k] = e[k];
+  return out;
+}
+
 // Messages from the main web app (externally_connectable origins only)
 chrome.runtime.onMessageExternal.addListener((msg, sender, sendResponse) => {
+  if (!isAllowedSender(sender)) {
+    sendResponse({ ok: false, error: "Sender not allowed" });
+    return;
+  }
   if (msg?.type === "SV_SYNC_ENTRIES" && Array.isArray(msg.entries)) {
-    sessionCache.entries = msg.entries;
+    sessionCache.entries = msg.entries.map(sanitizeEntry).filter((e) => e.id);
     sessionCache.receivedAt = Date.now();
     sessionCache.expiresAt = Date.now() + SESSION_TIMEOUT_MS;
     console.info(`[SV-Ext] Received ${msg.entries.length} entries from main app`);

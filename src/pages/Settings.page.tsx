@@ -11,6 +11,9 @@ import { ChangePasswordModal } from "../components/modals/ChangePassword.modal";
 import { VaultBackupQRModal } from "../components/modals/VaultBackupQR.modal";
 import { UpgradeEncryptionModal } from "../components/modals/UpgradeEncryption.modal";
 import { RecoveryKitModal } from "../components/modals/RecoveryKit.modal";
+import { RemoteUnlockModal } from "../components/modals/RemoteUnlock.modal";
+import { ConflictResolutionModal } from "../components/modals/ConflictResolution.modal";
+import type { VaultData } from "../core/vault/schema";
 import { IPCService } from "../services/ipc.service";
 import { DuressService } from "../services/duress.service";
 import { ExtensionBridge } from "../services/extension-bridge.service";
@@ -197,13 +200,14 @@ export function SettingsPage() {
     }
   };
 
+  // Pull flow: download → unlock remote (RemoteUnlockModal) → diff/merge
+  // (ConflictResolutionModal) → the winner replaces the open vault and is
+  // re-encrypted by autosave under the CURRENT session keys. Nothing is
+  // overwritten until the user picks a resolution.
+  const [pulledPayload, setPulledPayload] = useState<string | null>(null);
+  const [remoteVault, setRemoteVault] = useState<VaultData | null>(null);
+
   const handleSyncPull = async () => {
-    if (
-      !window.confirm(
-        "Restore from WebDAV?\n\nThis OVERWRITES your local vault with the remote copy. You'll re-enter your master password afterwards.",
-      )
-    )
-      return;
     setSyncBusy(true);
     try {
       const { result, payload } = await SyncService.pull();
@@ -215,12 +219,27 @@ export function SettingsPage() {
         toastError("Restore failed", "Remote returned empty data.");
         return;
       }
-      await IPCService.vault.save(payload);
-      lockApplication("manual");
-      window.location.reload();
+      setPulledPayload(payload);
     } finally {
       setSyncBusy(false);
     }
+  };
+
+  const handleResolve = (winner: VaultData, strategy: "local" | "remote" | "merge") => {
+    setRemoteVault(null);
+    setPulledPayload(null);
+    if (strategy === "local") {
+      toastSuccess("Kept local vault", "Push to update the WebDAV copy.");
+      return;
+    }
+    useVaultStore.setState({
+      vault: { ...winner, settings: vault?.settings ?? winner.settings },
+      isDirty: true,
+    });
+    toastSuccess(
+      strategy === "merge" ? "Vaults merged" : "Remote vault applied",
+      "Saved locally. Push to update the WebDAV copy.",
+    );
   };
 
   const persistSettings = (
@@ -255,6 +274,24 @@ export function SettingsPage() {
 
   return (
     <>
+      {pulledPayload && !remoteVault && (
+        <RemoteUnlockModal
+          payload={pulledPayload}
+          onOpened={setRemoteVault}
+          onCancel={() => setPulledPayload(null)}
+        />
+      )}
+      {remoteVault && vault && (
+        <ConflictResolutionModal
+          local={vault}
+          remote={remoteVault}
+          onResolve={handleResolve}
+          onCancel={() => {
+            setRemoteVault(null);
+            setPulledPayload(null);
+          }}
+        />
+      )}
       {showChangePw && <ChangePasswordModal onClose={() => setShowChangePw(false)} />}
       {showQR && <VaultBackupQRModal onClose={() => setShowQR(false)} />}
       {showUpgradeKdf && <UpgradeEncryptionModal onClose={() => setShowUpgradeKdf(false)} />}

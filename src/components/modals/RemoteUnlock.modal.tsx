@@ -1,0 +1,82 @@
+/**
+ * @file RemoteUnlock.modal.tsx
+ * Asks for the master password of a vault pulled from WebDAV so it can be
+ * decrypted locally and diffed against the open vault (ConflictResolutionModal).
+ * The remote copy may use a different salt/KDF, so the current session keys
+ * can't open it — the password is needed. It is only passed to openVault()
+ * and never stored.
+ */
+import React, { useState } from "react";
+import { openVault } from "../../core/vault/serializer";
+import { WrongPasswordError } from "../../core/errors";
+import type { VaultData } from "../../core/vault/schema";
+
+interface Props {
+  payload: string;
+  onOpened: (remote: VaultData) => void;
+  onCancel: () => void;
+}
+
+export function RemoteUnlockModal({ payload, onOpened, onCancel }: Props) {
+  const [pw, setPw] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setBusy(true);
+    setErr("");
+    try {
+      const { vault } = await openVault(payload, pw);
+      setPw("");
+      onOpened(vault);
+    } catch (ex: unknown) {
+      setErr(
+        ex instanceof WrongPasswordError
+          ? "Wrong password for the remote vault."
+          : "Remote vault could not be opened.",
+      );
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="sv-modal-backdrop" onKeyDown={(e) => e.key === "Escape" && onCancel()}>
+      <form
+        className="sv-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="remote-unlock-title"
+        onSubmit={submit}
+      >
+        <h2 id="remote-unlock-title" className="sv-modal-title mb-1">
+          Unlock remote vault
+        </h2>
+        <p className="sv-modal-subtitle mb-4">
+          Enter the master password of the WebDAV copy. Usually it is the same as this vault's.
+        </p>
+        <input
+          type="password"
+          className="sv-input mb-2"
+          autoFocus
+          autoComplete="current-password"
+          value={pw}
+          onChange={(e) => setPw(e.target.value)}
+          aria-label="Remote master password"
+        />
+        {err && <p className="sv-error mb-2">{err}</p>}
+        <div className="flex gap-3 justify-end mt-4">
+          <button type="button" onClick={onCancel} className="sv-btn-secondary">
+            Cancel
+          </button>
+          <button type="submit" disabled={busy || !pw} className="sv-btn-primary">
+            {busy ? "Decrypting…" : "Continue"}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
+export default RemoteUnlockModal;
