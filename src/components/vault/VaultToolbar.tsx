@@ -3,7 +3,7 @@ import React from "react";
 import { IconPlus, IconSearch, IconTag } from "../icons";
 
 const ghost =
-  "flex items-center gap-1.5 text-xs text-(--text-tertiary) hover:text-(--text-secondary) px-3 py-2 rounded-xl border border-(--border-subtle) hover:border-(--border-default) transition-colors";
+  "flex shrink-0 items-center gap-1.5 whitespace-nowrap text-xs text-(--text-tertiary) hover:text-(--text-secondary) px-3 py-2 rounded-xl border border-(--border-subtle) hover:border-(--border-default) transition-colors";
 
 export function VaultToolbar({
   searchRef,
@@ -26,8 +26,8 @@ export function VaultToolbar({
 }) {
   const { t } = useTranslation();
   return (
-    <div className="flex items-center gap-3 px-5 py-3 border-b border-(--border-subtle)">
-      <div className="relative flex-1">
+    <div className="flex flex-wrap items-center gap-3 px-5 py-3 border-b border-(--border-subtle)">
+      <div className="relative min-w-40 flex-1">
         <IconSearch
           aria-hidden="true"
           className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-(--text-tertiary) pointer-events-none"
@@ -56,7 +56,7 @@ export function VaultToolbar({
       </button>
       <button
         onClick={onAdd}
-        className="flex items-center gap-1.5 text-sm font-medium px-4 py-2 rounded-xl bg-(--accent-solid) text-white hover:opacity-90 transition-opacity"
+        className="flex shrink-0 items-center gap-1.5 whitespace-nowrap text-sm font-medium px-4 py-2 rounded-xl bg-(--accent-solid) text-white hover:opacity-90 transition-opacity"
       >
         <IconPlus className="w-4 h-4" /> {t("vault.addEntry")}
       </button>

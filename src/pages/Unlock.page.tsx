@@ -18,6 +18,7 @@ import { DeviceUnlockService } from "../services/device-unlock.service";
 import { DuressService } from "../services/duress.service";
 import { UnlockThrottleService, type LockStatus } from "../services/unlock-throttle.service";
 import { CreateVaultModal } from "../components/modals/CreateVault.modal";
+import { VaultkinLogo } from "../components/VaultkinLogo";
 import {
   IconEye,
   IconEyeOff,
@@ -232,19 +233,13 @@ export function UnlockPage() {
           {/* Logo */}
           <div className="flex flex-col items-center mb-10">
             <div
-              className="w-16 h-16 rounded-2xl bg-(--accent-dim) border border-(--accent)/20 flex items-center justify-center mb-4"
+              className="w-16 h-16 rounded-2xl mb-4"
               style={{
                 boxShadow: "0 0 40px rgba(var(--accent-rgb),0.2)",
                 animation: "glow 3s ease-in-out infinite",
               }}
             >
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
-                <path
-                  d="M12 2C9.24 2 7 4.24 7 7v2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2h-2V7c0-2.76-2.24-5-5-5zm0 13a2 2 0 1 1 0-4 2 2 0 0 1 0 4zm3-7H9V7a3 3 0 0 1 6 0v1z"
-                  fill="currentColor"
-                  className="text-(--accent-text)"
-                />
-              </svg>
+              <VaultkinLogo size={64} />
             </div>
             <h1 className="text-2xl font-bold text-(--text-primary) font-display tracking-tight">
               {t("app.name")}

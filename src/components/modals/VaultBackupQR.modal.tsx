@@ -37,8 +37,12 @@ export function VaultBackupQRModal({ onClose }: Props) {
 
   useEffect(() => {
     const h = (e: KeyboardEvent) => {
-      if (e.key === "ArrowRight") setPage((p) => Math.min(p + 1, chunks.length - 1));
-      if (e.key === "ArrowLeft") setPage((p) => Math.max(p - 1, 0));
+      // "Next" is the reading direction: right in LTR, left in RTL (Hebrew).
+      const rtl = document.documentElement.dir === "rtl";
+      const next = rtl ? "ArrowLeft" : "ArrowRight";
+      const prev = rtl ? "ArrowRight" : "ArrowLeft";
+      if (e.key === next) setPage((p) => Math.min(p + 1, chunks.length - 1));
+      if (e.key === prev) setPage((p) => Math.max(p - 1, 0));
     };
     window.addEventListener("keydown", h);
     return () => window.removeEventListener("keydown", h);

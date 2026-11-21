@@ -14,6 +14,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { useUIStore, type ActivePage } from "../../store/ui.store";
+import { VaultkinLogo } from "../VaultkinLogo";
 import { lockApplication } from "../../store";
 
 const NAV: Array<{ id: ActivePage; icon: LucideIcon }> = [
@@ -31,9 +32,7 @@ export function Sidebar() {
   return (
     <aside className="w-56 shrink-0 bg-(--bg-surface) border-e border-(--border-subtle) flex flex-col">
       <div className="app-drag titlebar-reserve-traffic-lights p-5 flex items-center gap-2">
-        <div className="w-8 h-8 rounded-lg bg-(--accent-dim) border border-(--accent)/20 flex items-center justify-center text-(--accent-text)">
-          <Lock aria-hidden="true" className="w-4 h-4" />
-        </div>
+        <VaultkinLogo size={32} simple />
         <span className="font-display font-semibold text-(--text-primary)">{t("app.name")}</span>
       </div>
       <nav aria-label={t("nav.primary")} className="flex-1 px-3 flex flex-col gap-0.5">
