@@ -100,7 +100,7 @@ jobs:
           fail_ci_if_error: false
 
       - name: Upload test results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: test-results-${{ matrix.os }}
@@ -132,7 +132,7 @@ jobs:
           pnpm list qrcode-generator
       - name: Generate SBOM (CycloneDX)
         run: pnpm run sbom
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: sbom
           path: sbom.json
@@ -149,7 +149,7 @@ jobs:
       - run: pnpm run build
         env:
           NODE_ENV: production
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: web-dist
           path: dist/renderer/
@@ -176,7 +176,7 @@ jobs:
           name: web-dist
           path: dist/renderer
       - run: pnpm run lighthouse
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: lighthouse-report
@@ -209,7 +209,7 @@ jobs:
         env:
           CI: true
       - name: Upload Playwright report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: playwright-report
@@ -231,7 +231,7 @@ jobs:
         run: node scripts/validate-extension-manifest.mjs
       - name: Build extension bundle
         run: pnpm run build:extension
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: extension-dist
           path: dist/extension/
@@ -256,7 +256,7 @@ jobs:
           (cd dist/extension && zip -qr "../../extras/Vaultkin-extension-chrome-${GITHUB_REF_NAME}.zip" .)
           (cd dist/extension-firefox && zip -qr "../../extras/Vaultkin-extension-firefox-${GITHUB_REF_NAME}.zip" .)
           cp dist/cli/sv.cjs "extras/sv-${GITHUB_REF_NAME}.cjs"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: electron-extras-${{ github.ref_name }}
           path: extras/*
@@ -318,7 +318,7 @@ jobs:
         run: pnpm run electron:dist:linux --publish never
 
       - name: Upload distributables
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: electron-${{ matrix.platform }}-${{ github.ref_name }}
           path: release/**/*
