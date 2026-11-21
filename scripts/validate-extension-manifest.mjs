@@ -104,9 +104,7 @@ if (manifest.host_permissions?.includes("<all_urls>")) {
 }
 
 if (JSON.stringify(manifest).includes("your-securevault-host.com")) {
-  warn(
-    "externally_connectable still contains the your-securevault-host.com placeholder — expected for this self-hosted OSS project until deployed somewhere real (see CLAUDE.md known gotchas), not a failure.",
-  );
+  fail("manifest still contains the your-securevault-host.com placeholder host.");
 }
 
 if (errors > 0) {

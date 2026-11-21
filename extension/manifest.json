@@ -40,9 +40,9 @@
   "permissions": ["activeTab", "storage", "scripting", "clipboardWrite", "nativeMessaging"],
   "host_permissions": ["<all_urls>"],
   "externally_connectable": {
-    "matches": ["http://localhost:5173/*", "https://*.your-securevault-host.com/*"]
+    "matches": ["http://localhost:5173/*"]
   },
   "content_security_policy": {
-    "extension_pages": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self' http://localhost:5173 https://*.your-securevault-host.com; img-src 'self' data:;"
+    "extension_pages": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self' http://localhost:5173; img-src 'self' data:;"
   }
 }

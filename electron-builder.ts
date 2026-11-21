@@ -57,7 +57,13 @@ async function hardenElectronFuses(context: AfterPackContext): Promise<void> {
 
   await flipFuses(electronBinaryPath, {
     version: FuseVersion.V1,
-    [FuseV1Options.RunAsNode]: false,
+    // ON for now: the browser-extension native-messaging host
+    // (dist/electron/bridge-host.js) runs as `SecureVault.exe` with
+    // ELECTRON_RUN_AS_NODE=1 (the GUI binary can't speak the stdio protocol).
+    // Turning this off broke the extension in packaged builds. Release
+    // blocker tracked in docs/RELEASE.md: ship a standalone host binary, then
+    // set this to false. The inspector / NODE_OPTIONS fuses below stay off.
+    [FuseV1Options.RunAsNode]: true,
     [FuseV1Options.EnableCookieEncryption]: true,
     [FuseV1Options.EnableNodeOptionsEnvironmentVariable]: false,
     [FuseV1Options.EnableNodeCliInspectArguments]: false,
@@ -81,6 +87,7 @@ const config: Configuration = {
   // no extraMetadata override needed.
   files: [
     "dist/electron/**/*",
+    "!dist/electron/**/*.test.js",
     "dist/renderer/**/*",
     "package.json",
     "!**/*.map",

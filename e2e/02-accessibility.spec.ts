@@ -50,6 +50,9 @@ for (const lang of ["en", "he"] as const) {
     });
 
     test("every page, the add-entry dialog and the command palette", async ({ page }) => {
+      // Any uncaught page error (e.g. a render loop) fails the test.
+      const pageErrors: string[] = [];
+      page.on("pageerror", (e) => pageErrors.push(e.message));
       await freshVault(page, lang);
       await page
         .locator("button")
@@ -85,6 +88,7 @@ for (const lang of ["en", "he"] as const) {
       await page.keyboard.press("Control+K");
       await expect(page.getByRole("combobox")).toBeVisible();
       await audit(page, "command palette");
+      expect(pageErrors).toEqual([]);
     });
   });
 }

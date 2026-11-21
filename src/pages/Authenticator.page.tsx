@@ -2,7 +2,7 @@
  * @file src/pages/Authenticator.page.tsx
  * Live TOTP codes for entries with totpSecret set.
  */
-import React, { useEffect } from "react";
+import React, { useEffect, useMemo } from "react";
 import { useVaultStore } from "../store/vault.store";
 import { useTOTPStore } from "../store/totp.store";
 import { useQuickCopy } from "../hooks/useQuickCopy";
@@ -14,7 +14,9 @@ export function AuthenticatorPage() {
   const { codes, refresh } = useTOTPStore();
   const quickCopy = useQuickCopy();
 
-  const totpEntries = entries.filter((e) => !!e.totpSecret);
+  // Memoized: a fresh array every render re-ran the effect below, whose
+  // refresh() re-rendered the page → "Maximum update depth exceeded".
+  const totpEntries = useMemo(() => entries.filter((e) => !!e.totpSecret), [entries]);
 
   useEffect(() => {
     let stopped = false;

@@ -89,6 +89,23 @@ await build({
 
 console.log(`Extension bundled to ${path.relative(root, outDir)}/`);
 
+// ── Release mode (`--release`): store packages carry no dev hosts ─────────
+// externally_connectable only exists for the dev web build on localhost; the
+// desktop app talks to the extension over native messaging (ADR 0007).
+const RELEASE = process.argv.includes("--release");
+if (RELEASE) {
+  const mPath = path.join(outDir, "manifest.json");
+  const m = JSON.parse(readFileSync(mPath, "utf8"));
+  delete m.externally_connectable;
+  if (m.content_security_policy?.extension_pages)
+    m.content_security_policy.extension_pages = m.content_security_policy.extension_pages.replace(
+      / ?http:\/\/localhost:5173/g,
+      "",
+    );
+  writeFileSync(mPath, JSON.stringify(m, null, 2));
+  console.log("Release manifest: dev hosts removed");
+}
+
 // ── Firefox package ─────────────────────────────────────────────────────────
 // Same bundles; the manifest differs: background scripts instead of a service
 // worker, a fixed add-on id (native messaging allows it by id), no
@@ -102,8 +119,9 @@ ff.background = { scripts: [ff.background.service_worker], type: "module" };
 delete ff.externally_connectable;
 ff.browser_specific_settings = { gecko: { id: FIREFOX_ID, strict_min_version: "128.0" } };
 if (ff.content_security_policy?.extension_pages)
-  ff.content_security_policy.extension_pages = ff.content_security_policy.extension_pages
-    .replace(/ ?http:\/\/localhost:5173/g, "")
-    .replace(/ ?https:\/\/\*\.your-securevault-host\.com/g, "");
+  ff.content_security_policy.extension_pages = ff.content_security_policy.extension_pages.replace(
+    / ?http:\/\/localhost:5173/g,
+    "",
+  );
 writeFileSync(path.join(ffDir, "manifest.json"), JSON.stringify(ff, null, 2));
 console.log(`Firefox package in ${path.relative(root, ffDir)}/`);

@@ -26,8 +26,12 @@ import * as folderSync from "./folder-sync";
 import { writeSecretExcludedFromHistory } from "./secure-clipboard";
 import { createHash } from "crypto";
 import { startSshAgent, sshAgentPath, type AgentRequest, type AgentIdentity } from "./ssh-agent";
+import { APP_ORIGIN, APP_URL, handleAppProtocol, registerAppScheme } from "./app-protocol";
 
 const isDev = !!process.env.VITE_DEV_SERVER_URL || !app.isPackaged;
+
+// Production renderer is served from app://securevault (see app-protocol.ts).
+registerAppScheme();
 
 // Local-only crash capture — uploadToServer: false means dumps are written
 // to app.getPath("crashDumps") and NEVER transmitted anywhere. This is not
@@ -63,8 +67,8 @@ const DEV_URL = process.env.VITE_DEV_SERVER_URL ?? "http://localhost:5173";
 function isAppUrl(url: string): boolean {
   try {
     const u = new URL(url);
-    if (u.protocol === "file:") return !isDev;
-    return isDev && u.origin === new URL(DEV_URL).origin;
+    if (!isDev) return u.origin === APP_ORIGIN;
+    return u.origin === new URL(DEV_URL).origin;
   } catch {
     return false;
   }
@@ -173,7 +177,7 @@ function createWindow(): void {
       win.webContents.openDevTools({ mode: "right" });
     }
   } else {
-    win.loadFile(path.join(__dirname, "../renderer/index.html"));
+    win.loadURL(APP_URL);
   }
 }
 
@@ -388,6 +392,7 @@ function startApp(): void {
       logFile: mainLog.filePath(),
     });
     lockDownSession();
+    if (!isDev) handleAppProtocol(path.join(__dirname, "../renderer"));
     wireSystemLock();
     createWindow();
     try {
