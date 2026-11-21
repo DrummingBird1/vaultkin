@@ -54,7 +54,7 @@ export const EntryCard = React.memo(function EntryCard({
         </p>
       </div>
       {entry.totpSecret && (
-        <span className="self-start text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-(--accent-dim) text-(--accent) border border-(--accent)/20">
+        <span className="self-start text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-(--accent-dim) text-(--accent-text) border border-(--accent)/20">
           {t("entryCard.twoFactor")}
         </span>
       )}

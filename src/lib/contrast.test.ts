@@ -26,3 +26,26 @@ describe("contrast", () => {
     expect(solidAccent("tomato")).toBe("tomato");
   });
 });
+
+import { readableAccent } from "./contrast";
+
+describe("readableAccent", () => {
+  const dark = ["#0d0d12", "#15151b", "#1c1c24", "#232330"];
+  const light = ["#fafafb", "#ffffff", "#f4f4f6", "#eaeaf0"];
+  const palette = ["#6366F1", "#8B5CF6", "#EC4899", "#10B981", "#F59E0B", "#EF4444"];
+
+  it("every palette accent reaches 4.5:1 as text on every surface of both themes", () => {
+    for (const hex of palette) {
+      for (const bgs of [dark, light]) {
+        const c = readableAccent(hex, bgs);
+        for (const bg of bgs) expect(contrastRatio(c, bg)).toBeGreaterThanOrEqual(4.5);
+      }
+    }
+  });
+
+  it("returns a color that already passes unchanged, and ignores bad input", () => {
+    expect(readableAccent("#ffffff", dark)).toBe("#ffffff");
+    expect(readableAccent("nope", dark)).toBe("nope");
+    expect(readableAccent("#6366f1", [])).toBe("#6366f1");
+  });
+});

@@ -54,7 +54,6 @@ export function TopBar() {
       <button
         type="button"
         onClick={() => setPaletteOpen(true)}
-        aria-label={t("topbar.openPalette")}
         aria-keyshortcuts={isMac ? "Meta+K" : "Control+K"}
         className="flex-1 max-w-md mx-auto flex items-center gap-2 px-3 py-1.5 rounded-xl border border-(--border-default) bg-(--bg-elevated) text-sm text-(--text-tertiary) hover:border-(--border-strong) transition-colors"
       >

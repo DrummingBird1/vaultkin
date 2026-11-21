@@ -117,7 +117,7 @@ export function EntryDetail({
           <button
             onClick={onEdit}
             aria-label={t("entry.edit")}
-            className="p-1.5 rounded-lg text-(--text-tertiary) hover:text-(--accent) hover:bg-(--accent-dim) transition-colors text-xs"
+            className="p-1.5 rounded-lg text-(--text-tertiary) hover:text-(--accent-text) hover:bg-(--accent-dim) transition-colors text-xs"
           >
             {t("entryDetail.edit")}
           </button>
@@ -143,14 +143,14 @@ export function EntryDetail({
                 href={entry.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-sm text-(--accent) hover:underline truncate flex-1"
+                className="text-sm text-(--accent-text) hover:underline truncate flex-1"
               >
                 {entry.url}
               </a>
               <button
                 onClick={() => copyField(entry.url!, t("entryDetail.url"))}
                 aria-label={t("entryDetail.copyUrl")}
-                className="text-(--text-tertiary) hover:text-(--accent) transition-colors text-xs shrink-0"
+                className="text-(--text-tertiary) hover:text-(--accent-text) transition-colors text-xs shrink-0"
               >
                 {t("entryDetail.copy")}
               </button>
@@ -171,7 +171,7 @@ export function EntryDetail({
               <button
                 onClick={() => copyField(entry.username!, t("entryDetail.username"))}
                 aria-label={t("entryDetail.copyUsername")}
-                className="text-(--text-tertiary) hover:text-(--accent) transition-colors text-xs"
+                className="text-(--text-tertiary) hover:text-(--accent-text) transition-colors text-xs"
               >
                 {t("entryDetail.copy")}
               </button>
@@ -199,7 +199,7 @@ export function EntryDetail({
               <button
                 onClick={() => copyField(entry.password!, t("entryDetail.password"))}
                 aria-label={t("entryDetail.copyPassword")}
-                className="text-(--text-tertiary) hover:text-(--accent) transition-colors text-xs"
+                className="text-(--text-tertiary) hover:text-(--accent-text) transition-colors text-xs"
               >
                 {t("entryDetail.copy")}
               </button>
@@ -222,7 +222,7 @@ export function EntryDetail({
         {/* TOTP badge */}
         {entry.totpSecret && (
           <div className="p-3 bg-(--accent-dim) border border-(--accent)/20 rounded-xl">
-            <p className="text-xs font-medium text-(--accent) mb-1">
+            <p className="text-xs font-medium text-(--accent-text) mb-1">
               {t("entryDetail.twoFactorEnabled")}
             </p>
             <p className="text-xs text-(--text-tertiary)">{t("entryDetail.totpHint")}</p>
@@ -268,7 +268,7 @@ export function EntryDetail({
                   </div>
                   <button
                     onClick={() => copyField(f.value, f.label)}
-                    className="text-(--text-tertiary) hover:text-(--accent) text-xs"
+                    className="text-(--text-tertiary) hover:text-(--accent-text) text-xs"
                   >
                     {t("entryDetail.copy")}
                   </button>
@@ -283,7 +283,7 @@ export function EntryDetail({
           <div>
             <button
               onClick={() => setShowHistory((v) => !v)}
-              className="text-xs font-medium text-(--text-tertiary) uppercase tracking-wider hover:text-(--accent) transition-colors"
+              className="text-xs font-medium text-(--text-tertiary) uppercase tracking-wider hover:text-(--accent-text) transition-colors"
             >
               <span className="inline-block rtl:-scale-x-100">{showHistory ? "▾" : "▸"}</span>{" "}
               {t("entryDetail.previousVersions", { count: versions.length })}
@@ -305,7 +305,7 @@ export function EntryDetail({
                     </div>
                     <button
                       onClick={() => restoreVersion(v)}
-                      className="text-(--accent) hover:underline text-xs shrink-0"
+                      className="text-(--accent-text) hover:underline text-xs shrink-0"
                     >
                       {t("entryDetail.restore")}
                     </button>

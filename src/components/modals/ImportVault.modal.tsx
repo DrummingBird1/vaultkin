@@ -308,7 +308,7 @@ export function ImportVaultModal({ onClose }: Props) {
                 key={i}
                 className="flex items-center gap-3 px-3 py-2 rounded-lg bg-(--bg-elevated) border border-(--border-subtle)"
               >
-                <div className="w-6 h-6 rounded-sm bg-(--accent-dim) flex items-center justify-center text-xs font-bold text-(--accent)">
+                <div className="w-6 h-6 rounded-sm bg-(--accent-dim) flex items-center justify-center text-xs font-bold text-(--accent-text)">
                   {(e.title ?? "?")[0]?.toUpperCase()}
                 </div>
                 <div className="flex-1 min-w-0">
@@ -320,7 +320,7 @@ export function ImportVaultModal({ onClose }: Props) {
                   </p>
                 </div>
                 {e.totpSecret && (
-                  <span className="text-[10px] bg-(--accent-dim) text-(--accent) px-1.5 py-0.5 rounded-sm">
+                  <span className="text-[10px] bg-(--accent-dim) text-(--accent-text) px-1.5 py-0.5 rounded-sm">
                     2FA
                   </span>
                 )}

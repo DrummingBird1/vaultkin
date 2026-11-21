@@ -60,7 +60,7 @@ function FolderNode({
       <div
         className={`group flex items-center gap-1 rounded-lg px-2 py-1.5 text-sm cursor-pointer transition-colors ${
           active
-            ? "bg-(--accent-dim) text-(--accent)"
+            ? "bg-(--accent-dim) text-(--accent-text)"
             : "text-(--text-secondary) hover:bg-(--bg-elevated)"
         }`}
         style={{ paddingInlineStart: depth * INDENT_PX + 8 }}
@@ -90,7 +90,7 @@ function FolderNode({
             e.stopPropagation();
             onAddSubfolder(node.folder.id);
           }}
-          className="opacity-0 group-hover:opacity-100 text-(--text-tertiary) hover:text-(--accent) shrink-0"
+          className="opacity-0 group-hover:opacity-100 text-(--text-tertiary) hover:text-(--accent-text) shrink-0"
         >
           <IconFolderPlus className="w-3.5 h-3.5" />
         </button>
@@ -156,7 +156,7 @@ export function FolderSidebar() {
           type="button"
           aria-label={t("folders.newFolder")}
           onClick={() => handleAddSubfolder(undefined)}
-          className="text-(--text-tertiary) hover:text-(--accent)"
+          className="text-(--text-tertiary) hover:text-(--accent-text)"
         >
           <IconFolderPlus className="w-4 h-4" />
         </button>
@@ -164,7 +164,7 @@ export function FolderSidebar() {
       <button
         className={`flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm text-start transition-colors ${
           !activeFolderId
-            ? "bg-(--accent-dim) text-(--accent)"
+            ? "bg-(--accent-dim) text-(--accent-text)"
             : "text-(--text-secondary) hover:bg-(--bg-elevated)"
         }`}
         onClick={() => setSearchQuery({ folderId: undefined })}

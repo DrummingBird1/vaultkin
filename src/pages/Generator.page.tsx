@@ -76,8 +76,11 @@ export function GeneratorPage() {
       </div>
 
       <div className="sv-card">
-        <label className="sv-label">{t("generator.length", { length })}</label>
+        <label className="sv-label" htmlFor="generator-length">
+          {t("generator.length", { length })}
+        </label>
         <input
+          id="generator-length"
           type="range"
           min={4}
           max={64}

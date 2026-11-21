@@ -41,7 +41,7 @@ export const EntryRow = React.memo(function EntryRow({
         </p>
       </div>
       {entry.totpSecret && (
-        <span className="text-[10px] bg-(--accent-dim) text-(--accent) px-1.5 py-0.5 rounded-full border border-(--accent)/20">
+        <span className="text-[10px] bg-(--accent-dim) text-(--accent-text) px-1.5 py-0.5 rounded-full border border-(--accent)/20">
           {t("entryCard.twoFactor")}
         </span>
       )}

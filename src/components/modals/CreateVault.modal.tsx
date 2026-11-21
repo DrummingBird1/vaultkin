@@ -181,7 +181,7 @@ export function CreateVaultModal({ onClose }: Props) {
               <button
                 type="button"
                 onClick={handleGenerateSuggestion}
-                className="text-xs text-(--accent) hover:underline font-medium"
+                className="text-xs text-(--accent-text) hover:underline font-medium"
               >
                 {t("createVault.suggest")}
               </button>
@@ -199,7 +199,7 @@ export function CreateVaultModal({ onClose }: Props) {
               />
               <button
                 type="button"
-                className="absolute end-3 top-1/2 -translate-y-1/2 text-(--text-tertiary) hover:text-(--text-secondary)"
+                className="absolute end-1.5 top-1/2 -translate-y-1/2 inline-flex items-center justify-center min-w-7 min-h-7 rounded-md text-(--text-tertiary) hover:text-(--text-secondary)"
                 onClick={() => setShowPw((v) => !v)}
                 aria-label={showPw ? t("unlock.hidePassword") : t("unlock.showPassword")}
               >
@@ -251,7 +251,7 @@ export function CreateVaultModal({ onClose }: Props) {
               />
               <button
                 type="button"
-                className="absolute end-3 top-1/2 -translate-y-1/2 text-(--text-tertiary) hover:text-(--text-secondary)"
+                className="absolute end-1.5 top-1/2 -translate-y-1/2 inline-flex items-center justify-center min-w-7 min-h-7 rounded-md text-(--text-tertiary) hover:text-(--text-secondary)"
                 onClick={() => setShowConfirm((v) => !v)}
                 aria-label={showConfirm ? t("unlock.hidePassword") : t("unlock.showPassword")}
               >

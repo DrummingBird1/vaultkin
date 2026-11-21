@@ -79,7 +79,7 @@ export function Segmented<T extends string>({
           aria-pressed={value === o.value}
           className={`flex-1 px-3 py-2 rounded-lg text-sm border transition-colors ${
             value === o.value
-              ? "border-(--accent) bg-(--accent-dim) text-(--accent)"
+              ? "border-(--accent) bg-(--accent-dim) text-(--accent-text)"
               : "border-(--border-default) hover:bg-(--bg-elevated)"
           }`}
         >

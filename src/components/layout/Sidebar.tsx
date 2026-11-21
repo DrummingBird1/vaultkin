@@ -31,7 +31,7 @@ export function Sidebar() {
   return (
     <aside className="w-56 shrink-0 bg-(--bg-surface) border-e border-(--border-subtle) flex flex-col">
       <div className="p-5 flex items-center gap-2">
-        <div className="w-8 h-8 rounded-lg bg-(--accent-dim) border border-(--accent)/20 flex items-center justify-center text-(--accent)">
+        <div className="w-8 h-8 rounded-lg bg-(--accent-dim) border border-(--accent)/20 flex items-center justify-center text-(--accent-text)">
           <Lock aria-hidden="true" className="w-4 h-4" />
         </div>
         <span className="font-display font-semibold text-(--text-primary)">{t("app.name")}</span>
@@ -46,7 +46,7 @@ export function Sidebar() {
               aria-current={active ? "page" : undefined}
               className={`flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition-colors ${
                 active
-                  ? "bg-(--accent-dim) text-(--accent)"
+                  ? "bg-(--accent-dim) text-(--accent-text)"
                   : "text-(--text-secondary) hover:bg-(--bg-elevated) hover:text-(--text-primary)"
               }`}
             >
@@ -59,7 +59,6 @@ export function Sidebar() {
       <div className="p-3 border-t border-(--border-subtle)">
         <button
           onClick={() => lockApplication("manual")}
-          aria-label="Lock vault"
           className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium text-(--text-secondary) hover:bg-(--danger-dim) hover:text-(--danger) transition-colors"
         >
           <Lock aria-hidden="true" className="w-4 h-4" /> {t("nav.lock")}

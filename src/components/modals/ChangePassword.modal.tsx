@@ -125,7 +125,7 @@ export function ChangePasswordModal({ onClose }: Props) {
               />
               <button
                 type="button"
-                className="absolute end-3 top-1/2 -translate-y-1/2 text-(--text-tertiary)"
+                className="absolute end-1.5 top-1/2 -translate-y-1/2 inline-flex items-center justify-center min-w-7 min-h-7 rounded-md text-(--text-tertiary)"
                 onClick={() => setShowCur((v) => !v)}
                 aria-label={showCur ? t("unlock.hidePassword") : t("unlock.showPassword")}
               >
@@ -146,7 +146,7 @@ export function ChangePasswordModal({ onClose }: Props) {
               />
               <button
                 type="button"
-                className="absolute end-3 top-1/2 -translate-y-1/2 text-(--text-tertiary)"
+                className="absolute end-1.5 top-1/2 -translate-y-1/2 inline-flex items-center justify-center min-w-7 min-h-7 rounded-md text-(--text-tertiary)"
                 onClick={() => setShowNew((v) => !v)}
                 aria-label={showNew ? t("unlock.hidePassword") : t("unlock.showPassword")}
               >

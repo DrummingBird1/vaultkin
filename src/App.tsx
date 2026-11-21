@@ -15,7 +15,7 @@ import { UnlockPage } from "./pages/Unlock.page";
 import { VaultPage } from "./pages/Vault.page";
 import { Toaster } from "./components/ui/Toaster";
 
-import { solidAccent } from "./lib/contrast";
+import { readableAccent, solidAccent } from "./lib/contrast";
 // Route-based code splitting: Vault/Unlock stay eager (the pages basically
 // everyone hits every session), the rest lazy-load on first visit. Shaves
 // real weight off the initial bundle for a page most sessions never open.
@@ -80,6 +80,12 @@ export function App() {
     document.documentElement.style.setProperty("--accent", hex);
     // Filled buttons put white text on the accent; keep that at 4.5:1 for any chosen color.
     document.documentElement.style.setProperty("--accent-solid", solidAccent(hex));
+    // Accent-colored TEXT must reach 4.5:1 on every surface of the current theme.
+    const css = getComputedStyle(document.documentElement);
+    const surfaces = ["--bg-base", "--bg-surface", "--bg-elevated", "--bg-overlay"].map((v) =>
+      css.getPropertyValue(v).trim(),
+    );
+    document.documentElement.style.setProperty("--accent-text", readableAccent(hex, surfaces));
     const rgb = hex
       .replace("#", "")
       .match(/.{2}/g)!

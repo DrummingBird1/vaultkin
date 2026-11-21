@@ -57,7 +57,7 @@ export function TagInput({
         {value.map((tag) => (
           <span
             key={tag}
-            className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-(--accent-dim) text-(--accent)"
+            className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-(--accent-dim) text-(--accent-text)"
           >
             {tag}
             <button
@@ -92,7 +92,7 @@ export function TagInput({
               // onMouseDown (not onClick) fires before the input's onBlur, so
               // the suggestion click registers before blur closes the list.
               onMouseDown={() => commit(s)}
-              className="block w-full text-start px-3 py-2 text-sm text-(--text-primary) hover:bg-(--accent-dim) hover:text-(--accent)"
+              className="block w-full text-start px-3 py-2 text-sm text-(--text-primary) hover:bg-(--accent-dim) hover:text-(--accent-text)"
             >
               {s}
             </button>

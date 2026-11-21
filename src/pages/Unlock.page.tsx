@@ -231,7 +231,7 @@ export function UnlockPage() {
                 <path
                   d="M12 2C9.24 2 7 4.24 7 7v2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2h-2V7c0-2.76-2.24-5-5-5zm0 13a2 2 0 1 1 0-4 2 2 0 0 1 0 4zm3-7H9V7a3 3 0 0 1 6 0v1z"
                   fill="currentColor"
-                  className="text-(--accent)"
+                  className="text-(--accent-text)"
                 />
               </svg>
             </div>
@@ -297,7 +297,7 @@ export function UnlockPage() {
                       <button
                         type="button"
                         aria-label={showPw ? t("unlock.hidePassword") : t("unlock.showPassword")}
-                        className="absolute end-3 top-1/2 -translate-y-1/2 text-(--text-tertiary)"
+                        className="absolute end-1.5 top-1/2 -translate-y-1/2 inline-flex items-center justify-center min-w-7 min-h-7 rounded-md text-(--text-tertiary)"
                         onClick={() => setShowPw((v) => !v)}
                       >
                         {showPw ? <IconEyeOff /> : <IconEye />}

@@ -294,7 +294,7 @@ function statusBadgeStyle(s: Diff["status"]): React.CSSProperties {
     case "local-only":
       return { background: "var(--warning-dim)", color: "var(--warning)" };
     case "remote-only":
-      return { background: "var(--accent-dim)", color: "var(--accent)" };
+      return { background: "var(--accent-dim)", color: "var(--accent-text, var(--accent))" };
     case "both":
       return { background: "var(--bg-overlay)", color: "var(--text-tertiary)" };
   }

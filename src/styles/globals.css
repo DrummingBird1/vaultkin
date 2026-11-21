@@ -20,7 +20,7 @@
    bg-surface / text-muted / border-subtle instead of bg-(--bg-surface).
    "inline" keeps them pointing at the runtime variables (themes + accent). */
 @theme inline {
-  --color-base: var(--bg-base);
+  --color-canvas: var(--bg-base); /* not "base": that would collide with text-base (font size) */
   --color-surface: var(--bg-surface);
   --color-elevated: var(--bg-elevated);
   --color-overlay: var(--bg-overlay);
@@ -33,6 +33,7 @@
   --color-accent: var(--accent);
   --color-accent-solid: var(--accent-solid, var(--accent));
   --color-accent-dim: var(--accent-dim);
+  --color-accent-text: var(--accent-text, var(--accent));
   --color-success: var(--success);
   --color-warning: var(--warning);
   --color-danger: var(--danger);
@@ -203,14 +204,14 @@
   color: var(--text-tertiary);
   border-color: transparent;
   &.is-active {
-    color: var(--accent);
+    color: var(--accent-text, var(--accent));
     border-color: var(--accent);
   }
 }
 
 @utility is-active {
   &.sv-tab {
-    color: var(--accent);
+    color: var(--accent-text, var(--accent));
     border-color: var(--accent);
   }
 }

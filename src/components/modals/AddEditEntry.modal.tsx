@@ -156,7 +156,7 @@ export function AddEditEntryModal({ entry, folderId, onClose }: Props) {
             aria-controls={ids.panel}
             className={`px-3 py-1.5 text-sm font-medium rounded-t-lg -mb-px border-b-2 transition-colors ${
               tab === id
-                ? "text-(--accent) border-(--accent)"
+                ? "text-(--accent-text) border-(--accent)"
                 : "text-(--text-tertiary) border-transparent hover:text-(--text-secondary)"
             }`}
             onClick={() => setTab(id)}

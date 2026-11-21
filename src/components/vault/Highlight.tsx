@@ -17,7 +17,7 @@ export function Highlight({ text, query }: { text: string; query: string }) {
     <>
       {parts.map((part, i) =>
         i % 2 === 1 ? (
-          <mark key={i} className="bg-(--accent-dim) text-(--accent) rounded-sm px-0.5">
+          <mark key={i} className="bg-(--accent-dim) text-(--accent-text) rounded-sm px-0.5">
             {part}
           </mark>
         ) : (
