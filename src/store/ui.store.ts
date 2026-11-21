@@ -1,8 +1,11 @@
 /**
  * @file src/store/ui.store.ts
- * Theme, accent, active page, viewMode, toasts.
+ * Theme, accent, active page (+ hash route, see lib/route.ts), viewMode, toasts.
  */
 import { create } from "zustand";
+import { formatHash, type ActivePage } from "../lib/route";
+
+export type { ActivePage };
 
 export interface Toast {
   id: string;
@@ -11,7 +14,6 @@ export interface Toast {
   message?: string;
 }
 
-export type ActivePage = "vault" | "authenticator" | "generator" | "health" | "settings";
 export type ViewMode = "grid" | "list" | "service";
 export type Theme = "dark" | "light" | "high-contrast";
 
@@ -19,13 +21,18 @@ interface UIState {
   theme: Theme;
   accentColor: { hex: string; name: string };
   activePage: ActivePage;
+  /** Optional sub-location within the page, e.g. a Settings section id. */
+  activeSection: string | null;
   viewMode: ViewMode;
   toasts: Toast[];
   editEntryId: string | null; // cross-page request to open edit modal
 
   setTheme: (t: Theme) => void;
   setAccent: (hex: string, name?: string) => void;
-  setActivePage: (p: ActivePage) => void;
+  /** Navigate: updates state and pushes a history entry (#/page/section). */
+  setActivePage: (p: ActivePage, section?: string) => void;
+  /** Apply a route that came FROM the URL (no history push). */
+  applyRoute: (p: ActivePage, section?: string) => void;
   setViewMode: (v: ViewMode) => void;
   addToast: (t: Omit<Toast, "id">) => void;
   removeToast: (id: string) => void;
@@ -42,13 +49,21 @@ export const useUIStore = create<UIState>((set, get) => ({
   theme: "dark",
   accentColor: { hex: "#6366F1", name: "Indigo" },
   activePage: "vault",
+  activeSection: null,
   viewMode: "grid",
   toasts: [],
   editEntryId: null,
 
   setTheme: (t) => set({ theme: t }),
   setAccent: (hex, name) => set({ accentColor: { hex, name: name ?? hex } }),
-  setActivePage: (p) => set({ activePage: p }),
+  setActivePage: (p, section) => {
+    set({ activePage: p, activeSection: section ?? null });
+    if (typeof window !== "undefined") {
+      const hash = formatHash({ page: p, section });
+      if (window.location.hash !== hash) window.history.pushState(null, "", hash);
+    }
+  },
+  applyRoute: (p, section) => set({ activePage: p, activeSection: section ?? null }),
   setViewMode: (v) => set({ viewMode: v }),
 
   addToast: (t) => {

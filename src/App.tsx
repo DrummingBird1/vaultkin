@@ -1,11 +1,14 @@
 /**
- * @file App.tsx — Step 7 final wired version.
- * Integrates AppLifecycle (onLock teardown) and ChangePassword modal in Settings.
+ * @file App.tsx
+ * Root: theme vars, auto-lock, lock teardown, hash routing (useHashRoute),
+ * page switch with lazy loading, toast stack.
  */
 import React, { useEffect, useRef, Suspense, lazy } from "react";
 import { useUIStore } from "./store/ui.store";
 import { useSessionStore } from "./store/session.store";
 import { useAutoLock } from "./hooks/useAutoLock";
+import { useHashRoute } from "./hooks/useHashRoute";
+import type { SettingsSectionId } from "./pages/Settings.page";
 import { AppLifecycle } from "./services/app-lifecycle.service";
 import { AppShell } from "./components/layout/AppShell";
 import { UnlockPage } from "./pages/Unlock.page";
@@ -39,18 +42,12 @@ function PageLoadingFallback() {
   );
 }
 
-const PAGES: Record<string, React.ReactNode> = {
-  vault: <VaultPage />,
-  authenticator: <AuthenticatorPage />,
-  generator: <GeneratorPage />,
-  health: <HealthPage />,
-  settings: <SettingsPage />,
-};
-
 export function App() {
   const { theme, accentColor, toasts, removeToast } = useUIStore();
   const { isUnlocked } = useSessionStore();
   const activePage = useUIStore((s) => s.activePage);
+  const activeSection = useUIStore((s) => s.activeSection);
+  useHashRoute(isUnlocked);
 
   // Apply CSS theme vars
   useEffect(() => {
@@ -90,7 +87,17 @@ export function App() {
       ) : (
         <AppShell>
           <Suspense fallback={<PageLoadingFallback />}>
-            {PAGES[activePage] ?? <VaultPage />}
+            {activePage === "authenticator" ? (
+              <AuthenticatorPage />
+            ) : activePage === "generator" ? (
+              <GeneratorPage />
+            ) : activePage === "health" ? (
+              <HealthPage />
+            ) : activePage === "settings" ? (
+              <SettingsPage section={(activeSection as SettingsSectionId) ?? undefined} />
+            ) : (
+              <VaultPage />
+            )}
           </Suspense>
         </AppShell>
       )}
