@@ -8,6 +8,7 @@ import { VaultBackupQRModal } from "../modals/VaultBackupQR.modal";
 import { UpgradeEncryptionModal } from "../modals/UpgradeEncryption.modal";
 import { RecoveryKitModal } from "../modals/RecoveryKit.modal";
 import { SettingsSection, persistSettings } from "./shared";
+import { DeviceUnlockControl } from "./DeviceUnlockControl";
 
 type Dialog = "change-pw" | "qr" | "upgrade-kdf" | "recovery-kit" | null;
 
@@ -56,6 +57,7 @@ export function SecuritySection() {
         </select>
         <p className="text-xs text-(--text-tertiary) mt-1">{t("settings.security.autoLockHint")}</p>
       </div>
+      <DeviceUnlockControl />
       <label className="flex items-center gap-2 mb-5 text-sm text-(--text-secondary) cursor-pointer">
         <input
           type="checkbox"

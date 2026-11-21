@@ -36,6 +36,7 @@ bridge between them (ADR 0007), and optional WebDAV sync. Cryptography details a
 | I | Clipboard history or cloud clipboard keeps copied passwords | Clipboard is cleared after copy | **Partial**: Windows clipboard-history exclusion not done yet |
 | I | Plaintext WebDAV credentials in `sessionStorage` | Planned: move them inside the vault | **Open** |
 | I | Plaintext cached in the extension | Data minimization; 5-minute idle wipe; wiped on lock | Done |
+| I | Stolen remembered device key | Opt-in; OS keystore (DPAPI / Keychain), bound to the OS user; tied to the current master-password salt; expires 14 days after the last master-password unlock; Touch ID on macOS | Done (M4). Windows Hello prompt not yet (needs native module) |
 | **D**enial of service | Duress wipes the local vault | By design; synced copies are untouched (documented) | Accepted |
 | **E**levation of privilege | Renderer compromise reaches Node | `sandbox`, `contextIsolation`, no `nodeIntegration`; IPC handlers check the sender and validate input | Done |
 | E | A site gains camera, mic, HID or similar | Every permission request and check is denied | Done (M4) |
@@ -50,8 +51,7 @@ bridge between them (ADR 0007), and optional WebDAV sync. Cryptography details a
 
 ## Still to do (M4 remainder and later)
 
-- OS keychain "remember this device" via `safeStorage`, gated by Windows Hello or
-  Touch ID.
+- A Windows Hello prompt before releasing the remembered device key (native module).
 - WebAuthn PRF unlock.
 - Optional Secret Key.
 - WebDAV credentials stored inside the vault.

@@ -22,7 +22,7 @@
       "incorrectPasswordLocked": "Incorrect master password. Too many attempts — try again in {{countdown}}.",
       "incorrectPassword": "Incorrect master password. Please try again.",
       "vaultCorrupt": "Failed to unlock vault. The file may be corrupted.",
-      "biometricFailed": "Biometric authentication failed.",
+      "biometricFailed": "Couldn't unlock with this device. Use your master password.",
       "biometricNotSupported": "Biometric unlock not yet supported in this session. Please use your master password.",
       "biometricError": "Biometric unlock failed. Use master password."
     },
@@ -38,7 +38,9 @@
       "heading": "No vault found",
       "description": "Create your first SecureVault to get started. Your data stays encrypted on your device.",
       "createButton": "Create New Vault"
-    }
+    },
+    "deviceButton": "Unlock with this device",
+    "touchIdButton": "Unlock with Touch ID"
   },
   "countdown": {
     "seconds": "{{count}}s",
@@ -248,7 +250,19 @@
       "lockOnHide": "Lock immediately when switching to another tab or window",
       "changePassword": "Change master password",
       "qr": "Export QR backup",
-      "recoveryKit": "Recovery Kit"
+      "recoveryKit": "Recovery Kit",
+      "device": {
+        "title": "Remember this device",
+        "label": "Remember this device (unlock without the master password)",
+        "labelMac": "Unlock with Touch ID",
+        "hint": "The vault key is kept encrypted by Windows for your account on this computer. You'll still need the master password at least every 14 days.",
+        "hintMac": "The vault key is kept in the macOS Keychain and released with Touch ID. You'll still need the master password at least every 14 days.",
+        "until": "On. Master password needed again after {{date}}.",
+        "confirm": "Enter your master password once to turn this on.",
+        "turnOn": "Turn on",
+        "enabled": "This device will be remembered",
+        "failed": "Couldn't turn this on on this device."
+      }
     },
     "duress": {
       "title": "Duress password",

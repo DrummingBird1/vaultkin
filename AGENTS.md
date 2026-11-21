@@ -109,7 +109,7 @@ Load-bearing for the zero-knowledge model. Breaking them is a security regressio
 
 ## Known gotchas
 
-- **Biometric unlock is partial.** Master-password unlock is required at least once per session; keys-only path isn't wired. Current `handleBiometric` shows a clear "use master password" message.
+- **Device unlock (desktop).** "Remember this device" keeps the 64-byte derived key in the OS keystore via `safeStorage` (`src/electron/device-unlock.ts`), tied to the vault salt, 14-day max age, Touch ID on macOS. On Windows it is protected by the Windows account (DPAPI), not by a Windows Hello prompt; that needs a native module. Raw keys leave `core/` only through `exportDeviceKey` / `openVaultWithDeviceKey`. WebAuthn PRF unlock is not built (no usable rpId for a `file://` renderer).
 - **i18n is a proof of concept.** Real infrastructure (`src/i18n/`, en/he locales), but only the Unlock page is migrated to `useTranslation()` — every other page/component still has hardcoded English regardless of the language setting. Deliberately partial, not half-finished.
 - **Extension `externally_connectable.matches` contains a placeholder** (`https://*.your-securevault-host.com/*` in [extension/manifest.json](extension/manifest.json)). Replace before shipping.
 - **Extension PNG icons are placeholders.** Generate real ones before Web Store submission.

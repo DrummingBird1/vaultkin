@@ -33,6 +33,15 @@ contextBridge.exposeInMainWorld("electron", {
     installHost: (extensionIds: string[]): Promise<{ manifest: string; registered: number }> =>
       ipcRenderer.invoke("sv-bridge-install", extensionIds),
   },
+  /** Remember this device: vault key kept in the OS keystore (main process). */
+  deviceUnlock: {
+    status: () => ipcRenderer.invoke("sv-device-unlock-status"),
+    save: (salt: string, rawB64: string): Promise<boolean> =>
+      ipcRenderer.invoke("sv-device-unlock-save", salt, rawB64),
+    load: (salt: string): Promise<string | null> =>
+      ipcRenderer.invoke("sv-device-unlock-load", salt),
+    clear: (): Promise<void> => ipcRenderer.invoke("sv-device-unlock-clear"),
+  },
   window: {
     /** Recolor the native window controls (Windows/Linux) to match the theme. */
     setTitleBarTheme: (colors: { color: string; symbolColor: string }): Promise<void> =>

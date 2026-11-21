@@ -55,6 +55,7 @@ test("window is hardened (sandbox, isolation, no node in the page)", async () =>
   );
   expect(await win.evaluate(() => Object.keys(window.electron ?? {}).sort())).toEqual([
     "bridge",
+    "deviceUnlock",
     "platform",
     "updates",
     "version",
@@ -137,6 +138,39 @@ test("sleep / screen lock locks the vault", async () => {
   await app.evaluate(({ powerMonitor }) => powerMonitor.emit("lock-screen"));
   await expect(lockBtn).toHaveCount(0, { timeout: 10_000 });
   await expect(win.locator('input[type="password"]').first()).toBeVisible();
+});
+
+test("remember this device: unlock without the master password", async () => {
+  test.skip(process.platform === "darwin", "Touch ID can't be driven in CI");
+  // Locked by the previous test: unlock with the master password first.
+  await win.locator('input[type="password"]').first().fill(MASTER);
+  await win.keyboard.press("Enter");
+  const lockBtn = win.getByRole("button", { name: /lock vault/i });
+  await expect(lockBtn).toBeVisible({ timeout: 45_000 });
+
+  await win.evaluate(() => (location.hash = "#/settings/security"));
+  // Stays unchecked until the master password is confirmed in the dialog.
+  await win.getByLabel(/remember this device/i).click();
+  await win.locator("#device-unlock-pw").fill("not-the-password");
+  await win.getByRole("button", { name: /^turn on$/i }).click();
+  await expect(win.getByText(/wrong|incorrect/i).first()).toBeVisible({ timeout: 45_000 });
+  await win.locator("#device-unlock-pw").fill(MASTER);
+  await win.getByRole("button", { name: /^turn on$/i }).click();
+  await expect(win.getByText(/master password needed again/i)).toBeVisible({ timeout: 45_000 });
+
+  // What is on disk is OS-encrypted: neither the password nor a raw key.
+  const stored = fs.readFileSync(path.join(profile, "device-unlock.json"), "utf8");
+  expect(stored).not.toContain(MASTER);
+  expect(JSON.parse(stored)).toMatchObject({ v: 1 });
+
+  await lockBtn.click();
+  await win.getByRole("button", { name: /unlock with this device/i }).click();
+  await expect(lockBtn).toBeVisible({ timeout: 20_000 });
+
+  // Turning it off removes the key.
+  await win.evaluate(() => (location.hash = "#/settings/security"));
+  await win.getByLabel(/remember this device/i).uncheck();
+  await expect.poll(() => fs.existsSync(path.join(profile, "device-unlock.json"))).toBe(false);
 });
 
 // Last: Playwright keeps waiting on the cancelled navigation afterwards.

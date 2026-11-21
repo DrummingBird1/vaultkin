@@ -26,6 +26,17 @@ export interface ElectronBridge {
     close: (connId: number) => Promise<void>;
     installHost: (extensionIds: string[]) => Promise<{ manifest: string; registered: number }>;
   };
+  /** Present from M4: remember this device (OS keystore). */
+  deviceUnlock?: {
+    status: () => Promise<
+      | { supported: false }
+      | { supported: true; enrolled: false }
+      | { supported: true; enrolled: true; salt: string; expiresAt: number }
+    >;
+    save: (salt: string, rawB64: string) => Promise<boolean>;
+    load: (salt: string) => Promise<string | null>;
+    clear: () => Promise<void>;
+  };
   /** Present in builds with the custom title bar / Quick Access (M2+). */
   window?: {
     setTitleBarTheme: (colors: { color: string; symbolColor: string }) => Promise<void>;

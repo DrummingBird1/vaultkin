@@ -14,6 +14,13 @@
   existing enrollments keep working until re-enrolled.
 - `docs/THREAT_MODEL.md` (STRIDE), listing what is done and what is open.
 
+### Added
+- Remember this device (desktop, opt-in, Settings → Security): unlock
+  without typing the master password. The vault key is kept encrypted by the
+  OS (Windows account protection / macOS Keychain with Touch ID), stops
+  working when the master password changes, and the master password is
+  required again at least every 14 days.
+
 ## [Unreleased] — M3 integrations (2026-11-21)
 
 ### Added

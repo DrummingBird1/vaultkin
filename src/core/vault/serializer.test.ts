@@ -14,6 +14,9 @@ import {
   saveVault,
   reEncryptVault,
   changeMasterPassword,
+  exportDeviceKey,
+  openVaultWithDeviceKey,
+  payloadSalt,
 } from "./serializer";
 import { deriveKeys, encryptVault, DEFAULT_KDF, PBKDF2_FALLBACK } from "./engine";
 import { VaultCorruptError, WrongPasswordError } from "../errors";
@@ -184,5 +187,25 @@ describe("changeMasterPassword", () => {
 
     const { sessionKeys: newKeys } = await changeMasterPassword(vaultData, PASSWORD);
     expect(newKeys.kdf.name).toBe("Argon2id");
+  });
+});
+
+describe("device key (remember this device)", () => {
+  it("exports the key only for the right password, and it opens the vault", async () => {
+    const { encryptedPayload } = await createVault(PASSWORD, createDefaultVaultData());
+    await expect(exportDeviceKey(encryptedPayload, "wrong-password")).rejects.toBeInstanceOf(
+      WrongPasswordError,
+    );
+    const raw = await exportDeviceKey(encryptedPayload, PASSWORD);
+    expect(raw.length).toBe(64);
+    const copy = raw.slice();
+    const { vault } = await openVaultWithDeviceKey(encryptedPayload, raw);
+    expect(vault.schemaVersion).toBe(CURRENT_SCHEMA_VERSION);
+    expect(raw.every((b) => b === 0)).toBe(true); // wiped after use
+    expect(payloadSalt(encryptedPayload)).toBe(JSON.parse(encryptedPayload).salt);
+    // A remembered key stops working once the master password changes.
+    const { vault: v2 } = await openVault(encryptedPayload, PASSWORD);
+    const { encryptedPayload: changed } = await changeMasterPassword(v2, "a-new-master-pw-88!");
+    await expect(openVaultWithDeviceKey(changed, copy)).rejects.toBeInstanceOf(WrongPasswordError);
   });
 });

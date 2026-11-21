@@ -4,7 +4,15 @@
  * (and nothing in `engine.ts`).
  */
 
-import { deriveKeys, encryptVault, decryptVault, DEFAULT_KDF, DEFAULT_SALT_BYTES } from "./engine";
+import {
+  deriveKeys,
+  deriveRawKey,
+  importSessionKeys,
+  encryptVault,
+  decryptVault,
+  DEFAULT_KDF,
+  DEFAULT_SALT_BYTES,
+} from "./engine";
 import type { SessionKeys, VaultPayload } from "./vault-types";
 import type { VaultData } from "./schema";
 import { bytesToBase64, base64ToBytes } from "../crypto/encoding";
@@ -41,12 +49,8 @@ export async function createVault(
   return { encryptedPayload: JSON.stringify(payload), vault, sessionKeys: keys };
 }
 
-/** Open an existing encrypted vault payload. Throws on wrong password. */
-export async function openVault(
-  encryptedPayload: string,
-  password: string,
-  onProgress?: (p: number) => void,
-): Promise<OpenVaultResult> {
+/** Parse and validate an on-disk payload; throws VaultCorruptError. */
+function parsePayload(encryptedPayload: string): VaultPayload {
   let payload: VaultPayload;
   try {
     payload = JSON.parse(encryptedPayload);
@@ -116,8 +120,13 @@ export async function openVault(
     }
   }
 
-  // KDF is chosen from the payload, so PBKDF2-era vaults still open.
-  const keys = await deriveKeys(password, payload.salt, payload.kdf, onProgress);
+  return payload;
+}
+
+async function decryptAndMigrate(
+  payload: VaultPayload,
+  keys: SessionKeys,
+): Promise<{ vault: VaultData; migrated: boolean }> {
   const json = await decryptVault(payload, keys);
   let parsed: unknown;
   try {
@@ -129,8 +138,63 @@ export async function openVault(
     // callers), not a raw SyntaxError.
     throw new VaultCorruptError("Decrypted vault content is not valid JSON");
   }
-  const { vault, migrated } = migrateVault(parsed);
+  return migrateVault(parsed);
+}
+
+/** Open an existing encrypted vault payload. Throws on wrong password. */
+export async function openVault(
+  encryptedPayload: string,
+  password: string,
+  onProgress?: (p: number) => void,
+): Promise<OpenVaultResult> {
+  const payload = parsePayload(encryptedPayload);
+  // KDF is chosen from the payload, so PBKDF2-era vaults still open.
+  const keys = await deriveKeys(password, payload.salt, payload.kdf, onProgress);
+  const { vault, migrated } = await decryptAndMigrate(payload, keys);
   return { vault, sessionKeys: keys, migrated };
+}
+
+/** Salt of a stored payload — identifies which master-password generation a
+ *  remembered device key belongs to (it changes on password change). */
+export function payloadSalt(encryptedPayload: string): string {
+  return parsePayload(encryptedPayload).salt;
+}
+
+/**
+ * Verify the master password against a stored payload and return the raw
+ * 64-byte key (enc || mac) for "remember this device". The caller hands it to
+ * the OS keystore and must wipe it. Throws WrongPasswordError on a bad password.
+ */
+export async function exportDeviceKey(
+  encryptedPayload: string,
+  password: string,
+  onProgress?: (p: number) => void,
+): Promise<Uint8Array<ArrayBuffer>> {
+  const payload = parsePayload(encryptedPayload);
+  const raw = await deriveRawKey(password, payload.salt, payload.kdf, onProgress);
+  try {
+    await decryptVault(payload, await importSessionKeys(raw, payload.salt, payload.kdf));
+  } catch (err) {
+    raw.fill(0);
+    throw err;
+  }
+  return raw;
+}
+
+/** Open a vault with a remembered device key instead of the master password.
+ *  Wipes `raw`. Throws WrongPasswordError if the key no longer matches. */
+export async function openVaultWithDeviceKey(
+  encryptedPayload: string,
+  raw: Uint8Array<ArrayBuffer>,
+): Promise<OpenVaultResult> {
+  try {
+    const payload = parsePayload(encryptedPayload);
+    const keys = await importSessionKeys(raw, payload.salt, payload.kdf);
+    const { vault, migrated } = await decryptAndMigrate(payload, keys);
+    return { vault, sessionKeys: keys, migrated };
+  } finally {
+    raw.fill(0);
+  }
 }
 
 /** Re-encrypt the (mutated) in-memory vault with the SAME session keys.

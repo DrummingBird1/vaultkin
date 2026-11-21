@@ -14,7 +14,7 @@ import { createDefaultVaultData } from "../core/vault/vault-types";
 import { WrongPasswordError, VaultCorruptError } from "../core/errors";
 import { IPCService } from "../services/ipc.service";
 import { AppLifecycle } from "../services/app-lifecycle.service";
-import { BiometricService } from "../services/biometric.service";
+import { DeviceUnlockService } from "../services/device-unlock.service";
 import { DuressService } from "../services/duress.service";
 import { UnlockThrottleService, type LockStatus } from "../services/unlock-throttle.service";
 import { CreateVaultModal } from "../components/modals/CreateVault.modal";
@@ -65,40 +65,50 @@ export function UnlockPage() {
 
   useEffect(() => {
     (async () => {
-      const [stored, prf] = await Promise.all([
-        IPCService.vault.load().catch(() => null),
-        // Only surface the biometric button once the PRF-based wrapped-key
-        // unlock is implemented + tested. supportsPRF() returns false today,
-        // so we don't show a non-functional control. See biometric.service.ts.
-        BiometricService.supportsPRF().catch(() => false),
-      ]);
+      const stored = await IPCService.vault.load().catch(() => null);
       setVaultExists(!!stored);
-      setBioAvail(prf);
+      // "Remember this device" (desktop): offer the one-click unlock only when
+      // a key for THIS vault's current master password is in the OS keystore.
+      const dev = await DeviceUnlockService.state(stored).catch(() => null);
+      setBioAvail(dev?.kind === "on");
       if (stored) setTimeout(() => inputRef.current?.focus(), 50);
     })();
   }, []);
+
+  const finishUnlock = useCallback(
+    async (res: Awaited<ReturnType<typeof DeviceUnlockService.openWithPassword>>) => {
+      const { vault, sessionKeys, migrated } = res;
+      unlock(sessionKeys, vault.settings.autoLockMs);
+      onVaultUnlocked(vault);
+      await AppLifecycle.onUnlock(vault, sessionKeys, vault.settings.autoLockMs);
+      // Upgraded to a newer schema on open: mark dirty AFTER onUnlock has
+      // started autosave (it reacts to the isDirty false→true edge), so the
+      // migrated document is written back, re-encrypted with the same keys.
+      if (migrated) useVaultStore.setState({ isDirty: true });
+    },
+    [unlock],
+  );
 
   const handleBiometric = useCallback(async () => {
     setError("");
     setLoading(true);
     try {
-      // The keys-only decryption path (unlock the vault using only the OS
-      // keychain-protected session keys, without re-deriving from the master
-      // password) is not yet wired end-to-end. Until that lands, we surface a
-      // clear message instead of silently calling openVault with arguments it
-      // does not accept.
-      const keyMaterial = await BiometricService.authenticate(t("unlock.biometricPromptReason"));
-      if (!keyMaterial) {
+      const stored = await IPCService.vault.load();
+      const res = stored ? await DeviceUnlockService.openWithDevice(stored) : null;
+      if (!res) {
         setError(t("unlock.errors.biometricFailed"));
+        setBioAvail(false);
         return;
       }
-      setError(t("unlock.errors.biometricNotSupported"));
+      await finishUnlock(res);
+      UnlockThrottleService.recordSuccess();
     } catch {
       setError(t("unlock.errors.biometricError"));
+      setBioAvail(false);
     } finally {
       setLoading(false);
     }
-  }, [t]);
+  }, [t, finishUnlock]);
 
   const handleUnlock = useCallback(
     async (e: React.FormEvent) => {
@@ -167,15 +177,10 @@ export function UnlockPage() {
         }
 
         setKDFProgress(0.2);
-        const { vault, sessionKeys, migrated } = await openVault(stored, password);
+        // Same as openVault, but also refreshes a remembered device key.
+        const res = await DeviceUnlockService.openWithPassword(stored, password);
         setKDFProgress(0.9);
-        unlock(sessionKeys, vault.settings.autoLockMs);
-        onVaultUnlocked(vault);
-        await AppLifecycle.onUnlock(vault, sessionKeys, vault.settings.autoLockMs);
-        // Upgraded to a newer schema on open: mark dirty AFTER onUnlock has
-        // started autosave (it reacts to the isDirty false→true edge), so the
-        // migrated document is written back, re-encrypted with the same keys.
-        if (migrated) useVaultStore.setState({ isDirty: true });
+        await finishUnlock(res);
         UnlockThrottleService.recordSuccess();
         setKDFProgress(1);
       } catch (err: unknown) {
@@ -202,7 +207,7 @@ export function UnlockPage() {
         setPassword("");
       }
     },
-    [password, unlock, setKDFProgress, t],
+    [password, unlock, setKDFProgress, t, finishUnlock],
   );
 
   const isLoading = loading || isDerivingKey;
@@ -268,7 +273,10 @@ export function UnlockPage() {
                     disabled={isLoading}
                     className="w-full flex items-center justify-center gap-3 py-3 rounded-xl border border-(--border-default) bg-(--bg-elevated) hover:border-(--accent) hover:bg-(--accent-dim) transition-all text-sm font-medium text-(--text-primary)"
                   >
-                    <IconIdCard className="w-5 h-5" /> {t("unlock.biometricButton")}
+                    <IconIdCard className="w-5 h-5" />{" "}
+                    {window.electron?.platform === "darwin"
+                      ? t("unlock.touchIdButton")
+                      : t("unlock.deviceButton")}
                   </button>
                 )}
                 {bioAvail && (

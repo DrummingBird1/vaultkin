@@ -19,6 +19,7 @@ import { mainLog } from "./logger";
 import { wireUpdater, checkForUpdates, downloadUpdate, quitAndInstall } from "./update.service";
 import { bridgeSocketPath, startBridgeServer } from "./bridge-transport";
 import { installNativeHost } from "./bridge-install";
+import * as deviceUnlock from "./device-unlock";
 
 const isDev = !!process.env.VITE_DEV_SERVER_URL || !app.isPackaged;
 
@@ -231,6 +232,26 @@ function startApp(): void {
     if (!Array.isArray(ids) || !ids.every((x) => typeof x === "string"))
       throw new Error("Bad input");
     return installNativeHost(ids as string[]);
+  });
+
+  // ── Remember this device (OS keystore) ────────────────────────────────
+  const B64 = /^[A-Za-z0-9+/]+={0,2}$/;
+  const isSalt = (x: unknown): x is string =>
+    typeof x === "string" && x.length <= 64 && B64.test(x);
+  ipcMain.handle("sv-device-unlock-status", (event) =>
+    fromMainWindow(event) ? deviceUnlock.status() : { supported: false },
+  );
+  ipcMain.handle("sv-device-unlock-save", (event, salt: unknown, raw: unknown) => {
+    if (!fromMainWindow(event) || !isSalt(salt)) return false;
+    // 64 bytes → 88 base64 chars.
+    if (typeof raw !== "string" || raw.length !== 88 || !B64.test(raw)) return false;
+    return deviceUnlock.save(salt, raw);
+  });
+  ipcMain.handle("sv-device-unlock-load", (event, salt: unknown) =>
+    fromMainWindow(event) && isSalt(salt) ? deviceUnlock.load(salt) : null,
+  );
+  ipcMain.handle("sv-device-unlock-clear", (event) => {
+    if (fromMainWindow(event)) deviceUnlock.clear();
   });
 
   app.whenReady().then(() => {
