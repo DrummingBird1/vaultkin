@@ -2,11 +2,20 @@
  * @file src/core/vault/schema.ts
  * Public types describing a decrypted vault's shape.
  */
+import type { StoredPasskey } from "../passkey/authenticator";
+import type { VaultAttachment } from "./attachment";
 
 export type CategoryType =
   "websites" | "apps" | "finance" | "gaming" | "servers" | "identity" | "email" | "custom";
 
-export type EntryType = "login" | "note" | "card" | "totp" | "identity";
+export type EntryType = "login" | "note" | "card" | "totp" | "identity" | "ssh";
+
+/** An Ed25519 SSH key (OpenSSH formats; see core/ssh/ssh-key.ts). */
+export interface SshKeyData {
+  publicKey: string;
+  privateKey: string;
+  fingerprint: string;
+}
 
 export interface CustomField {
   id: string;
@@ -39,6 +48,12 @@ export interface VaultEntry {
   cardCVV?: string;
   createdAt?: string;
   updatedAt?: string;
+  /** Passkeys saved for this login (software WebAuthn authenticator). */
+  passkeys?: StoredPasskey[];
+  /** SSH key for type "ssh" (served by the SSH agent on desktop). */
+  ssh?: SshKeyData;
+  /** Encrypted files (keys here; ciphertext in services/attachment-store). */
+  attachments?: VaultAttachment[];
 }
 
 export interface VaultFolder {
@@ -59,6 +74,9 @@ export interface VaultSettings {
    *  idle timer already covers most of this, and instant lock-on-blur would
    *  surprise users who just alt-tab briefly. */
   lockOnHide?: boolean;
+  /** WebDAV sync credentials. Encrypted with the rest of the vault, so they
+   *  are only readable while it is unlocked (never in browser storage). */
+  sync?: { url: string; username: string; password: string };
 }
 
 export interface VaultMeta {
@@ -67,10 +85,38 @@ export interface VaultMeta {
   entryCount?: number;
 }
 
+/** Marks an entry as deleted so sync merge doesn't resurrect it (schema v2). */
+export interface VaultTombstone {
+  id: string;
+  deletedAt: string;
+}
+
+/** A browser extension the user paired with this vault (ADR 0007). */
+export interface PairedExtension {
+  /** chrome-extension://<id>/ as reported by the browser, not by the extension. */
+  origin: string;
+  /** The extension's ECDH P-256 public key (raw, base64), pinned at pairing. */
+  publicKey: string;
+  pairedAt: string;
+  lastSeenAt?: string;
+}
+
+/** Bridge identity + pairings. Lives inside the encrypted vault. */
+export interface VaultBridge {
+  appPublicKey: string;
+  /** ECDH private key as JWK; only ever in memory while unlocked or encrypted at rest. */
+  appPrivateJwk: JsonWebKey;
+  paired: PairedExtension[];
+}
+
 export interface VaultData {
+  /** Optional, added on first use of the browser bridge. */
+  bridge?: VaultBridge;
+  /** See CURRENT_SCHEMA_VERSION in migrations.ts. */
   schemaVersion: number;
   entries: VaultEntry[];
   folders: VaultFolder[];
+  tombstones: VaultTombstone[];
   settings: VaultSettings;
   meta: VaultMeta;
 }

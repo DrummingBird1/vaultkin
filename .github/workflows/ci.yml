@@ -1,5 +1,5 @@
 # .github/workflows/ci.yml
-# SecureVault CI/CD Pipeline
+# Vaultkin CI/CD Pipeline
 #
 # Runs on every PR and push to main:
 #   1. Type-check (tsc --noEmit)
@@ -28,13 +28,13 @@ name: CI
 
 on:
   push:
-    branches: [main, develop]
-    tags:     ['v*.*.*']
+    branches: [master, main, develop]
+    tags: ["v*.*.*"]
   pull_request:
-    branches: [main, develop]
+    branches: [master, main, develop]
 
 concurrency:
-  group:  ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 # Least-privilege default: every job only gets read access unless it
@@ -44,14 +44,12 @@ permissions:
   contents: read
 
 env:
-  NODE_VERSION: '20'
-  PNPM_VERSION: '9'
-  COVERAGE_THRESHOLD: '80'
+  NODE_VERSION: "22"
+  # Coverage thresholds live in config/vitest.config.ts (core 95/90/90/85, rest a ratchet floor).
 
 # ─── Jobs ─────────────────────────────────────────────────────────────────────
 
 jobs:
-
   # ── 1. Type Check ───────────────────────────────────────────────────────────
   typecheck:
     name: TypeScript
@@ -75,7 +73,7 @@ jobs:
       # Ratchet: pre-existing warnings as of the tooling-upgrade session.
       # New code should not add to this count — lower it over time instead
       # of letting it silently grow.
-      - run: pnpm run lint -- --max-warnings=43
+      - run: pnpm run lint --max-warnings=43
 
   # ── 3. Tests ─────────────────────────────────────────────────────────────────
   test:
@@ -90,7 +88,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup
       - name: Run tests with coverage
-        run: pnpm run test:coverage -- --reporter=verbose --reporter=junit
+        run: pnpm run test:coverage --reporter=verbose --reporter=junit
         env:
           CI: true
 
@@ -118,8 +116,14 @@ jobs:
       - uses: ./.github/actions/setup
       - name: Lint lockfile (registry / integrity policy)
         run: pnpm run lockfile:lint
-      - name: pnpm audit (high severity)
+      # Blocks on what ships: production dependencies. Dev tooling (test
+      # runners, bundlers, wait-on) is reported by the next step without failing
+      # the run, since none of it reaches the vault's users.
+      - name: pnpm audit, production dependencies (high severity)
+        run: pnpm audit --prod --audit-level=high
+      - name: pnpm audit, all dependencies (report only)
         run: pnpm audit --audit-level=high
+        continue-on-error: true
       - name: Check crypto dependency versions
         run: |
           echo "Checking hash-wasm (Argon2id)..."
@@ -161,6 +165,9 @@ jobs:
     name: Lighthouse
     runs-on: ubuntu-latest
     needs: [build-web]
+    # Advisory, as config/lighthouserc.cjs says: the lighthouse:no-pwa preset
+    # turns many audits into errors, so the job reports without blocking.
+    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup
@@ -230,6 +237,31 @@ jobs:
           path: dist/extension/
           retention-days: 7
 
+  # ── 8b. Store packages + CLI (release tags only) ──────────────────────────
+  release-extras:
+    name: Extension store packages + CLI
+    runs-on: ubuntu-latest
+    needs: [typecheck, lint, test]
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+      - name: Build release extension (no dev hosts) and CLI
+        run: |
+          pnpm run build:extension:release
+          pnpm run build:cli
+      - name: Zip store packages
+        run: |
+          mkdir -p extras
+          (cd dist/extension && zip -qr "../../extras/Vaultkin-extension-chrome-${GITHUB_REF_NAME}.zip" .)
+          (cd dist/extension-firefox && zip -qr "../../extras/Vaultkin-extension-firefox-${GITHUB_REF_NAME}.zip" .)
+          cp dist/cli/sv.cjs "extras/sv-${GITHUB_REF_NAME}.cjs"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: electron-extras-${{ github.ref_name }}
+          path: extras/*
+          retention-days: 90
+
   # ── 9. Electron Builds (release tags only) ────────────────────────────────
   # Packaged by electron-builder.ts (project root) via the electron:dist:*
   # scripts. Only triggers on `v*.*.*` tag pushes, so it doesn't block normal
@@ -261,17 +293,29 @@ jobs:
 
       - name: Build Electron (macOS)
         if: matrix.platform == 'macOS'
-        run: pnpm run electron:dist:mac
+        run: pnpm run electron:dist:mac --publish never
         env:
-          CSC_IDENTITY_AUTO_DISCOVERY: false  # Code signing: set CSC_LINK + CSC_KEY_PASSWORD in secrets
+          CSC_IDENTITY_AUTO_DISCOVERY: false # Code signing: set CSC_LINK + CSC_KEY_PASSWORD in secrets
+
+      # The extension host must be universal (x64 + arm64) and must run.
+      # Exit code 2 = "missing extension origin": the host started correctly.
+      - name: Check universal bridge host (macOS)
+        if: matrix.platform == 'macOS'
+        run: |
+          host="$(find release -path '*Vaultkin.app/Contents/Resources/bridge-host/vaultkin-bridge-host' | head -1)"
+          test -n "$host"
+          lipo -info "$host" | grep -q 'x86_64 arm64'
+          codesign --verify "$host"
+          set +e; "$host"; code=$?; set -e
+          test "$code" = 2
 
       - name: Build Electron (Windows)
         if: matrix.platform == 'Windows'
-        run: pnpm run electron:dist:win
+        run: pnpm run electron:dist:win --publish never
 
       - name: Build Electron (Linux)
         if: matrix.platform == 'Linux'
-        run: pnpm run electron:dist:linux
+        run: pnpm run electron:dist:linux --publish never
 
       - name: Upload distributables
         uses: actions/upload-artifact@v4
@@ -284,10 +328,12 @@ jobs:
   release:
     name: Create Release
     runs-on: ubuntu-latest
-    needs: [build-electron]
+    needs: [build-electron, release-extras, dependency-check]
     if: startsWith(github.ref, 'refs/tags/v')
     permissions:
       contents: write
+      id-token: write # signed build provenance (Sigstore via GitHub attestations)
+      attestations: write
     steps:
       - uses: actions/checkout@v4
       - name: Download all artifacts
@@ -300,27 +346,50 @@ jobs:
       # The release body below promises "SHA-256 checksums are attached" —
       # this step is what actually makes that true. Previously nothing
       # computed them, so the promise in the body was empty.
+      - name: Download SBOM
+        uses: actions/download-artifact@v4
+        with:
+          name: sbom
+          path: release-artifacts/
+
+      # Installers / packages only (electron-builder also leaves unpacked dirs
+      # and blockmaps; those aren't release assets).
+      - name: Collect release files
+        run: |
+          mkdir -p out
+          find release-artifacts -type f \( -name '*.exe' -o -name '*.dmg' -o -name '*.AppImage' \
+            -o -name '*.deb' -o -name '*.rpm' -o -name '*.zip' -o -name '*.cjs' -o -name 'latest*.yml' \
+            -o -name 'sbom.json' \) -not -path '*unpacked*' -exec cp {} out/ \;
+          ls -la out
+
       - name: Generate SHA-256 checksums
         run: |
-          cd release-artifacts
+          cd out
           sha256sum * > SHA256SUMS.txt
           cat SHA256SUMS.txt
+
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: "out/*"
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          draft:     true
-          files:     release-artifacts/**/*
+          draft: true
+          files: out/*
           body: |
-            ## SecureVault ${{ github.ref_name }}
+            ## Vaultkin ${{ github.ref_name }}
 
             ### Downloads
             | Platform | File |
             |----------|------|
-            | macOS    | SecureVault-*.dmg |
-            | Windows  | SecureVault-Setup-*.exe |
-            | Linux    | SecureVault-*.AppImage / .deb / .rpm |
+            | macOS    | Vaultkin-*.dmg |
+            | Windows  | Vaultkin-Setup-*.exe |
+            | Linux    | Vaultkin-*.AppImage / .deb / .rpm |
 
             ### Verification
             SHA-256 checksums are attached to this release as `SHA256SUMS.txt`.
             Verify before installing: `shasum -a 256 -c SHA256SUMS.txt`
+            Build provenance (Sigstore): `gh attestation verify <file> --repo ${{ github.repository }}`
+            SBOM (CycloneDX): `sbom.json`

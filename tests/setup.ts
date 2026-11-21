@@ -24,9 +24,15 @@ global.indexedDB = {
         objectStoreNames: { contains: () => true },
         transaction: () => ({
           objectStore: () => ({
-            get:       (k: string) => makeRequest(_store.get(k) ?? null),
-            put:       (v: string, k: string) => { _store.set(k, v); return makeRequest(undefined); },
-            delete:    (k: string) => { _store.delete(k); return makeRequest(undefined); },
+            get: (k: string) => makeRequest(_store.get(k) ?? null),
+            put: (v: string, k: string) => {
+              _store.set(k, v);
+              return makeRequest(undefined);
+            },
+            delete: (k: string) => {
+              _store.delete(k);
+              return makeRequest(undefined);
+            },
             getAllKeys: () => makeRequest([..._store.keys()]),
           }),
         }),
@@ -37,7 +43,10 @@ global.indexedDB = {
       onerror: null,
       onblocked: null,
     };
-    setTimeout(() => { req.onupgradeneeded?.({ target: req }); req.onsuccess?.(); }, 0);
+    setTimeout(() => {
+      req.onupgradeneeded?.({ target: req });
+      req.onsuccess?.();
+    }, 0);
     return req;
   },
 } as any;
@@ -45,23 +54,35 @@ global.indexedDB = {
 // ─── localStorage mock ────────────────────────────────────────────────────────
 const _ls = new Map<string, string>();
 global.localStorage = {
-  getItem:    (k: string) => _ls.get(k) ?? null,
-  setItem:    (k: string, v: string) => { _ls.set(k, v); },
-  removeItem: (k: string) => { _ls.delete(k); },
-  clear:      () => { _ls.clear(); },
-  length:     0,
-  key:        () => null,
+  getItem: (k: string) => _ls.get(k) ?? null,
+  setItem: (k: string, v: string) => {
+    _ls.set(k, v);
+  },
+  removeItem: (k: string) => {
+    _ls.delete(k);
+  },
+  clear: () => {
+    _ls.clear();
+  },
+  length: 0,
+  key: () => null,
 } as any;
 
 // ─── sessionStorage mock ──────────────────────────────────────────────────────
 const _ss = new Map<string, string>();
 global.sessionStorage = {
-  getItem:    (k: string) => _ss.get(k) ?? null,
-  setItem:    (k: string, v: string) => { _ss.set(k, v); },
-  removeItem: (k: string) => { _ss.delete(k); },
-  clear:      () => { _ss.clear(); },
-  length:     0,
-  key:        () => null,
+  getItem: (k: string) => _ss.get(k) ?? null,
+  setItem: (k: string, v: string) => {
+    _ss.set(k, v);
+  },
+  removeItem: (k: string) => {
+    _ss.delete(k);
+  },
+  clear: () => {
+    _ss.clear();
+  },
+  length: 0,
+  key: () => null,
 } as any;
 
 // ─── Clipboard mock ───────────────────────────────────────────────────────────
@@ -70,7 +91,7 @@ Object.defineProperty(global.navigator, "clipboard", {
   configurable: true,
   value: {
     writeText: vi.fn().mockResolvedValue(undefined),
-    readText:  vi.fn().mockResolvedValue(""),
+    readText: vi.fn().mockResolvedValue(""),
   },
 });
 

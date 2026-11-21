@@ -1,4 +1,4 @@
-# SecureVault launcher (Windows PowerShell)
+# Vaultkin launcher (Windows PowerShell)
 #
 # Usage:
 #   .\launch.ps1               # Electron dev mode (default)
@@ -24,7 +24,7 @@ function Write-Section($text) {
   Write-Host ""
 }
 
-Write-Section "SecureVault launcher"
+Write-Section "Vaultkin launcher"
 
 # --- Check Node.js ---
 $node = Get-Command node -ErrorAction SilentlyContinue
@@ -37,7 +37,7 @@ if (-not $node) {
 $nodeVersion = (node -v) -replace '^v', ''
 $nodeMajor   = [int]($nodeVersion.Split('.')[0])
 if ($nodeMajor -lt 20) {
-  Write-Host "[WARN]  Node $nodeVersion detected; SecureVault expects 20+." -ForegroundColor Yellow
+  Write-Host "[WARN]  Node $nodeVersion detected; Vaultkin expects 20+." -ForegroundColor Yellow
 }
 Write-Host "[OK]    Node $nodeVersion" -ForegroundColor Green
 

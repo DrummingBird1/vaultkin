@@ -17,7 +17,7 @@ This file gives AI coding agents (Codex, Claude Code, Copilot, Cursor, Gemini an
 
 ## What this is
 
-**SecureVault** — a zero-knowledge password manager + 2FA authenticator. React + TypeScript + Vite + Electron, with a companion Chrome MV3 browser extension for autofill.
+**Vaultkin** — a zero-knowledge password manager + 2FA authenticator. React + TypeScript + Vite + Electron, with a companion Chrome MV3 browser extension for autofill.
 
 - Master password never leaves the device.
 - AES-256-GCM encryption, HMAC-SHA256 (Encrypt-then-MAC). KDF is **Argon2id (64 MiB, t=3, p=1)** via `hash-wasm`; PBKDF2-SHA256 600k vaults still open (KDF chosen from the vault header). Defaults live in `DEFAULT_KDF` in `src/core/vault/engine.ts` — see [docs/README.security.md](docs/README.security.md).
@@ -53,6 +53,7 @@ securevault/
 │   ├── components/{modals,vault,layout}/     # *.modal.tsx, vault views (grid/list/service), app shell
 │   ├── hooks/
 │   ├── pages/                                # *.page.tsx — Vault, Unlock, Authenticator, Generator, Health, Settings
+│   ├── cli/                                  # `sv` CLI (read-only, bundled by scripts/build-cli.mjs → dist/cli/sv.cjs)
 │   ├── i18n/                                 # react-i18next setup, en/he locales (partial migration — see gotchas)
 │   ├── electron/                             # main process, preload, updater
 │   └── styles/globals.css                    # sv-* design-system layer
@@ -71,13 +72,13 @@ Load-bearing for the zero-knowledge model. Breaking them is a security regressio
 1. **Master password never leaves the device.** No telemetry, no error reports include vault content. The HIBP check sends 5 hex chars of a SHA-1 hash, nothing more.
 2. **Crypto types in one place** — `src/core/vault/vault-types.ts` is the single source of truth for `KdfParams`, `SessionKeys`, `VaultPayload`, `wipeSessionKeys`, `createDefaultVaultData`. Both `engine.ts` and `serializer.ts` import from there.
 3. **`serializer.ts` is the public façade.** Outside `core/`, code calls `createVault` / `openVault` / `reEncryptVault` / `changeMasterPassword` from `serializer.ts`. It does not poke at the engine's raw `Uint8Array` key API.
-4. **Memory hygiene on lock.** `BreachService._cache`, `HistoryService.versions`, and the paired browser extension's cache (via `ExtensionBridge.lock`) **must** be cleared in `AppLifecycle.onLock`. Adding a new in-memory cache holding plaintext-derived data? Wire it into lock teardown.
+4. **Memory hygiene on lock.** `BreachService._cache`, `HistoryService.versions`, SSH-agent approvals (`SshAgentService.onLock`), the clipboard (`ClipboardService.clearNow`), and the paired browser extension's cache (via `ExtensionBridge.lock`) **must** be cleared in `AppLifecycle.onLock`. Adding a new in-memory cache holding plaintext-derived data? Wire it into lock teardown.
 5. **`ErrorBoundary` wraps the whole tree.** Crashes must not leak a blank screen.
 6. **Password strength API.** Exported function is `analyzeStrength(...)`, entropy field is `effectiveEntropy`. `analyzePassword` is kept only as a documented backward-compat alias — don't add new callers of it, and don't reintroduce `.entropy`-only callers.
 7. **`lockApplication` reasons.** Valid `LockReason`: `"manual"`, `"inactivity"`, `"duress"`. Not `"system"`.
-8. **Electron sandbox.** `contextIsolation: true`, `sandbox: true`, `nodeIntegration: false`, CSP `default-src 'self'`. Don't loosen.
+8. **Electron sandbox.** `contextIsolation: true`, `sandbox: true`, `nodeIntegration: false`, CSP `default-src 'self'` (injected at build by `sv-csp` in `config/vite.config.ts`), navigation/webview blocked, all permission requests denied, content protection on. Don't loosen.
 9. **Browser extension data minimization.** `ExtensionBridge` sends only `{id, title, url, username, password, totpSecret}`. Cache auto-wipes after 5 min idle. Autofill enforces strict domain match; generous match is only used for "what entries belong to this site".
-10. **Duress password.** Stored as SHA-256 hash in `localStorage` under `sv_duress_hash`. Constant-time comparison.
+10. **Duress password.** Stored as a salted Argon2id hash (`argon2id$<salt>$<hex>`) in `localStorage` under `sv_duress_hash`; legacy unsalted SHA-256 is only read, never written. Constant-time comparison.
 11. **Password generator RNG buffer.** `crypto.getRandomValues(buf)` must be called immediately after allocating the buffer in `generatePassword`/`randomWordIndices`, not only inside the "buffer exhausted" refill check — see the comment in `src/core/password/generator.ts` for the exact regression this guards against.
 12. **Autosave flush before lock clears state.** `lockApplication` must call `AutosaveService.flushNow()` before `setVault(null)` — a pending debounced edit would otherwise be silently discarded.
 
@@ -104,15 +105,22 @@ Load-bearing for the zero-knowledge model. Breaking them is a security regressio
 - [LAUNCH.md](LAUNCH.md) — launcher usage and how to make a Start-menu / dock shortcut.
 - [docs/USER_GUIDE.md](docs/USER_GUIDE.md) — comprehensive end-user guide (Hebrew).
 - [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) — known issues + recovery paths (Hebrew).
+- [docs/CLI.md](docs/CLI.md) — the `sv` command line tool.
 - [docs/adr/](docs/adr/) — architecture decision records (KDF choice, Recovery Kit snapshot design, no-PSL-dependency).
 - [extension/README.md](extension/README.md) — extension dev install.
 
 ## Known gotchas
 
-- **Biometric unlock is partial.** Master-password unlock is required at least once per session; keys-only path isn't wired. Current `handleBiometric` shows a clear "use master password" message.
-- **i18n is a proof of concept.** Real infrastructure (`src/i18n/`, en/he locales), but only the Unlock page is migrated to `useTranslation()` — every other page/component still has hardcoded English regardless of the language setting. Deliberately partial, not half-finished.
-- **Extension `externally_connectable.matches` contains a placeholder** (`https://*.your-securevault-host.com/*` in [extension/manifest.json](extension/manifest.json)). Replace before shipping.
-- **Extension PNG icons are placeholders.** Generate real ones before Web Store submission.
-- **QR encoder ([src/lib/qrcode.ts](src/lib/qrcode.ts)) is single-block / single-mask** and omits alignment patterns. Fine for v1; v2+ may not scan reliably. Verify with real scanners or swap for `qrcode-generator`.
+- **Device unlock (desktop).** "Remember this device" keeps the 64-byte derived key in the OS keystore via `safeStorage` (`src/electron/device-unlock.ts`), tied to the vault salt, 14-day max age, Touch ID on macOS. On Windows, when Hello is set up, the key is also wrapped (AES-256-GCM, `src/electron/key-wrap.ts`) with SHA-256 of a deterministic Windows Hello RSA signature (`src/electron/windows-hello.ts`, via the OS PowerShell + WinRT `KeyCredentialManager`), so DPAPI alone can't unwrap it; without Hello it falls back to DPAPI only. A password unlock only `refresh`es the timestamp (no prompt). E2E sets `SV_DEVICE_UNLOCK_NO_HELLO=1` (honoured only in unpackaged builds). Raw keys leave `core/` only through `exportDeviceKey` / `openVaultWithDeviceKey`. WebAuthn PRF unlock is not built (no usable rpId for a `file://` renderer).
+- **i18n (en/he).** Every user-visible string in `src/` goes through `t()` / `i18n.t()` with keys in `src/i18n/locales/{en,he}.json`; `src/i18n/locales.test.ts` enforces identical key sets and matching `{{placeholders}}`. `<html lang dir>` follows the language (Hebrew → rtl), so layout must use logical classes (`ms-/me-/ps-/pe-/start-/end-/text-start`), not `ml-/mr-/left-/right-`. Tests run in English. Not translated on purpose: brand name, crypto/protocol identifiers, example placeholders (`user@example.com`, `MM/YY`, PEM headers), keyboard hints, log/`console` text, error class names, the `sv` CLI, the Electron main process and the `extension/`.
+- **Packaged renderer is served from `app://securevault`** (`src/electron/app-protocol.ts`), not file:// (the GrantFileProtocolExtraPrivileges fuse blocks file:// in the asar). IndexedDB origin is therefore `app://securevault` in packaged builds and `http://localhost:5173` in dev.
+- **Native-messaging host is a standalone binary** in packaged builds (`scripts/build-bridge-host.mjs`, a Node single executable, shipped in `resources/bridge-host`), so the RunAsNode fuse is off. Dev still registers a wrapper that runs `bridge-host.js` with Electron in Node mode. On macOS it is a universal binary (official Node x64 + arm64, checksum-verified, merged with `lipo`); not yet run on a Mac, see [docs/RELEASE.md](docs/RELEASE.md).
+- **No remote favicons** (`EntryFavicon` is letters only): loading them leaked the vault's site list to a third party. See [PRIVACY.md](PRIVACY.md).
+- **Extension store packages**: `pnpm build:extension:release` strips dev hosts; icons are generated by `scripts/generate-icons.cjs` (final branding is an owner decision).
+- **QR backup** uses `qrcode-generator` (full spec) in `VaultBackupQR.modal.tsx`; the old hand-rolled `src/lib/qrcode.ts` was removed. Still verify with a real scanner.
+- **WebDAV pull never overwrites blindly**: pull → `RemoteUnlockModal` (remote master password) → `ConflictResolutionModal` (merge / keep local / keep remote) → autosave re-encrypts under the current session keys.
 - **`ImportVault` 50 MB cap reads the full file into memory.** Streaming parser preferred for large LastPass exports.
+- **SSH agent (desktop, opt-in).** `src/electron/ssh-agent.ts` only frames the agent protocol on a per-user pipe/socket; keys and the approval dialog stay in the renderer (`ssh-agent.service.ts`). List + sign only (no add/remove), Ed25519 only, every sign approved (optional 10-minute per-key memory, cleared on lock). E2E drives it with the real Windows OpenSSH `ssh-add` / `ssh-keygen -Y sign`.
+- **Attachments.** Per-file AES-256-GCM key in `entry.attachments[]` (inside the vault), id bound as AAD; ciphertext in the separate IndexedDB `securevault-attachments` (`services/attachment-store.ts`). `IPCService.vault.delete()` clears them (duress, danger zone); unreferenced blobs are GC'd on unlock. Not synced over WebDAV yet.
+- **Folder sync (desktop).** `src/electron/folder-sync.ts` writes `Vaultkin.svault` (ciphertext only, validated) to the user-chosen folder after each autosave; it remembers the hash it last read/wrote and returns `conflict` instead of overwriting another device's copy. Pull goes through the same RemoteUnlock → ConflictResolution flow as WebDAV. E2E uses `SV_FOLDER_SYNC_DIR` (unpackaged only).
 - **`BulkActionBar` only supports delete**, not move-to-folder or add-tag — a known, scoped limitation, not an oversight.

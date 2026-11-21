@@ -18,6 +18,64 @@ export type UpdateStatus =
 export interface ElectronBridge {
   platform: string;
   version: string;
+  /** Browser-extension bridge transport (ADR 0007). */
+  bridge?: {
+    onFrame: (cb: (f: { connId: number; origin: string; msg: unknown }) => void) => () => void;
+    onClosed: (cb: (connId: number) => void) => () => void;
+    send: (connId: number, msg: object) => Promise<boolean>;
+    close: (connId: number) => Promise<void>;
+    installHost: (extensionIds: string[]) => Promise<{ manifest: string; registered: number }>;
+  };
+  /** Present from M5: encrypted vault copy in a user-chosen folder. */
+  folderSync?: {
+    status: () => Promise<{ dir: string; file: string } | null>;
+    choose: () => Promise<{ dir: string; file: string } | null>;
+    clear: () => Promise<void>;
+    read: () => Promise<string | null>;
+    write: (payload: string, force?: boolean) => Promise<"written" | "conflict" | "off" | "error">;
+  };
+  /** Present from M5: SSH agent served from the app. */
+  sshAgent?: {
+    /** Returns the agent socket/pipe path when running, else null. */
+    setEnabled: (on: boolean) => Promise<string | null>;
+    onRequest: (
+      cb: (r: {
+        id: number;
+        req: { kind: "list" } | { kind: "sign"; keyBlob: string; data: string; flags: number };
+      }) => void,
+    ) => () => void;
+    reply: (id: number, value: unknown) => Promise<void>;
+  };
+  /** Present from M4: secret copies kept out of clipboard history. */
+  clipboard?: {
+    writeSecret: (text: string) => Promise<{ ok: boolean; excluded: boolean }>;
+    clearSecret: () => Promise<boolean>;
+  };
+  /** Present from M4: remember this device (OS keystore). */
+  deviceUnlock?: {
+    status: () => Promise<
+      | { supported: false }
+      | { supported: true; enrolled: false }
+      | {
+          supported: true;
+          enrolled: true;
+          salt: string;
+          expiresAt: number;
+          protection: "hello" | "touchid" | "account";
+        }
+    >;
+    save: (salt: string, rawB64: string) => Promise<boolean>;
+    refresh: (salt: string) => Promise<boolean>;
+    load: (salt: string) => Promise<string | null>;
+    clear: () => Promise<void>;
+  };
+  /** Present in builds with the custom title bar / Quick Access (M2+). */
+  window?: {
+    setTitleBarTheme: (colors: { color: string; symbolColor: string }) => Promise<void>;
+    onQuickAccess: (callback: () => void) => () => void;
+    /** Present from M4: sleep / screen lock / user switch. */
+    onSystemLock?: (callback: () => void) => () => void;
+  };
   updates: {
     check: () => Promise<void>;
     download: () => Promise<void>;

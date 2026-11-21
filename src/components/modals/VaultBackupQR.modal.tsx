@@ -10,27 +10,39 @@
 import React, { useEffect, useMemo, useState } from "react";
 import qrcode from "qrcode-generator";
 import { IPCService } from "../../services/ipc.service";
+import { Modal } from "../ui/Modal";
+import { useTranslation } from "react-i18next";
 
-interface Props { onClose: () => void; }
+interface Props {
+  onClose: () => void;
+}
 
 const CHUNK_SIZE = 700; // bytes of payload per QR (kept well under v40 capacity)
 
 export function VaultBackupQRModal({ onClose }: Props) {
+  const { t } = useTranslation();
   const [payload, setPayload] = useState<string | null>(null);
-  const [error, setError]     = useState("");
-  const [page, setPage]       = useState(0);
+  const [error, setError] = useState("");
+  const [page, setPage] = useState(0);
 
   useEffect(() => {
-    IPCService.vault.load()
-      .then(p => { if (p) setPayload(p); else setError("No vault found to back up."); })
-      .catch(() => setError("Failed to read the vault."));
-  }, []);
+    IPCService.vault
+      .load()
+      .then((p) => {
+        if (p) setPayload(p);
+        else setError(t("backupQr.noVault"));
+      })
+      .catch(() => setError(t("backupQr.readFailed")));
+  }, [t]);
 
   useEffect(() => {
     const h = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-      if (e.key === "ArrowRight") setPage(p => Math.min(p + 1, chunks.length - 1));
-      if (e.key === "ArrowLeft")  setPage(p => Math.max(p - 1, 0));
+      // "Next" is the reading direction: right in LTR, left in RTL (Hebrew).
+      const rtl = document.documentElement.dir === "rtl";
+      const next = rtl ? "ArrowLeft" : "ArrowRight";
+      const prev = rtl ? "ArrowRight" : "ArrowLeft";
+      if (e.key === next) setPage((p) => Math.min(p + 1, chunks.length - 1));
+      if (e.key === prev) setPage((p) => Math.max(p - 1, 0));
     };
     window.addEventListener("keydown", h);
     return () => window.removeEventListener("keydown", h);
@@ -49,48 +61,58 @@ export function VaultBackupQRModal({ onClose }: Props) {
 
   const svg = useMemo(() => {
     if (!chunks[page]) return "";
-    const qr = qrcode(0, "M");          // typeNumber 0 = auto-size
+    const qr = qrcode(0, "M"); // typeNumber 0 = auto-size
     qr.addData(chunks[page]);
     qr.make();
     return qr.createSvgTag({ cellSize: 4, margin: 2, scalable: true });
   }, [chunks, page]);
 
   return (
-    <div className="sv-modal-backdrop" onClick={e => e.target === e.currentTarget && onClose()}>
-      <div className="sv-modal max-w-md" role="dialog" aria-modal="true" aria-label="Vault QR backup">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-[var(--text-primary)]">QR Backup</h2>
-          <button onClick={onClose} aria-label="Close" className="sv-icon-btn">✕</button>
-        </div>
-
-        {error && <p className="sv-error">{error}</p>}
-
-        {!error && !payload && (
-          <p className="text-sm text-[var(--text-tertiary)] text-center py-8">Loading vault…</p>
-        )}
-
-        {payload && chunks.length > 0 && (
-          <>
-            <p className="text-sm text-[var(--text-secondary)] mb-4">
-              Scan all {chunks.length} code{chunks.length > 1 ? "s" : ""} in order to back up your
-              <strong> encrypted</strong> vault. They contain ciphertext only — your master password
-              is still required to open the result.
-            </p>
-            <div className="bg-white rounded-xl p-4 flex items-center justify-center mb-4"
-              dangerouslySetInnerHTML={{ __html: svg }} />
-            <div className="flex items-center justify-between">
-              <button onClick={() => setPage(p => Math.max(p - 1, 0))} disabled={page === 0}
-                className="sv-btn-secondary px-4 disabled:opacity-40">← Prev</button>
-              <span className="text-sm text-[var(--text-tertiary)] tabular-nums">
-                {page + 1} / {chunks.length}
-              </span>
-              <button onClick={() => setPage(p => Math.min(p + 1, chunks.length - 1))} disabled={page === chunks.length - 1}
-                className="sv-btn-secondary px-4 disabled:opacity-40">Next →</button>
-            </div>
-          </>
-        )}
+    <Modal onClose={onClose} className="max-w-md" label={t("backupQr.label")}>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-lg font-semibold text-(--text-primary)">{t("backupQr.title")}</h2>
+        <button onClick={onClose} aria-label={t("entry.close")} className="sv-icon-btn">
+          ✕
+        </button>
       </div>
-    </div>
+
+      {error && <p className="sv-error">{error}</p>}
+
+      {!error && !payload && (
+        <p className="text-sm text-(--text-tertiary) text-center py-8">{t("backupQr.loading")}</p>
+      )}
+
+      {payload && chunks.length > 0 && (
+        <>
+          <p className="text-sm text-(--text-secondary) mb-4">
+            {t("backupQr.instructions", { count: chunks.length })}
+          </p>
+          <div
+            className="bg-white rounded-xl p-4 flex items-center justify-center mb-4"
+            dangerouslySetInnerHTML={{ __html: svg }}
+          />
+          <div className="flex items-center justify-between">
+            <button
+              onClick={() => setPage((p) => Math.max(p - 1, 0))}
+              disabled={page === 0}
+              className="sv-btn-secondary px-4 disabled:opacity-40"
+            >
+              {t("backupQr.prev")}
+            </button>
+            <span className="text-sm text-(--text-tertiary) tabular-nums">
+              {page + 1} / {chunks.length}
+            </span>
+            <button
+              onClick={() => setPage((p) => Math.min(p + 1, chunks.length - 1))}
+              disabled={page === chunks.length - 1}
+              className="sv-btn-secondary px-4 disabled:opacity-40"
+            >
+              {t("backupQr.next")}
+            </button>
+          </div>
+        </>
+      )}
+    </Modal>
   );
 }
 

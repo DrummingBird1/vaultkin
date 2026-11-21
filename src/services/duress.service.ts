@@ -11,8 +11,11 @@
  *    indistinguishable from a user who hasn't added much yet.
  *
  * IMPLEMENTATION:
- *  - The duress password is hashed with SHA-256 and stored in localStorage
- *    under "sv_duress_hash". Hash only — never the password itself.
+ *  - The duress password is hashed with salted Argon2id (19 MiB, t=2, p=1)
+ *    and stored in localStorage under "sv_duress_hash" as
+ *    `argon2id$<salt b64>$<hash hex>`. Hash only — never the password itself.
+ *    Older installs stored an unsalted SHA-256 hex; it is still recognised
+ *    and is replaced the next time the user enrolls.
  *  - On every unlock attempt, we first check if the entered password's hash
  *    matches the stored duress hash. If yes → trigger duress mode.
  *  - In duress mode:
@@ -30,17 +33,31 @@
  *    plausible deniability is the goal here, not perfect concealment.
  */
 
+import { argon2id } from "hash-wasm";
+
 const DURESS_HASH_KEY = "sv_duress_hash";
 const DURESS_TRIGGERED_KEY = "sv_duress_triggered_at";
 
-/** SHA-256 a string and return lowercase hex. */
+const ARGON = { memorySize: 19 * 1024, iterations: 2, parallelism: 1, hashLength: 32 };
+
+/** SHA-256 hex, only to recognise a hash enrolled before M4. */
 async function sha256Hex(text: string): Promise<string> {
-  const buf = new TextEncoder().encode(text);
-  const digest = await crypto.subtle.digest("SHA-256", buf);
-  const bytes = new Uint8Array(digest);
-  let hex = "";
-  for (const b of bytes) hex += b.toString(16).padStart(2, "0");
-  return hex;
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+  return Array.from(new Uint8Array(digest), (b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+async function argonHex(password: string, salt: Uint8Array): Promise<string> {
+  return argon2id({ password, salt, ...ARGON, outputType: "hex" });
+}
+
+const b64 = (u: Uint8Array) => btoa(String.fromCharCode(...u));
+const unb64 = (s: string) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
+
+function constantTimeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return diff === 0;
 }
 
 export const DuressService = {
@@ -54,10 +71,10 @@ export const DuressService = {
     if (!duressPassword) throw new Error("Duress password cannot be empty");
     if (duressPassword === realPassword)
       throw new Error("Duress password must be different from the master password");
-    if (duressPassword.length < 6)
-      throw new Error("Duress password must be at least 6 characters");
-    const hash = await sha256Hex(duressPassword);
-    localStorage.setItem(DURESS_HASH_KEY, hash);
+    if (duressPassword.length < 6) throw new Error("Duress password must be at least 6 characters");
+    const salt = crypto.getRandomValues(new Uint8Array(16));
+    const hash = await argonHex(duressPassword, salt);
+    localStorage.setItem(DURESS_HASH_KEY, `argon2id$${b64(salt)}$${hash}`);
   },
 
   /** Remove the duress password (disable duress feature). */
@@ -72,13 +89,13 @@ export const DuressService = {
    */
   async isDuress(enteredPassword: string): Promise<boolean> {
     const stored = localStorage.getItem(DURESS_HASH_KEY);
-    if (!stored) return false;
-    const hash = await sha256Hex(enteredPassword);
-    // Constant-time comparison (small effort against timing attacks)
-    if (hash.length !== stored.length) return false;
-    let diff = 0;
-    for (let i = 0; i < hash.length; i++) diff |= hash.charCodeAt(i) ^ stored.charCodeAt(i);
-    return diff === 0;
+    if (!stored || !enteredPassword) return false;
+    const parts = stored.split("$");
+    if (parts.length === 3 && parts[0] === "argon2id") {
+      const hash = await argonHex(enteredPassword, unb64(parts[1]));
+      return constantTimeEqual(hash, parts[2]);
+    }
+    return constantTimeEqual(await sha256Hex(enteredPassword), stored); // legacy
   },
 
   /** Mark that the duress trigger fired (for later forensic review by the user). */

@@ -4,6 +4,7 @@
  * comma-separated text field — a native <datalist> can't autocomplete one
  * segment of a comma-separated string, only the whole field.
  */
+import { useTranslation } from "react-i18next";
 import React, { useState, useRef } from "react";
 import { IconClose } from "../icons";
 
@@ -16,6 +17,7 @@ export function TagInput({
   onChange: (tags: string[]) => void;
   suggestions?: string[];
 }) {
+  const { t } = useTranslation();
   const [draft, setDraft] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -55,13 +57,13 @@ export function TagInput({
         {value.map((tag) => (
           <span
             key={tag}
-            className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-[var(--accent-dim)] text-[var(--accent)]"
+            className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-(--accent-dim) text-(--accent-text)"
           >
             {tag}
             <button
               type="button"
               onClick={() => removeTag(tag)}
-              aria-label={`Remove tag ${tag}`}
+              aria-label={t("tagInput.remove", { tag })}
               className="hover:opacity-70"
             >
               <IconClose className="w-3 h-3" />
@@ -76,12 +78,13 @@ export function TagInput({
           onKeyDown={handleKeyDown}
           onFocus={() => setShowSuggestions(true)}
           onBlur={() => setShowSuggestions(false)}
-          placeholder={value.length === 0 ? "Add tags…" : ""}
-          className="flex-1 min-w-[80px] bg-transparent outline-none text-sm text-[var(--text-primary)] placeholder-[var(--text-tertiary)]"
+          aria-label={t("entry.tags")}
+          placeholder={value.length === 0 ? t("tagInput.placeholder") : ""}
+          className="flex-1 min-w-[80px] bg-transparent outline-hidden text-sm text-(--text-primary) placeholder-(--text-tertiary)"
         />
       </div>
       {showSuggestions && filteredSuggestions.length > 0 && (
-        <div className="absolute z-10 mt-1 w-full rounded-xl border border-[var(--border-default)] bg-[var(--bg-elevated)] shadow-lg overflow-hidden">
+        <div className="absolute z-10 mt-1 w-full rounded-xl border border-(--border-default) bg-(--bg-elevated) shadow-lg overflow-hidden">
           {filteredSuggestions.map((s) => (
             <button
               key={s}
@@ -89,7 +92,7 @@ export function TagInput({
               // onMouseDown (not onClick) fires before the input's onBlur, so
               // the suggestion click registers before blur closes the list.
               onMouseDown={() => commit(s)}
-              className="block w-full text-left px-3 py-2 text-sm text-[var(--text-primary)] hover:bg-[var(--accent-dim)] hover:text-[var(--accent)]"
+              className="block w-full text-start px-3 py-2 text-sm text-(--text-primary) hover:bg-(--accent-dim) hover:text-(--accent-text)"
             >
               {s}
             </button>

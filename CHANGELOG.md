@@ -1,5 +1,211 @@
 # Changelog
 
+## [Unreleased] — M6 release preparation (2026-11-21)
+
+### Changed
+- Hebrew translation now covers the whole app, including copy and update
+  notifications, import errors and accent color names; a test keeps the
+  English and Hebrew string lists in sync.
+- The browser extension's native-messaging host now ships as its own small
+  program, so the desktop app's "run as Node" fuse is turned off in release
+  builds (one less way to abuse the signed app binary).
+- The app is renamed **Vaultkin** (was SecureVault). Existing data keeps
+  working: the desktop app and the `sv` CLI keep using an old `SecureVault`
+  data folder if one exists. Internal identifiers stay unchanged so nothing
+  is orphaned: the IndexedDB names, `app://securevault`, the native-messaging
+  host and the Firefox add-on id, and the Windows Hello key.
+
+### Fixed
+- Packaged desktop builds showed a blank window (a hardening fuse blocks
+  loading the app from file://). The app is now served from
+  `app://securevault`, with a real Content-Security-Policy header.
+- The Authenticator page could crash React with an endless re-render
+  ("Maximum update depth exceeded").
+
+### Privacy
+- Entry icons no longer load favicons from Google (that revealed which sites
+  are in your vault); entries show their first letter instead.
+- New PRIVACY.md lists every network request the app makes.
+
+### Release engineering
+- The packaged app no longer ships the renderer's libraries as
+  node_modules (they're already bundled): app.asar went from ~3,800 files to
+  a few dozen (2.2 MB).
+- Store-ready extension packages (`build:extension:release`, no dev hosts),
+  release assets with SHA-256 checksums, CycloneDX SBOM and signed build
+  provenance. docs/RELEASE.md has the checklist and open blockers.
+
+## [Unreleased] — M5 beyond parity (2026-11-21)
+
+### Added
+- SSH keys as a vault item: generate Ed25519 or import an existing OpenSSH
+  key; copy the public key; fingerprint shown. Works with OpenSSH's own
+  `ssh-keygen` (tested both ways).
+- SSH agent (desktop, Settings → SSH agent): ssh and git can use the vault's
+  keys. Every signature asks for approval (optionally remembered for 10
+  minutes per key); nothing is available while the vault is locked.
+- Attachments: add files to any entry (up to 25 MB each). Each file is
+  encrypted with its own key, kept inside the vault; deleting the vault (or
+  the duress password) removes them too. Attachments don't sync yet.
+- Secure sharing without a server: share an entry as an encrypted
+  `.svshare` file plus a separate code (send them over two channels), with
+  an expiry of 1 hour, 1 day or 7 days and only the fields you pick. The
+  recipient opens it in SecureVault and adds it to their vault.
+- Sync folder (desktop, Settings → Sync): keeps an encrypted copy of the
+  vault in a folder another tool syncs (Syncthing, OneDrive, Dropbox, NAS),
+  updated after every change. A copy changed on another device is never
+  overwritten: pull it and merge first.
+- `sv` command line tool (read-only): list entries, print a field or the
+  current 2FA code, and fill `.env`-style templates from the vault file in
+  the sync folder. See docs/CLI.md.
+
+### Fixed
+- New entries silently dropped fields the store didn't list (found while
+  adding SSH keys).
+- Sync settings still said credentials stay in session memory.
+
+## [Unreleased] — M4 security hardening, part 1 (2026-11-21)
+
+### Security
+- Production Content-Security-Policy (`default-src 'self'`, no frames, no
+  plugins, `connect-src` https only). WebDAV servers must use https.
+- Desktop window: can't be navigated away or host a `<webview>`; every
+  permission request (camera, mic, notifications, devices…) is denied; window
+  contents are hidden from screenshots and screen sharing.
+- The vault locks when the computer sleeps, the screen is locked or the user
+  switches.
+- Duress password stored as salted Argon2id instead of unsalted SHA-256;
+  existing enrollments keep working until re-enrolled.
+- `docs/THREAT_MODEL.md` (STRIDE), listing what is done and what is open.
+
+### Added
+- Remember this device (desktop, opt-in, Settings → Security): unlock
+  without typing the master password. The vault key is kept encrypted by the
+  OS (Windows account protection / macOS Keychain with Touch ID), stops
+  working when the master password changes, and the master password is
+  required again at least every 14 days.
+- WebDAV sync credentials are stored inside the encrypted vault instead of
+  plaintext browser session storage (moved automatically), are unavailable
+  while locked, and only https:// servers are accepted.
+- Copied passwords and codes are kept out of Windows Clipboard History
+  (Win+V) and cloud clipboard sync, and are wiped when the vault locks. The
+  30-second auto-clear no longer erases something you copied yourself
+  afterwards.
+- Remember this device on Windows now uses Windows Hello (face, fingerprint or
+  PIN) when it's set up: the stored key can only be unwrapped after a Hello
+  check, not just by being signed in to Windows.
+
+## [Unreleased] — M3 integrations (2026-11-21)
+
+### Added
+- Watchtower security report (replaces Password Health): breached, weak,
+  reused (grouped), insecure http:// sites, expired / expiring cards, old
+  passwords, missing passwords, no 2FA code; weighted score; per-category
+  advice. Pure, tested analysis in `src/core/watchtower`.
+- Desktop app ↔ browser extension bridge over native messaging, end-to-end
+  encrypted (ADR 0007): one-time pairing confirmed with a 6-digit code in the
+  app, per-connection keys, replay protection; the extension asks for the
+  current site's logins on demand and caches nothing. Settings → Browser
+  extension registers the connection for Chrome / Edge / Brave and lists
+  paired browsers.
+- Passkeys: SecureVault can save and use passkeys on websites (via the
+  extension); every save and sign-in is confirmed in the app; anything it
+  can't handle falls back to the browser's own passkey flow.
+- Autofill v2 in the extension: an inline menu on login and 2FA fields
+  (closed shadow DOM, Alt+↓, doesn't restructure the page), works in iframes,
+  fills the current 2FA code, and asks twice before filling a login saved for
+  another host or into a cross-site frame.
+- Save / update prompt: after a sign-in, the extension offers to save a new
+  login or update a changed password (kept in history); nothing is held
+  longer than 3 minutes, and lock, dismiss or tab close drop it.
+- Extension in Hebrew (and English) following the browser language.
+- Firefox build (`dist/extension-firefox`); Settings → Connect also
+  registers the connection for Firefox.
+- Tests: Electron E2E drives the real bridge host as Chrome would, including
+  pairing, scoped answers, replay/impostor rejection and a full passkey
+  ceremony verified like a relying party; Chromium test for the page shim.
+
+### Fixed
+- Settings crashed in the browser build (store selector returning a new
+  array each render); found by the accessibility E2E.
+
+### Notes
+- The extension must now be built (`pnpm build:extension`, load
+  `dist/extension`).
+- The native-messaging host runs as Electron in Node mode: the Electron
+  binary writes a CRLF to stdout on Windows, which breaks the protocol.
+  Disabling the RunAsNode fuse (Phase 4) requires a standalone host first.
+
+## [Unreleased] — M2 design, UX and desktop (2026-11-21)
+
+### Added
+- Command palette (Ctrl/⌘+K): search entries (never by password or notes),
+  copy password / username / 2FA code, open or edit entries, jump to pages and
+  Settings sections, lock, theme.
+- Quick Access hotkey Ctrl/⌘+Shift+Space on desktop: brings the window forward
+  and opens the palette (ADR 0006).
+- Complete Hebrew interface with right-to-left layout (579 strings, Hebrew dual
+  plurals); password crack time and strength tips localized via Intl.
+- First-run guide after creating a vault: Recovery Kit, import, shortcuts and
+  language.
+- Desktop: frameless window with native caption buttons that follow the theme;
+  works with caption buttons on either side (right-to-left Windows).
+- Design tokens v2 (radius, shadow, motion, focus ring, semantic Tailwind
+  colors), lucide icons, thin themed scrollbars.
+- Tests: axe accessibility E2E on every page, dialog and onboarding step in
+  English and Hebrew; Electron E2E suite (`pnpm test:e2e:electron`) on the real
+  desktop app with a throwaway profile.
+
+### Changed
+- Fonts are bundled (@fontsource) instead of loaded from Google Fonts: no
+  third-party request on launch, works offline.
+
+### Fixed
+- Accent-colored text below 4.5:1 contrast (new runtime `--accent-text`).
+- Show/hide password buttons below the 24px touch-target size.
+- Buttons whose accessible name didn't match their visible text.
+- Generator length slider had no label.
+- Crack-time estimates above a million years were shown as "centuries".
+- First keystrokes after the first Ctrl+K were lost while the palette loaded.
+
+### Verified
+- The Electron desktop app runs and renders (the "black screen" item from the
+  old roadmap is fixed).
+
+## [Unreleased] — M0/M1 foundation (2026-11-21)
+
+### Added
+- Vault schema v2 with a forward-only migrations framework (ADR 0004):
+  tombstones and guaranteed entry timestamps; v1 vaults upgrade on unlock.
+- WebDAV pull opens a merge view (remote unlock → merge / keep local / keep
+  remote) instead of overwriting the local vault.
+- Hash routing with Back/Forward and Settings section deep links (ADR 0005).
+- UI primitives in `src/components/ui/`: `Modal` (all 12 dialogs), `Button`,
+  `Field`, `Toaster`. `prefers-reduced-motion` support.
+
+### Changed
+- TypeScript 6, Tailwind CSS 4 (Vite plugin, PostCSS removed), Playwright
+  1.65, refreshed dev tooling.
+- Settings, Add/Edit Entry and Vault pages split into focused components
+  (`components/settings/`, `components/vault/entry-form/`, `components/vault/views/`).
+
+### Fixed
+- Editing a card or note saved it as a login.
+- Editing an entry moved it to the folder being viewed and reset imported
+  TOTP digits/period/algorithm.
+- New entries ignored the folder being viewed.
+- Arrow keys changed the selection behind an open dialog.
+- Keyboard shortcuts (Ctrl/⌘+L, K, N) could silently do nothing.
+- Nested dialogs could leave the page unable to scroll.
+- Extension background re-checks the sender origin and strips cached
+  entries to the allowed fields.
+
+### Tests
+- 255 unit/integration tests (was 191): services, migrations, merge, entry
+  form, primitives, shortcuts. E2E lifecycle passes on Chromium for the
+  first time. Global coverage is ~31% against an 80% gate (UI largely
+  untested) — the gate fails and is not lowered.
+
 ## [Unreleased] — Disaster recovery + reconstruction (2026-08-28, session 7)
 
 The working tree was wiped by something outside this project (not caused by

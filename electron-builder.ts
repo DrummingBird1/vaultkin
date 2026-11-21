@@ -33,7 +33,7 @@ import * as path from "path";
  * in src/electron/main.ts's BrowserWindow (contextIsolation/sandbox/
  * nodeIntegration: false). Fuses close off attack surface that exists
  * *before* any of that renderer-level config even runs:
- *   - runAsNode: without this off, `ELECTRON_RUN_AS_NODE=1 ./SecureVault ...`
+ *   - runAsNode: without this off, `ELECTRON_RUN_AS_NODE=1 ./Vaultkin ...`
  *     turns the packaged binary into a generic Node interpreter — a
  *     well-known Electron abuse vector for LOLBIN-style attacks.
  *   - nodeCliInspectArguments / nodeOptionsEnvironmentVariable: without
@@ -57,6 +57,9 @@ async function hardenElectronFuses(context: AfterPackContext): Promise<void> {
 
   await flipFuses(electronBinaryPath, {
     version: FuseVersion.V1,
+    // Off: the browser-extension native-messaging host ships as its own
+    // binary (resources/bridge-host, built by scripts/build-bridge-host.mjs),
+    // so nothing needs to run this app binary as plain Node.
     [FuseV1Options.RunAsNode]: false,
     [FuseV1Options.EnableCookieEncryption]: true,
     [FuseV1Options.EnableNodeOptionsEnvironmentVariable]: false,
@@ -68,9 +71,9 @@ async function hardenElectronFuses(context: AfterPackContext): Promise<void> {
 }
 
 const config: Configuration = {
-  appId: "com.securevault.app",
-  productName: "SecureVault",
-  copyright: "Copyright (c) SecureVault contributors",
+  appId: "com.vaultkin.app",
+  productName: "Vaultkin",
+  copyright: "Copyright (c) Vaultkin contributors",
 
   directories: {
     output: "release",
@@ -79,8 +82,11 @@ const config: Configuration = {
 
   // package.json's own "main" (dist/electron/main.js) is reused as-is —
   // no extraMetadata override needed.
+  // Standalone native-messaging host (built per OS by build:bridge-host).
+  extraResources: [{ from: "dist/bridge-host", to: "bridge-host" }],
   files: [
     "dist/electron/**/*",
+    "!dist/electron/**/*.test.js",
     "dist/renderer/**/*",
     "package.json",
     "!**/*.map",
@@ -127,8 +133,8 @@ const config: Configuration = {
   // header comment for why auto-polling is deliberately not wired in).
   publish: {
     provider: "github",
-    owner: "securevault",
-    repo: "securevault",
+    owner: "DrummingBird1",
+    repo: "vaultkin",
   },
 };
 

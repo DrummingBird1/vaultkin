@@ -1,5 +1,6 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
+import tailwindcss from "@tailwindcss/vite";
 import { VitePWA } from "vite-plugin-pwa";
 import path from "path";
 
@@ -9,10 +10,37 @@ import path from "path";
 // because the import itself is eager. A dynamic import sidesteps the
 // loader mismatch and also means the plugin's cost isn't paid on every
 // normal build, only when actually requested.
+export const CSP = [
+  "default-src 'self'",
+  "script-src 'self' 'wasm-unsafe-eval'",
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data: blob:",
+  "font-src 'self'",
+  "connect-src 'self' https:",
+  "worker-src 'self'",
+  "object-src 'none'",
+  "base-uri 'none'",
+  "form-action 'none'",
+  "frame-src 'none'",
+].join("; ");
+
 export default defineConfig(async () => ({
   root: path.resolve(__dirname, ".."),
   plugins: [
+    // Production CSP (dev is left alone: React Refresh injects inline script).
+    // 'wasm-unsafe-eval' is for Argon2 (hash-wasm); connect-src https: covers
+    // the HIBP range API and the user's own WebDAV server (https only).
+    {
+      name: "sv-csp",
+      apply: "build" as const,
+      transformIndexHtml: (html: string) =>
+        html.replace(
+          "<head>",
+          `<head>\n    <meta http-equiv="Content-Security-Policy" content="${CSP}" />`,
+        ),
+    },
     react(),
+    tailwindcss(),
     VitePWA({
       // "prompt" (not "autoUpdate"): a new service worker installs in the
       // background but does NOT self-activate and force-reload the page.
@@ -24,16 +52,26 @@ export default defineConfig(async () => ({
       registerType: "prompt",
       injectRegister: false,
       manifest: {
-        name: "SecureVault",
-        short_name: "SecureVault",
+        name: "Vaultkin",
+        short_name: "Vaultkin",
         description: "Zero-knowledge password manager and 2FA authenticator.",
         theme_color: "#0D0D12",
         background_color: "#0D0D12",
         display: "standalone",
         start_url: "/",
         icons: [
-          { src: "/icons/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any maskable" },
-          { src: "/icons/icon-512.png", sizes: "512x512", type: "image/png", purpose: "any maskable" },
+          {
+            src: "/icons/icon-192.png",
+            sizes: "192x192",
+            type: "image/png",
+            purpose: "any maskable",
+          },
+          {
+            src: "/icons/icon-512.png",
+            sizes: "512x512",
+            type: "image/png",
+            purpose: "any maskable",
+          },
         ],
       },
       workbox: {
@@ -58,12 +96,12 @@ export default defineConfig(async () => ({
   ],
   resolve: {
     alias: {
-      "@core":       path.resolve(__dirname, "../src/core"),
-      "@services":   path.resolve(__dirname, "../src/services"),
-      "@store":      path.resolve(__dirname, "../src/store"),
+      "@core": path.resolve(__dirname, "../src/core"),
+      "@services": path.resolve(__dirname, "../src/services"),
+      "@store": path.resolve(__dirname, "../src/store"),
       "@components": path.resolve(__dirname, "../src/components"),
-      "@hooks":      path.resolve(__dirname, "../src/hooks"),
-      "@pages":      path.resolve(__dirname, "../src/pages"),
+      "@hooks": path.resolve(__dirname, "../src/hooks"),
+      "@pages": path.resolve(__dirname, "../src/pages"),
     },
   },
   server: {
@@ -78,8 +116,5 @@ export default defineConfig(async () => ({
     // auto-fetch and display original source structure by default.
     sourcemap: "hidden",
     target: "es2022",
-  },
-  css: {
-    postcss: path.resolve(__dirname, "postcss.config.cjs"),
   },
 }));

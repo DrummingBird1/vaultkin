@@ -1,8 +1,8 @@
-# SecureVault
+# Vaultkin
 
 **Zero-knowledge password manager and 2FA authenticator** — built with React, Web Crypto API, Argon2id, and Electron.
 
-[![CI](https://github.com/securevault/securevault/actions/workflows/ci.yml/badge.svg)](https://github.com/securevault/securevault/actions)
+[![CI](https://github.com/DrummingBird1/vaultkin/actions/workflows/ci.yml/badge.svg)](https://github.com/DrummingBird1/vaultkin/actions)
 [![Coverage](https://codecov.io/gh/securevault/securevault/badge.svg)](https://codecov.io/gh/securevault/securevault)
 
 ---
@@ -187,4 +187,4 @@ Conflict resolution uses the `updatedAt` timestamp in the outer JSON wrapper (pl
 
 ## License
 
-MIT — see LICENSE file.
+GPL-3.0-only — see LICENSE file.

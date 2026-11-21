@@ -1,28 +1,57 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self';" />
-  <title>SecureVault</title>
-  <link rel="stylesheet" href="popup.css" />
-</head>
-<body>
-  <header class="sv-header">
-    <span class="sv-title">SecureVault</span>
-    <button id="lockBtn" class="sv-icon-btn" title="Lock" type="button">🔒</button>
-  </header>
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self';"
+    />
+    <title>Vaultkin</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <header class="sv-header">
+      <span class="sv-title">Vaultkin</span>
+      <button
+        id="lockBtn"
+        class="sv-icon-btn"
+        data-i18n-title="clearCache"
+        data-i18n-aria="clearCache"
+        type="button"
+      >
+        🔒
+      </button>
+    </header>
 
-  <div id="lockedView" class="sv-locked" hidden>
-    <p>SecureVault is locked.</p>
-    <p class="sv-hint">Open the app and click "Send entries to extension" after unlocking.</p>
-  </div>
+    <!-- Desktop app connection (native messaging, ADR 0007) -->
+    <section id="desktopView" class="sv-desktop" aria-live="polite" hidden>
+      <p id="desktopMessage" class="sv-desktop-msg"></p>
+      <p id="pairCode" class="sv-pair-code" dir="ltr" hidden></p>
+      <button id="desktopAction" class="sv-btn" type="button" hidden></button>
+    </section>
 
-  <div id="unlockedView" hidden>
-    <input id="searchInput" class="sv-search" type="text" placeholder="Search…" autocomplete="off" />
-    <ul id="entryList" class="sv-entry-list"></ul>
-    <p id="emptyState" class="sv-hint" hidden>No matching entries.</p>
-  </div>
+    <div id="lockedView" class="sv-locked" hidden>
+      <p data-i18n="popupLockedTitle">Vaultkin is locked.</p>
+      <p class="sv-hint" data-i18n="popupLockedHint">Unlock the Vaultkin app to fill logins.</p>
+    </div>
 
-  <script src="popup.js"></script>
-</body>
+    <div id="unlockedView" hidden>
+      <p id="siteLabel" class="sv-hint sv-site"></p>
+      <input
+        id="searchInput"
+        class="sv-search"
+        type="text"
+        data-i18n-placeholder="popupSearch"
+        data-i18n-aria="popupSearch"
+        placeholder="Search…"
+        autocomplete="off"
+      />
+      <ul id="entryList" class="sv-entry-list"></ul>
+      <p id="emptyState" class="sv-hint" data-i18n="popupNoLogins" hidden>
+        No logins saved for this site.
+      </p>
+    </div>
+
+    <script src="popup.js"></script>
+  </body>
 </html>

@@ -1,10 +1,10 @@
 @echo off
-title SecureVault Launcher
+title Vaultkin Launcher
 cd /d "%~dp0"
 
 echo.
 echo  =====================================
-echo   SecureVault - Launcher
+echo   Vaultkin - Launcher
 echo  =====================================
 echo.
 
@@ -46,7 +46,7 @@ if not exist "node_modules\" (
     echo.
 )
 
-echo [INFO]  Starting SecureVault ^(Electron + Vite^)...
+echo [INFO]  Starting Vaultkin ^(Electron + Vite^)...
 echo         An Electron window will open in 10-30 seconds.
 echo         Keep this window open. Press Ctrl+C here to stop.
 echo.
@@ -54,5 +54,5 @@ echo.
 call pnpm run electron:dev
 
 echo.
-echo [INFO]  SecureVault stopped.
+echo [INFO]  Vaultkin stopped.
 pause

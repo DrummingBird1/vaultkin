@@ -30,19 +30,21 @@ export const useSessionStore = create<SessionState>((set) => ({
   kdfProgress: 0,
   lastActivityAt: Date.now(),
 
-  unlock: (keys, autoLockMs) => set({
-    isUnlocked: true,
-    sessionKeys: keys,
-    autoLockMs,
-    kdfProgress: 0,
-    isDerivingKey: false,
-    lastActivityAt: Date.now(),
-  }),
-  lock: () => set({
-    isUnlocked: false,
-    sessionKeys: null,
-    kdfProgress: 0,
-  }),
+  unlock: (keys, autoLockMs) =>
+    set({
+      isUnlocked: true,
+      sessionKeys: keys,
+      autoLockMs,
+      kdfProgress: 0,
+      isDerivingKey: false,
+      lastActivityAt: Date.now(),
+    }),
+  lock: () =>
+    set({
+      isUnlocked: false,
+      sessionKeys: null,
+      kdfProgress: 0,
+    }),
   setKDFProgress: (p) => set({ kdfProgress: p, isDerivingKey: p > 0 && p < 1 }),
   setDerivingKey: (b) => set({ isDerivingKey: b }),
   bumpActivity: () => set({ lastActivityAt: Date.now() }),

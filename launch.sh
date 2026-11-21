@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# SecureVault launcher (macOS / Linux)
+# Vaultkin launcher (macOS / Linux)
 #
 # Usage:
 #   ./launch.sh                  # Electron dev mode (default)
@@ -16,7 +16,7 @@ err()   { color "1;31" "[ERROR] $1"; }
 ok()    { color "1;32" "[OK]    $1"; }
 
 echo
-color "1;36" "  SecureVault launcher"
+color "1;36" "  Vaultkin launcher"
 color "0;36" "  --------------------"
 echo
 
@@ -27,7 +27,7 @@ if ! command -v node >/dev/null 2>&1; then
 fi
 node_major=$(node -v | sed 's/^v//' | cut -d. -f1)
 if [ "$node_major" -lt 20 ]; then
-  warn "Node $(node -v) detected; SecureVault expects 20+."
+  warn "Node $(node -v) detected; Vaultkin expects 20+."
 fi
 ok "Node $(node -v)"
 

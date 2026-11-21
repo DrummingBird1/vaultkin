@@ -1,6 +1,6 @@
-# מדריך משתמש מלא — SecureVault
+# מדריך משתמש מלא — Vaultkin
 
-## מה זה SecureVault?
+## מה זה Vaultkin?
 
 מנהל סיסמאות ומאמת 2FA עם **הצפנה מקומית בלבד** (zero-knowledge):
 הסיסמה המאסטר שלך אף פעם לא יוצאת מהמכשיר, וגם המידע מוצפן לפני שהוא נכתב לדיסק. אם תשכח את סיסמת המאסטר — אין שחזור. זו הצורה היחידה לוודא שאף אחד מלבדך יכול לראות את המידע.
@@ -224,7 +224,7 @@ npm run electron:dist:linux    # AppImage / deb / rpm
 6. העתק את **Extension ID** מהדף.
 
 ### חיבור לאפליקציה
-1. ב-SecureVault: **Settings → Security → Browser extension**.
+1. ב-Vaultkin: **Settings → Security → Browser extension**.
 2. הדבק את ה-Extension ID.
 3. **Send entries to extension**.
 4. ה-extension מאחסן את ה-entries ב-זיכרון בלבד למשך 5 דקות (ואז מתנקה).
@@ -296,9 +296,9 @@ npm run electron:dist:linux    # AppImage / deb / rpm
 - אם שניהם השתנו → conflict resolution UI.
 
 ### Credentials
-- ב-Electron: ב-OS keychain (TouchID/Windows Credential Manager).
-- בדפדפן: ב-sessionStorage (נמחק עם ה-tab).
-- **לא ב-localStorage**, אף פעם.
+- נשמרים **בתוך הכספת המוצפנת** (בהגדרות שלה), ולכן זמינים רק כשהכספת פתוחה ונמחקים מהזיכרון בנעילה.
+- לא נשמרים ב-localStorage או ב-sessionStorage. גרסאות ישנות שמרו אותם ב-sessionStorage; הם מועברים לכספת ונמחקים משם אוטומטית.
+- רק כתובות `https://`. סנכרון ב-http רגיל נחסם, כדי שסיסמת ה-WebDAV לא תישלח בגלוי.
 
 ---
 
@@ -311,7 +311,7 @@ npm run electron:dist:linux    # AppImage / deb / rpm
 - **LastPass CSV**
 - **KeePass XML**
 - **Generic CSV**
-- **SecureVault QR codes**
+- **Vaultkin QR codes**
 
 זיהוי פורמט אוטומטי. בקונפליקטים: **Skip / Overwrite / Keep both**.
 

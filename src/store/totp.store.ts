@@ -14,7 +14,15 @@ interface TOTPCode {
 
 interface TOTPState {
   codes: Map<string, TOTPCode>;
-  refresh: (entries: Array<{ id: string; totpSecret?: string; totpAlgorithm?: Algorithm; totpDigits?: 6 | 8; totpPeriod?: number }>) => Promise<void>;
+  refresh: (
+    entries: Array<{
+      id: string;
+      totpSecret?: string;
+      totpAlgorithm?: Algorithm;
+      totpDigits?: 6 | 8;
+      totpPeriod?: number;
+    }>,
+  ) => Promise<void>;
   clear: () => void;
 }
 
@@ -32,7 +40,9 @@ export const useTOTPStore = create<TOTPState>((set) => ({
           period: e.totpPeriod,
         });
         out.set(e.id, { entryId: e.id, ...r });
-      } catch { /* invalid secret — skip */ }
+      } catch {
+        /* invalid secret — skip */
+      }
     }
     set({ codes: out });
   },

@@ -12,10 +12,9 @@
 import { test, expect } from "@playwright/test";
 
 const MASTER = "correct-horse-battery-staple-77!";
-const WRONG  = "definitely-not-the-master";
+const WRONG = "definitely-not-the-master";
 
 test.describe.serial("Vault lifecycle", () => {
-
   test.beforeEach(async ({ page }) => {
     // Wipe persistent state between tests
     await page.goto("/");
@@ -37,25 +36,34 @@ test.describe.serial("Vault lifecycle", () => {
     await page.getByRole("button", { name: /create.*vault/i }).click();
 
     // Step 2: enter master password (twice) and confirm
-    const pw  = page.getByLabel(/^master password/i);
+    const pw = page.getByLabel(/^master password/i);
     const pw2 = page.getByLabel(/confirm/i);
     await pw.fill(MASTER);
     await pw2.fill(MASTER);
     // Strength bar should show "Strong" or better
-    await expect(page.getByText(/Strong|Very Strong/i)).toBeVisible();
+    // Anchored: "strong" also appears in the heading and the "Suggest strong password" button.
+    await expect(page.getByText(/^(very )?strong$/i)).toBeVisible();
     await page.getByRole("button", { name: /create vault/i }).click();
 
     // Step 3: vault opens → we should be on the Vault page
     await expect(page.getByText(/your vault is empty/i)).toBeVisible({ timeout: 30_000 });
+    await page.getByRole("button", { name: /skip for now/i }).click();
 
     // Step 4: add an entry
-    await page.getByRole("button", { name: /add entry/i }).first().click();
+    await page
+      .getByRole("button", { name: /add entry/i })
+      .first()
+      .click();
     await page.getByLabel(/title/i).fill("Example Site");
     await page.getByLabel(/username/i).fill("alice@example.com");
     await page.getByLabel(/^password/i).fill("super-secret-123!");
-    await page.getByRole("button", { name: /^save/i }).click();
+    // The dialog's submit button is labeled "Add Entry" (same as the toolbar button outside it).
+    await page
+      .getByRole("dialog", { name: /add entry/i })
+      .getByRole("button", { name: /^add entry$/i })
+      .click();
 
-    await expect(page.getByText("Example Site")).toBeVisible();
+    await expect(page.getByText("Example Site").first()).toBeVisible();
 
     // Step 5: lock the vault (manual lock button or keyboard shortcut)
     await page.keyboard.press(process.platform === "darwin" ? "Meta+L" : "Control+L");
@@ -64,7 +72,7 @@ test.describe.serial("Vault lifecycle", () => {
     // Step 6: unlock with correct password
     await page.getByLabel(/master password/i).fill(MASTER);
     await page.getByRole("button", { name: /^unlock/i }).click();
-    await expect(page.getByText("Example Site")).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByText("Example Site").first()).toBeVisible({ timeout: 30_000 });
   });
 
   test("wrong password shows shake + error", async ({ page }) => {
@@ -77,7 +85,11 @@ test.describe.serial("Vault lifecycle", () => {
       await page.getByLabel(/^master password/i).fill(MASTER);
       await page.getByLabel(/confirm/i).fill(MASTER);
       await page.getByRole("button", { name: /create vault/i }).click();
-      await page.keyboard.press(process.platform === "darwin" ? "Meta+L" : "Control+L");
+      // Wait for the vault to open before locking; a shortcut pressed earlier is lost
+      // (Firefox and WebKit got there before the vault page existed).
+      await expect(page.getByText(/your vault is empty/i)).toBeVisible({ timeout: 30_000 });
+      await page.getByRole("button", { name: /skip for now/i }).click();
+      await page.getByRole("button", { name: /lock vault/i }).click();
     }
 
     await page.getByLabel(/master password/i).fill(WRONG);

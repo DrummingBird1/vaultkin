@@ -24,8 +24,8 @@ export function generatePassword(opts: GenerateOptions = {}): string {
   let alphabet = "";
   if (opts.uppercase ?? true) alphabet += UPPER;
   if (opts.lowercase ?? true) alphabet += LOWER;
-  if (opts.digits    ?? true) alphabet += DIGIT;
-  if (opts.symbols   ?? true) alphabet += SYMBL;
+  if (opts.digits ?? true) alphabet += DIGIT;
+  if (opts.symbols ?? true) alphabet += SYMBL;
   if (opts.excludeAmbiguous) {
     for (const ch of AMBIG) alphabet = alphabet.replaceAll(ch, "");
   }
@@ -50,7 +50,10 @@ export function generatePassword(opts: GenerateOptions = {}): string {
   let bi = 0;
   const max = 0xffffffff - (0xffffffff % alphabet.length);
   while (out.length < length) {
-    if (bi >= buf.length) { crypto.getRandomValues(buf); bi = 0; }
+    if (bi >= buf.length) {
+      crypto.getRandomValues(buf);
+      bi = 0;
+    }
     const r = buf[bi++];
     if (r > max) continue;
     out.push(alphabet[r % alphabet.length]);
@@ -80,7 +83,10 @@ function randomWordIndices(count: number): number[] {
   let bi = 0;
   const max = 0xffffffff - (0xffffffff % WORDLIST.length);
   while (out.length < count) {
-    if (bi >= buf.length) { crypto.getRandomValues(buf); bi = 0; }
+    if (bi >= buf.length) {
+      crypto.getRandomValues(buf);
+      bi = 0;
+    }
     const r = buf[bi++];
     if (r > max) continue;
     out.push(r % WORDLIST.length);
@@ -89,13 +95,13 @@ function randomWordIndices(count: number): number[] {
 }
 
 export function generatePassphrase(opts: PassphraseOptions = {}): string {
-  const wordCount   = Math.max(3, Math.min(10, opts.words ?? 5));
-  const separator    = opts.separator ?? "-";
-  const capitalize   = opts.capitalize ?? true;
+  const wordCount = Math.max(3, Math.min(10, opts.words ?? 5));
+  const separator = opts.separator ?? "-";
+  const capitalize = opts.capitalize ?? true;
   const includeNumber = opts.includeNumber ?? true;
 
   const indices = randomWordIndices(wordCount);
-  const words = indices.map(i => {
+  const words = indices.map((i) => {
     const w = WORDLIST[i];
     return capitalize ? w[0].toUpperCase() + w.slice(1) : w;
   });

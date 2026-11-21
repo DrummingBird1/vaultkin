@@ -8,17 +8,26 @@ import type { VaultData } from "../core/vault/schema";
 import type { SessionKeys } from "../core/vault/vault-types";
 import { AutosaveService } from "./autosave.service";
 import { ClipboardService } from "./clipboard.service";
+import { AttachmentStore } from "./attachment-store";
+import { SshAgentService } from "./ssh-agent.service";
 import { BreachService } from "./breach.service";
 import { HistoryService } from "./history.service";
 import { ExtensionBridge } from "./extension-bridge.service";
+import { BridgeService } from "./bridge.service";
 import { useSessionStore } from "../store/session.store";
 import { EXTENSION_ID_STORAGE_KEY } from "../constants";
 
 export const AppLifecycle = {
-  async onUnlock(_vault: VaultData, _keys: SessionKeys, autoLockMs: number): Promise<void> {
+  async onUnlock(vault: VaultData, _keys: SessionKeys, autoLockMs: number): Promise<void> {
     useSessionStore.getState().setAutoLockMs(autoLockMs);
     useSessionStore.getState().bumpActivity();
     AutosaveService.start();
+    // Drop attachment blobs no entry references any more (deleted entries or
+    // removed files). Background, best effort.
+    const referenced = new Set(
+      vault.entries.flatMap((e) => (e.attachments ?? []).map((a) => a.id)),
+    );
+    void AttachmentStore.collectGarbage(referenced).catch(() => 0);
   },
   async onLock(): Promise<void> {
     try {
@@ -27,9 +36,14 @@ export const AppLifecycle = {
       /* best effort */
     }
     AutosaveService.stop();
-    ClipboardService.cancelClear();
+    // Don't leave a copied secret behind after locking.
+    void ClipboardService.clearNow();
     BreachService.clearCache();
     HistoryService.clear();
+    // Native-messaging bridge: close every extension session (ADR 0007).
+    BridgeService.onLock();
+    // SSH agent: forget remembered approvals, refuse a pending one.
+    SshAgentService.onLock();
     // Tell the paired browser extension to drop its cached entries too —
     // otherwise a locked main vault would leave plaintext credentials
     // reachable in the extension for up to its own 5-minute idle timeout.

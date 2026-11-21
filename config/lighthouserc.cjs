@@ -41,6 +41,11 @@ module.exports = {
         "categories:accessibility": ["warn", { minScore: 0.9 }],
         "categories:best-practices": ["warn", { minScore: 0.9 }],
         "categories:seo": "off",
+        // The preset makes these two hard errors, which broke the "advisory
+        // only" intent above on the first CI run. Both are expected for an
+        // SPA shell that loads one bundle; keep them visible as warnings.
+        "network-dependency-tree-insight": "warn",
+        "unused-javascript": "warn",
       },
     },
     upload: {

@@ -1,4 +1,4 @@
-# 🔐 SecureVault
+# 🔐 Vaultkin
 
 A zero-knowledge password manager and 2FA authenticator built with React, TypeScript, Vite, and Electron. Cross-platform (Web / macOS / Windows / Linux), with an optional companion Chrome extension for autofill.
 
@@ -113,8 +113,12 @@ pnpm run test:e2e:headed          # with visible browser
 
 ## Browser Extension
 
-See [`extension/README.md`](./extension/README.md) for development install instructions. Currently a working scaffold; before publishing to the Chrome Web Store, replace placeholder PNG icons and update `externally_connectable` for your production origin.
+See [`extension/README.md`](./extension/README.md) for development install (Chrome, Edge, Brave and Firefox). Store packages come from `pnpm build:extension:release`; see [docs/RELEASE.md](docs/RELEASE.md).
+
+## Privacy
+
+No accounts, no telemetry, no servers of our own. See [PRIVACY.md](PRIVACY.md) for every network request the app makes.
 
 ## License
 
-MIT
+GPL-3.0-only. See [LICENSE](LICENSE).

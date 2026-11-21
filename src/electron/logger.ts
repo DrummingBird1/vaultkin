@@ -69,8 +69,8 @@ function write(level: LogLevel, message: string, meta?: Record<string, unknown>)
 }
 
 export const mainLog = {
-  info:  (message: string, meta?: Record<string, unknown>) => write("info", message, meta),
-  warn:  (message: string, meta?: Record<string, unknown>) => write("warn", message, meta),
+  info: (message: string, meta?: Record<string, unknown>) => write("info", message, meta),
+  warn: (message: string, meta?: Record<string, unknown>) => write("warn", message, meta),
   error: (message: string, meta?: Record<string, unknown>) => write("error", message, meta),
   /** Absolute path to the current log file, for a "Show logs" menu item / support instructions. */
   filePath: (): string => ensureLogFile(),

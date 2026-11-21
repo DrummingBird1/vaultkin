@@ -1,0 +1,159 @@
+/**
+ * @file src/electron/bridge-install.ts
+ * Registers the native-messaging host so the browser can launch the relay.
+ * Explicit user action only (Settings → Browser extension → Connect), and
+ * writes only to the current user's profile:
+ *   - the host manifest JSON under userData;
+ *   - Windows: HKCU\Software\<browser>\NativeMessagingHosts\com.securevault.bridge
+ *   - macOS/Linux: the browser's per-user NativeMessagingHosts directory.
+ */
+import { app } from "electron";
+import * as fs from "fs";
+import * as os from "os";
+import * as path from "path";
+import { execFile } from "child_process";
+import { HOST_NAME } from "./bridge-transport";
+
+const EXTENSION_ID = /^[a-p]{32}$/;
+
+const WIN_KEYS = [
+  "HKCU\\Software\\Google\\Chrome\\NativeMessagingHosts",
+  "HKCU\\Software\\Microsoft\\Edge\\NativeMessagingHosts",
+  "HKCU\\Software\\BraveSoftware\\Brave-Browser\\NativeMessagingHosts",
+  "HKCU\\Software\\Chromium\\NativeMessagingHosts",
+];
+
+function unixDirs(): string[] {
+  const h = os.homedir();
+  return process.platform === "darwin"
+    ? [
+        "Library/Application Support/Google/Chrome/NativeMessagingHosts",
+        "Library/Application Support/Microsoft Edge/NativeMessagingHosts",
+        "Library/Application Support/BraveSoftware/Brave-Browser/NativeMessagingHosts",
+        "Library/Application Support/Chromium/NativeMessagingHosts",
+      ].map((d) => path.join(h, d))
+    : [
+        ".config/google-chrome/NativeMessagingHosts",
+        ".config/microsoft-edge/NativeMessagingHosts",
+        ".config/BraveSoftware/Brave-Browser/NativeMessagingHosts",
+        ".config/chromium/NativeMessagingHosts",
+      ].map((d) => path.join(h, d));
+}
+
+/** Standalone host shipped with packaged builds (scripts/build-bridge-host.mjs). */
+export function packagedHostPath(): string {
+  const name = `vaultkin-bridge-host${process.platform === "win32" ? ".exe" : ""}`;
+  return path.join(process.resourcesPath, "bridge-host", name);
+}
+
+/**
+ * The command the browser runs.
+ * - Packaged: the standalone host binary (the app binary has RunAsNode off).
+ * - Dev: a wrapper that starts bridge-host.js with Electron in Node mode (the
+ *   plain app binary writes a CRLF to stdout on Windows, which breaks native
+ *   messaging).
+ */
+function hostCommand(dir: string): string {
+  if (app.isPackaged) {
+    const exe = packagedHostPath();
+    if (!fs.existsSync(exe)) throw new Error(`Browser bridge host missing: ${exe}`);
+    return exe;
+  }
+  const hostJs = path.join(__dirname, "bridge-host.js");
+  if (process.platform === "win32") {
+    const cmd = path.join(dir, "securevault-host.cmd");
+    fs.writeFileSync(
+      cmd,
+      `@echo off\r\nset ELECTRON_RUN_AS_NODE=1\r\n"${process.execPath}" "${hostJs}" %*\r\n`,
+    );
+    return cmd;
+  }
+  const sh = path.join(dir, "securevault-host.sh");
+  fs.writeFileSync(
+    sh,
+    `#!/bin/sh\nELECTRON_RUN_AS_NODE=1 exec "${process.execPath}" "${hostJs}" "$@"\n`,
+    {
+      mode: 0o700,
+    },
+  );
+  return sh;
+}
+
+function regAdd(key: string, value: string): Promise<void> {
+  return new Promise((resolve, reject) =>
+    execFile(
+      "reg",
+      ["add", `${key}\\${HOST_NAME}`, "/ve", "/t", "REG_SZ", "/d", value, "/f"],
+      (err) => (err ? reject(err) : resolve()),
+    ),
+  );
+}
+
+export async function installNativeHost(
+  extensionIds: string[],
+): Promise<{ manifest: string; registered: number }> {
+  const ids = extensionIds.filter((id) => EXTENSION_ID.test(id));
+  if (ids.length === 0) throw new Error("No valid extension id");
+  const dir = path.join(app.getPath("userData"), "native-messaging");
+  fs.mkdirSync(dir, { recursive: true });
+  const manifest = {
+    name: HOST_NAME,
+    description: "Vaultkin browser bridge",
+    path: hostCommand(dir),
+    type: "stdio",
+    allowed_origins: ids.map((id) => `chrome-extension://${id}/`),
+  };
+  const file = path.join(dir, `${HOST_NAME}.json`);
+  fs.writeFileSync(file, JSON.stringify(manifest, null, 2));
+
+  let registered = 0;
+  if (process.platform === "win32") {
+    for (const k of WIN_KEYS) {
+      try {
+        await regAdd(k, file);
+        registered++;
+      } catch {
+        /* that browser isn't installed or key is locked */
+      }
+    }
+  } else {
+    for (const d of unixDirs()) {
+      try {
+        fs.mkdirSync(d, { recursive: true });
+        fs.writeFileSync(path.join(d, `${HOST_NAME}.json`), JSON.stringify(manifest, null, 2));
+        registered++;
+      } catch {
+        /* skip */
+      }
+    }
+  }
+
+  // Firefox: allowed by add-on id (fixed, see scripts/build-extension.mjs),
+  // registered under Mozilla's per-user locations.
+  const ffManifest = {
+    ...manifest,
+    allowed_origins: undefined,
+    allowed_extensions: [FIREFOX_ADDON_ID],
+  };
+  const ffFile = path.join(dir, `${HOST_NAME}.firefox.json`);
+  fs.writeFileSync(ffFile, JSON.stringify(ffManifest, null, 2));
+  try {
+    if (process.platform === "win32")
+      await regAdd("HKCU\\Software\\Mozilla\\NativeMessagingHosts", ffFile);
+    else {
+      const d =
+        process.platform === "darwin"
+          ? path.join(os.homedir(), "Library/Application Support/Mozilla/NativeMessagingHosts")
+          : path.join(os.homedir(), ".mozilla/native-messaging-hosts");
+      fs.mkdirSync(d, { recursive: true });
+      fs.writeFileSync(path.join(d, `${HOST_NAME}.json`), JSON.stringify(ffManifest, null, 2));
+    }
+    registered++;
+  } catch {
+    /* Firefox not installed */
+  }
+  return { manifest: file, registered };
+}
+
+/** Must match FIREFOX_ID in scripts/build-extension.mjs. */
+export const FIREFOX_ADDON_ID = "securevault@securevault.app";

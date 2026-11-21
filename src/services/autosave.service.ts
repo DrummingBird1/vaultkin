@@ -4,10 +4,11 @@
  * true, schedules a re-encrypt + storage write 1.5s later. The 1.5s window
  * coalesces rapid edits into a single save.
  */
-import { useVaultStore }   from "../store/vault.store";
+import { useVaultStore } from "../store/vault.store";
 import { useSessionStore } from "../store/session.store";
 import { reEncryptVault, saveVault } from "../core/vault/serializer";
-import { IPCService }      from "./ipc.service";
+import { IPCService } from "./ipc.service";
+import { FolderSyncService } from "./folder-sync.service";
 
 const DEBOUNCE_MS = 1500;
 let pending: ReturnType<typeof setTimeout> | null = null;
@@ -16,7 +17,7 @@ let unsubscribe: (() => void) | null = null;
 async function flush(): Promise<void> {
   pending = null;
   const vault = useVaultStore.getState().vault;
-  const keys  = useSessionStore.getState().sessionKeys;
+  const keys = useSessionStore.getState().sessionKeys;
   if (!vault || !keys) return;
   try {
     const existing = await IPCService.vault.load();
@@ -24,6 +25,9 @@ async function flush(): Promise<void> {
       ? await reEncryptVault(vault, keys, existing)
       : await saveVault(vault, keys);
     await IPCService.vault.save(payload);
+    // Encrypted copy to the sync folder, if one is set (never overwrites
+    // another device's newer copy; see folder-sync.service).
+    void FolderSyncService.push(payload);
     useVaultStore.getState().markClean();
   } catch (err) {
     console.error("[autosave] failed:", err);
@@ -41,12 +45,18 @@ export const AutosaveService = {
     });
   },
   stop(): void {
-    if (pending) { clearTimeout(pending); pending = null; }
+    if (pending) {
+      clearTimeout(pending);
+      pending = null;
+    }
     unsubscribe?.();
     unsubscribe = null;
   },
   async flushNow(): Promise<void> {
-    if (pending) { clearTimeout(pending); pending = null; }
+    if (pending) {
+      clearTimeout(pending);
+      pending = null;
+    }
     await flush();
   },
 };

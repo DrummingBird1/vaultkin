@@ -6,6 +6,7 @@
  * cascades to descendants (vault.store.ts's deleteFolder), never deletes
  * entries — they're just unfiled.
  */
+import { useTranslation } from "react-i18next";
 import React, { useState, useMemo } from "react";
 import { useVaultStore } from "../../store/vault.store";
 import { IconFolder, IconFolderPlus, IconTrash, IconChevronRight, IconChevronDown } from "../icons";
@@ -49,6 +50,7 @@ function FolderNode({
   onDelete: (id: string, name: string) => void;
   onAddSubfolder: (parentId: string) => void;
 }) {
+  const { t } = useTranslation();
   const [expanded, setExpanded] = useState(true);
   const hasChildren = node.children.length > 0;
   const active = activeFolderId === node.folder.id;
@@ -58,48 +60,48 @@ function FolderNode({
       <div
         className={`group flex items-center gap-1 rounded-lg px-2 py-1.5 text-sm cursor-pointer transition-colors ${
           active
-            ? "bg-[var(--accent-dim)] text-[var(--accent)]"
-            : "text-[var(--text-secondary)] hover:bg-[var(--bg-elevated)]"
+            ? "bg-(--accent-dim) text-(--accent-text)"
+            : "text-(--text-secondary) hover:bg-(--bg-elevated)"
         }`}
-        style={{ paddingLeft: depth * INDENT_PX + 8 }}
+        style={{ paddingInlineStart: depth * INDENT_PX + 8 }}
         onClick={() => onSelect(node.folder.id)}
       >
         <button
           type="button"
-          aria-label={expanded ? "Collapse" : "Expand"}
+          aria-label={expanded ? t("folders.collapse") : t("folders.expand")}
           onClick={(e) => {
             e.stopPropagation();
             setExpanded((v) => !v);
           }}
-          className={`flex-shrink-0 text-[var(--text-tertiary)] ${hasChildren ? "" : "invisible"}`}
+          className={`shrink-0 text-(--text-tertiary) ${hasChildren ? "" : "invisible"}`}
         >
           {expanded ? (
             <IconChevronDown className="w-3.5 h-3.5" />
           ) : (
-            <IconChevronRight className="w-3.5 h-3.5" />
+            <IconChevronRight className="w-3.5 h-3.5 rtl:-scale-x-100" />
           )}
         </button>
-        <IconFolder className="w-4 h-4 flex-shrink-0" />
+        <IconFolder className="w-4 h-4 shrink-0" />
         <span className="flex-1 truncate">{node.folder.name}</span>
         <button
           type="button"
-          aria-label={`New subfolder in ${node.folder.name}`}
+          aria-label={t("folders.newSubfolderIn", { name: node.folder.name })}
           onClick={(e) => {
             e.stopPropagation();
             onAddSubfolder(node.folder.id);
           }}
-          className="opacity-0 group-hover:opacity-100 text-[var(--text-tertiary)] hover:text-[var(--accent)] flex-shrink-0"
+          className="opacity-0 group-hover:opacity-100 text-(--text-tertiary) hover:text-(--accent-text) shrink-0"
         >
           <IconFolderPlus className="w-3.5 h-3.5" />
         </button>
         <button
           type="button"
-          aria-label={`Delete folder ${node.folder.name}`}
+          aria-label={t("folders.deleteFolder", { name: node.folder.name })}
           onClick={(e) => {
             e.stopPropagation();
             onDelete(node.folder.id, node.folder.name);
           }}
-          className="opacity-0 group-hover:opacity-100 text-[var(--text-tertiary)] hover:text-[var(--danger)] flex-shrink-0"
+          className="opacity-0 group-hover:opacity-100 text-(--text-tertiary) hover:text-(--danger) shrink-0"
         >
           <IconTrash className="w-3.5 h-3.5" />
         </button>
@@ -121,6 +123,7 @@ function FolderNode({
 }
 
 export function FolderSidebar() {
+  const { t } = useTranslation();
   const { vault, searchQuery, setSearchQuery, addFolder, deleteFolder } = useVaultStore();
   const folders = vault?.folders ?? [];
   const tree = useMemo(() => buildTree(folders), [folders]);
@@ -131,44 +134,42 @@ export function FolderSidebar() {
   };
 
   const handleAddSubfolder = (parentId?: string) => {
-    const name = window.prompt(parentId ? "New subfolder name" : "New folder name");
+    const name = window.prompt(
+      parentId ? t("folders.newSubfolderName") : t("folders.newFolderName"),
+    );
     if (name?.trim()) addFolder(name.trim(), undefined, parentId);
   };
 
   const handleDelete = (id: string, name: string) => {
-    if (
-      window.confirm(
-        `Delete "${name}"? Subfolders are deleted too. Entries inside are kept, just unfiled.`,
-      )
-    ) {
+    if (window.confirm(t("folders.deleteConfirm", { name }))) {
       deleteFolder(id);
     }
   };
 
   return (
-    <aside className="w-52 flex-shrink-0 border-r border-[var(--border-subtle)] p-3 flex flex-col gap-1 overflow-y-auto">
+    <aside className="w-52 shrink-0 border-e border-(--border-subtle) p-3 flex flex-col gap-1 overflow-y-auto">
       <div className="flex items-center justify-between px-1 mb-1">
-        <span className="text-xs font-medium uppercase tracking-wider text-[var(--text-tertiary)]">
-          Folders
+        <span className="text-xs font-medium uppercase tracking-wider text-(--text-tertiary)">
+          {t("folders.title")}
         </span>
         <button
           type="button"
-          aria-label="New folder"
+          aria-label={t("folders.newFolder")}
           onClick={() => handleAddSubfolder(undefined)}
-          className="text-[var(--text-tertiary)] hover:text-[var(--accent)]"
+          className="text-(--text-tertiary) hover:text-(--accent-text)"
         >
           <IconFolderPlus className="w-4 h-4" />
         </button>
       </div>
       <button
-        className={`flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm text-left transition-colors ${
+        className={`flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm text-start transition-colors ${
           !activeFolderId
-            ? "bg-[var(--accent-dim)] text-[var(--accent)]"
-            : "text-[var(--text-secondary)] hover:bg-[var(--bg-elevated)]"
+            ? "bg-(--accent-dim) text-(--accent-text)"
+            : "text-(--text-secondary) hover:bg-(--bg-elevated)"
         }`}
         onClick={() => setSearchQuery({ folderId: undefined })}
       >
-        All items
+        {t("folders.allItems")}
       </button>
       {tree.map((node) => (
         <FolderNode

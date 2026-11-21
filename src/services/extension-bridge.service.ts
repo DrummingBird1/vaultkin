@@ -18,9 +18,13 @@ export const ExtensionBridge = {
   async syncEntries(extensionId: string, entries: VaultEntry[]): Promise<boolean> {
     if (typeof chrome === "undefined" || !chrome.runtime?.sendMessage) return false;
     if (!extensionId) return false;
-    const minimal: ExtensionEntry[] = entries.map(e => ({
-      id: e.id, title: e.title, url: e.url,
-      username: e.username, password: e.password, totpSecret: e.totpSecret,
+    const minimal: ExtensionEntry[] = entries.map((e) => ({
+      id: e.id,
+      title: e.title,
+      url: e.url,
+      username: e.username,
+      password: e.password,
+      totpSecret: e.totpSecret,
     }));
     return new Promise((resolve) => {
       chrome.runtime.sendMessage(

@@ -1,0 +1,136 @@
+{
+  "extName": {
+    "message": "Vaultkin"
+  },
+  "extDescription": {
+    "message": "מילוי אוטומטי של פרטי התחברות, קודים חד־פעמיים ומפתחות גישה מאפליקציית Vaultkin."
+  },
+  "openMenu": {
+    "message": "Vaultkin: הצגת פרטי ההתחברות לאתר הזה"
+  },
+  "menuTitle": {
+    "message": "פרטי התחברות עבור $SITE$",
+    "placeholders": {
+      "site": {
+        "content": "$1"
+      }
+    }
+  },
+  "loading": {
+    "message": "טוען…"
+  },
+  "locked": {
+    "message": "הכספת נעולה. פתחו אותה באפליקציה ונסו שוב."
+  },
+  "notConnected": {
+    "message": "אין חיבור לאפליקציית Vaultkin. פתחו את חלון התוסף כדי להתחבר."
+  },
+  "noLogins": {
+    "message": "לא שמורים פרטי התחברות לאתר הזה."
+  },
+  "fillCode": {
+    "message": "מילוי קוד חד־פעמי"
+  },
+  "otherSite": {
+    "message": "נשמר עבור $HOST$ — לחצו שוב כדי למלא כאן בכל זאת",
+    "placeholders": {
+      "host": {
+        "content": "$1"
+      }
+    }
+  },
+  "thirdPartyFrame": {
+    "message": "הטופס הזה נמצא במסגרת של $HOST$, לא של הדף שבו אתם נמצאים. לחצו שוב כדי למלא בכל זאת.",
+    "placeholders": {
+      "host": {
+        "content": "$1"
+      }
+    }
+  },
+  "close": {
+    "message": "סגירה"
+  },
+  "saveTitle": {
+    "message": "לשמור את פרטי ההתחברות ב־Vaultkin?"
+  },
+  "updateTitle": {
+    "message": "לעדכן את הסיסמה השמורה עבור $USER$?",
+    "placeholders": {
+      "user": {
+        "content": "$1"
+      }
+    }
+  },
+  "save": {
+    "message": "שמירה"
+  },
+  "update": {
+    "message": "עדכון"
+  },
+  "notNow": {
+    "message": "לא עכשיו"
+  },
+  "saved": {
+    "message": "נשמר ב־Vaultkin"
+  },
+  "popupSearch": {
+    "message": "חיפוש…"
+  },
+  "popupNoLogins": {
+    "message": "לא שמורים פרטי התחברות לאתר הזה."
+  },
+  "popupLockedTitle": {
+    "message": "הכספת נעולה."
+  },
+  "popupLockedHint": {
+    "message": "פתחו את אפליקציית Vaultkin כדי למלא פרטי התחברות."
+  },
+  "popupNotInstalled": {
+    "message": "אפליקציית Vaultkin עדיין לא מחוברת לדפדפן הזה. באפליקציה: הגדרות ← תוסף לדפדפן ← הגדרת חיבור לדפדפן."
+  },
+  "popupAppNotRunning": {
+    "message": "פתחו את אפליקציית Vaultkin כדי למלא פרטי התחברות."
+  },
+  "popupConnecting": {
+    "message": "מתחבר ל־Vaultkin…"
+  },
+  "popupDisconnected": {
+    "message": "אין חיבור לאפליקציית Vaultkin."
+  },
+  "popupUnpaired": {
+    "message": "חברו את הדפדפן הזה לאפליקציית Vaultkin."
+  },
+  "popupRejected": {
+    "message": "האפליקציה דחתה את החיבור."
+  },
+  "popupPairing": {
+    "message": "ודאו שבאפליקציה מופיע אותו קוד, ואשרו אותו שם."
+  },
+  "popupRetry": {
+    "message": "ניסיון חוזר"
+  },
+  "popupConnect": {
+    "message": "חיבור"
+  },
+  "popupTryAgain": {
+    "message": "ניסיון נוסף"
+  },
+  "copyUser": {
+    "message": "העתקת שם המשתמש"
+  },
+  "copyPass": {
+    "message": "העתקת הסיסמה"
+  },
+  "copyCode": {
+    "message": "העתקת הקוד החד־פעמי"
+  },
+  "fill": {
+    "message": "מילוי בדף הזה"
+  },
+  "clearCache": {
+    "message": "ניקוי הרשומות השמורות בתוסף"
+  },
+  "untitled": {
+    "message": "(ללא שם)"
+  }
+}

@@ -15,11 +15,12 @@ import { useUIStore } from "../../store/ui.store";
 import { openVault, changeMasterPassword } from "../../core/vault/serializer";
 import { WrongPasswordError } from "../../core/errors";
 import { IPCService } from "../../services/ipc.service";
-import { useFocusTrap } from "../../hooks/useFocusTrap";
 import { IconClose, IconShield } from "../icons";
+import { Modal } from "../ui/Modal";
+import { useTranslation } from "react-i18next";
 
 export function UpgradeEncryptionModal({ onClose }: { onClose: () => void }) {
-  const containerRef = useFocusTrap<HTMLDivElement>(true);
+  const { t } = useTranslation();
   const { unlock, autoLockMs } = useSessionStore();
   const { vault } = useVaultStore();
   const { toastSuccess } = useUIStore();
@@ -31,7 +32,7 @@ export function UpgradeEncryptionModal({ onClose }: { onClose: () => void }) {
 
   const handleUpgrade = useCallback(async () => {
     if (!password) {
-      setError("Enter your master password to confirm.");
+      setError(t("upgradeEncryption.enterPassword"));
       return;
     }
     setWorking(true);
@@ -48,78 +49,69 @@ export function UpgradeEncryptionModal({ onClose }: { onClose: () => void }) {
       await IPCService.vault.save(encryptedPayload);
       unlock(newKeys, autoLockMs);
       setDone(true);
-      toastSuccess("Encryption upgraded", "Vault now uses Argon2id.");
+      toastSuccess(t("upgradeEncryption.upgraded"), t("upgradeEncryption.upgradedBody"));
     } catch (err: unknown) {
       setError(
         err instanceof WrongPasswordError
-          ? "Incorrect master password."
-          : "Upgrade failed. Please try again.",
+          ? t("upgradeEncryption.wrongPassword")
+          : t("upgradeEncryption.failed"),
       );
     } finally {
       setWorking(false);
     }
-  }, [password, vault, unlock, autoLockMs, toastSuccess]);
+  }, [password, vault, unlock, autoLockMs, toastSuccess, t]);
 
   return (
-    <div className="sv-modal-backdrop" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div
-        ref={containerRef}
-        className="sv-modal max-w-sm"
-        role="dialog"
-        aria-modal="true"
-        aria-label="Upgrade encryption"
-      >
-        <div className="flex items-center justify-between mb-5">
-          <h2 className="sv-modal-title flex items-center gap-2">
-            <IconShield className="w-5 h-5" /> Upgrade Encryption
-          </h2>
-          <button onClick={onClose} aria-label="Close" className="sv-icon-btn">
-            <IconClose />
+    <Modal
+      onClose={onClose}
+      dismissable={!working}
+      className="max-w-sm"
+      label={t("upgradeEncryption.title")}
+    >
+      <div className="flex items-center justify-between mb-5">
+        <h2 className="sv-modal-title flex items-center gap-2">
+          <IconShield className="w-5 h-5" /> {t("upgradeEncryption.title")}
+        </h2>
+        <button onClick={onClose} aria-label={t("entry.close")} className="sv-icon-btn">
+          <IconClose />
+        </button>
+      </div>
+
+      {done ? (
+        <div className="flex flex-col items-center text-center py-6 gap-4">
+          <p className="text-sm text-(--text-secondary)">{t("upgradeEncryption.doneBody")}</p>
+          <button onClick={onClose} className="sv-btn-primary px-8">
+            {t("upgradeEncryption.done")}
           </button>
         </div>
-
-        {done ? (
-          <div className="flex flex-col items-center text-center py-6 gap-4">
-            <p className="text-sm text-[var(--text-secondary)]">
-              Your vault now uses Argon2id — the modern, memory-hard key derivation function.
-            </p>
-            <button onClick={onClose} className="sv-btn-primary px-8">
-              Done
+      ) : (
+        <>
+          <p className="text-sm text-(--text-secondary) mb-4">{t("upgradeEncryption.intro")}</p>
+          {error && <p className="sv-error mb-3">{error}</p>}
+          <label className="sv-label">{t("upgradeEncryption.password")}</label>
+          <input
+            className="sv-input w-full font-mono mb-5"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            autoComplete="current-password"
+            disabled={working}
+            onKeyDown={(e) => e.key === "Enter" && handleUpgrade()}
+          />
+          <div className="flex justify-end gap-3">
+            <button onClick={onClose} disabled={working} className="sv-btn-secondary px-5">
+              {t("entry.cancel")}
+            </button>
+            <button
+              onClick={handleUpgrade}
+              disabled={working || !password}
+              className="sv-btn-primary px-5"
+            >
+              {working ? t("upgradeEncryption.upgrading") : t("upgradeEncryption.upgrade")}
             </button>
           </div>
-        ) : (
-          <>
-            <p className="text-sm text-[var(--text-secondary)] mb-4">
-              This vault was created with an older key derivation function (PBKDF2-SHA256).
-              Re-encrypt it with Argon2id — stronger against offline brute-force — using the same
-              master password.
-            </p>
-            {error && <p className="sv-error mb-3">{error}</p>}
-            <label className="sv-label">Master password</label>
-            <input
-              className="sv-input w-full font-mono mb-5"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              autoComplete="current-password"
-              disabled={working}
-              onKeyDown={(e) => e.key === "Enter" && handleUpgrade()}
-            />
-            <div className="flex justify-end gap-3">
-              <button onClick={onClose} disabled={working} className="sv-btn-secondary px-5">
-                Cancel
-              </button>
-              <button
-                onClick={handleUpgrade}
-                disabled={working || !password}
-                className="sv-btn-primary px-5"
-              >
-                {working ? "Upgrading…" : "Upgrade"}
-              </button>
-            </div>
-          </>
-        )}
-      </div>
-    </div>
+        </>
+      )}
+    </Modal>
   );
 }

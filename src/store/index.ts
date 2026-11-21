@@ -4,12 +4,13 @@
  * lives here so we don't introduce circular imports.
  */
 import { useSessionStore } from "./session.store";
-import { useVaultStore }   from "./vault.store";
-import { useTOTPStore }    from "./totp.store";
-import { useUIStore }      from "./ui.store";
-import { BreachService }   from "../services/breach.service";
+import { useVaultStore } from "./vault.store";
+import { useTOTPStore } from "./totp.store";
+import { useUIStore } from "./ui.store";
+import { BreachService } from "../services/breach.service";
 import { AutosaveService } from "../services/autosave.service";
-import type { VaultData }  from "../core/vault/schema";
+import type { VaultData } from "../core/vault/schema";
+import i18n from "../i18n";
 
 export type LockReason = "manual" | "inactivity" | "duress";
 
@@ -50,6 +51,6 @@ export function lockApplication(reason: LockReason = "manual"): void {
   useTOTPStore.getState().clear();
   BreachService.clearCache();
   if (reason === "inactivity") {
-    useUIStore.getState().toastInfo("Vault locked", "Due to inactivity.");
+    useUIStore.getState().toastInfo(i18n.t("lock.lockedTitle"), i18n.t("lock.inactivityBody"));
   }
 }

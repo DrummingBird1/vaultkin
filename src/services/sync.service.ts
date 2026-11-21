@@ -10,28 +10,60 @@
  * is wired, last-write-wins automation could destroy data, so we keep the user
  * in control. ETag is tracked so push can warn on remote changes (If-Match).
  *
- * Credentials live in sessionStorage only (cleared when the tab closes) — never
- * in the vault, never synced.
+ * Credentials live inside the encrypted vault (settings.sync), so they are
+ * only available while it is unlocked and are wiped from memory on lock. The
+ * remote blob carries them too, encrypted like everything else. Older builds
+ * kept them in sessionStorage in plaintext; that copy is moved into the vault
+ * and deleted the first time it is seen.
  */
+import { useVaultStore } from "../store/vault.store";
 
 export interface SyncConfig {
   enabled: boolean;
-  url?: string;       // full URL to the vault file, e.g. https://dav.host/securevault.svault
+  url?: string; // full URL to the vault file, e.g. https://dav.host/securevault.svault
   username?: string;
 }
 
 export type SyncResult =
   | { ok: true; etag?: string }
-  | { ok: false; reason: "disabled" | "not-configured" | "auth" | "not-found" | "conflict" | "network"; message?: string };
+  | {
+      ok: false;
+      reason: "disabled" | "not-configured" | "auth" | "not-found" | "conflict" | "network";
+      message?: string;
+    };
 
-const CRED_KEY = "sv_sync_cred";   // sessionStorage: { url, username, password }
-const ETAG_KEY = "sv_sync_etag";
+const LEGACY_CRED_KEY = "sv_sync_cred"; // sessionStorage, pre-M4 (plaintext)
+const ETAG_KEY = "sv_sync_etag"; // sessionStorage, not secret
 
-function loadCred(): { url: string; username: string; password: string } | null {
+type Cred = { url: string; username: string; password: string };
+
+/** Only https: the production CSP blocks anything else, and Basic auth over
+ *  plain http would expose the WebDAV password. */
+export class InsecureSyncUrlError extends Error {}
+
+function writeCred(cred: Cred | undefined): void {
+  const { vault } = useVaultStore.getState();
+  if (!vault) return;
+  const settings = { ...vault.settings };
+  if (cred) settings.sync = cred;
+  else delete settings.sync;
+  useVaultStore.setState({ vault: { ...vault, settings }, isDirty: true });
+}
+
+function loadCred(): Cred | null {
+  const { vault } = useVaultStore.getState();
+  if (!vault) return null; // locked
   try {
-    const raw = sessionStorage.getItem(CRED_KEY);
-    return raw ? JSON.parse(raw) : null;
-  } catch { return null; }
+    const legacy = sessionStorage.getItem(LEGACY_CRED_KEY);
+    if (legacy) {
+      sessionStorage.removeItem(LEGACY_CRED_KEY);
+      const c = JSON.parse(legacy) as Cred;
+      if (!vault.settings.sync && c?.url && /^https:/i.test(c.url)) writeCred(c);
+    }
+  } catch {
+    /* unreadable legacy copy: dropped */
+  }
+  return useVaultStore.getState().vault?.settings.sync ?? null;
 }
 
 function authHeader(username: string, password: string): string {
@@ -44,12 +76,18 @@ export const SyncService = {
     return c ? { enabled: true, url: c.url, username: c.username } : { enabled: false };
   },
 
+  /** Save credentials into the vault. An empty password keeps the saved one
+   *  (the form never shows it back). Throws InsecureSyncUrlError for non-https. */
   configure(url: string, username: string, password: string): void {
-    sessionStorage.setItem(CRED_KEY, JSON.stringify({ url: url.trim(), username, password }));
+    const u = url.trim();
+    if (!/^https:\/\//i.test(u)) throw new InsecureSyncUrlError("WebDAV URL must use https");
+    const keep = loadCred();
+    writeCred({ url: u, username, password: password || keep?.password || "" });
   },
 
   disconnect(): void {
-    sessionStorage.removeItem(CRED_KEY);
+    writeCred(undefined);
+    sessionStorage.removeItem(LEGACY_CRED_KEY);
     sessionStorage.removeItem(ETAG_KEY);
   },
 
@@ -58,9 +96,12 @@ export const SyncService = {
     const c = loadCred();
     if (!c) return { ok: false, reason: "not-configured" };
     try {
-      const res = await fetch(c.url, { method: "HEAD", headers: { Authorization: authHeader(c.username, c.password) } });
+      const res = await fetch(c.url, {
+        method: "HEAD",
+        headers: { Authorization: authHeader(c.username, c.password) },
+      });
       if (res.status === 401 || res.status === 403) return { ok: false, reason: "auth" };
-      if (res.status === 404) return { ok: true };          // file not there yet — fine, first push creates it
+      if (res.status === 404) return { ok: true }; // file not there yet — fine, first push creates it
       if (!res.ok) return { ok: false, reason: "network", message: `HTTP ${res.status}` };
       return { ok: true, etag: res.headers.get("ETag") ?? undefined };
     } catch (e: any) {
@@ -96,10 +137,15 @@ export const SyncService = {
     const c = loadCred();
     if (!c) return { result: { ok: false, reason: "not-configured" } };
     try {
-      const res = await fetch(c.url, { method: "GET", headers: { Authorization: authHeader(c.username, c.password) } });
-      if (res.status === 401 || res.status === 403) return { result: { ok: false, reason: "auth" } };
+      const res = await fetch(c.url, {
+        method: "GET",
+        headers: { Authorization: authHeader(c.username, c.password) },
+      });
+      if (res.status === 401 || res.status === 403)
+        return { result: { ok: false, reason: "auth" } };
       if (res.status === 404) return { result: { ok: false, reason: "not-found" } };
-      if (!res.ok) return { result: { ok: false, reason: "network", message: `HTTP ${res.status}` } };
+      if (!res.ok)
+        return { result: { ok: false, reason: "network", message: `HTTP ${res.status}` } };
       const payload = await res.text();
       const etag = res.headers.get("ETag");
       if (etag) sessionStorage.setItem(ETAG_KEY, etag);

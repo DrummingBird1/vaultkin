@@ -1,16 +1,27 @@
 /**
- * @file App.tsx — Step 7 final wired version.
- * Integrates AppLifecycle (onLock teardown) and ChangePassword modal in Settings.
+ * @file App.tsx
+ * Root: theme vars, auto-lock, lock teardown, hash routing (useHashRoute),
+ * page switch with lazy loading, toast stack.
  */
 import React, { useEffect, useRef, Suspense, lazy } from "react";
 import { useUIStore } from "./store/ui.store";
 import { useSessionStore } from "./store/session.store";
 import { useAutoLock } from "./hooks/useAutoLock";
+import { useHashRoute } from "./hooks/useHashRoute";
+import type { SettingsSectionId } from "./pages/settings-sections";
 import { AppLifecycle } from "./services/app-lifecycle.service";
 import { AppShell } from "./components/layout/AppShell";
 import { UnlockPage } from "./pages/Unlock.page";
 import { VaultPage } from "./pages/Vault.page";
+import { Toaster } from "./components/ui/Toaster";
+import { PairingDialog } from "./components/bridge/PairingDialog";
+import { PasskeyDialog } from "./components/bridge/PasskeyDialog";
+import { SshApprovalDialog } from "./components/bridge/SshApprovalDialog";
+import { SshAgentService } from "./services/ssh-agent.service";
+import { BridgeService } from "./services/bridge.service";
+import { lockApplication } from "./store";
 
+import { readableAccent, solidAccent } from "./lib/contrast";
 // Route-based code splitting: Vault/Unlock stay eager (the pages basically
 // everyone hits every session), the rest lazy-load on first visit. Shaves
 // real weight off the initial bundle for a page most sessions never open.
@@ -30,7 +41,7 @@ const SettingsPage = lazy(() =>
 function PageLoadingFallback() {
   return (
     <div
-      className="flex-1 flex items-center justify-center text-sm text-[var(--text-tertiary)]"
+      className="flex-1 flex items-center justify-center text-sm text-(--text-tertiary)"
       role="status"
       aria-live="polite"
     >
@@ -39,24 +50,55 @@ function PageLoadingFallback() {
   );
 }
 
-const PAGES: Record<string, React.ReactNode> = {
-  vault: <VaultPage />,
-  authenticator: <AuthenticatorPage />,
-  generator: <GeneratorPage />,
-  health: <HealthPage />,
-  settings: <SettingsPage />,
-};
+/**
+ * Route → page. Memoized and self-subscribing so App re-renders (e.g. the
+ * auto-lock activity tracker on every keypress) don't re-render the page.
+ */
+const Pages = React.memo(function Pages() {
+  const activePage = useUIStore((s) => s.activePage);
+  const activeSection = useUIStore((s) => s.activeSection);
+  return (
+    <Suspense fallback={<PageLoadingFallback />}>
+      {activePage === "authenticator" ? (
+        <AuthenticatorPage />
+      ) : activePage === "generator" ? (
+        <GeneratorPage />
+      ) : activePage === "health" ? (
+        <HealthPage />
+      ) : activePage === "settings" ? (
+        <SettingsPage section={(activeSection as SettingsSectionId) ?? undefined} />
+      ) : (
+        <VaultPage />
+      )}
+    </Suspense>
+  );
+});
 
 export function App() {
-  const { theme, accentColor, toasts, removeToast } = useUIStore();
+  const { theme, accentColor } = useUIStore();
   const { isUnlocked } = useSessionStore();
-  const activePage = useUIStore((s) => s.activePage);
+  useHashRoute(isUnlocked);
 
   // Apply CSS theme vars
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
     const hex = accentColor.hex;
     document.documentElement.style.setProperty("--accent", hex);
+    // Filled buttons put white text on the accent; keep that at 4.5:1 for any chosen color.
+    document.documentElement.style.setProperty("--accent-solid", solidAccent(hex));
+    // Accent-colored TEXT must reach 4.5:1 on every surface of the current theme.
+    const css = getComputedStyle(document.documentElement);
+    const surfaces = ["--bg-base", "--bg-surface", "--bg-elevated", "--bg-overlay"].map((v) =>
+      css.getPropertyValue(v).trim(),
+    );
+    document.documentElement.style.setProperty("--accent-text", readableAccent(hex, surfaces));
+    // Desktop: native window controls follow the theme.
+    window.electron?.window
+      ?.setTitleBarTheme({
+        color: css.getPropertyValue("--bg-surface").trim(),
+        symbolColor: css.getPropertyValue("--text-secondary").trim(),
+      })
+      .catch(() => {});
     const rgb = hex
       .replace("#", "")
       .match(/.{2}/g)!
@@ -64,6 +106,58 @@ export function App() {
       .join(",");
     document.documentElement.style.setProperty("--accent-rgb", rgb);
   }, [theme, accentColor]);
+
+  // Desktop window chrome + Quick Access hotkey (Electron only).
+  useEffect(() => {
+    const bridge = window.electron;
+    if (!bridge?.window) return;
+    document.documentElement.dataset.titlebar = bridge.platform === "darwin" ? "inset" : "overlay";
+    // Reserve exactly the space of the native caption buttons. They are on the
+    // right normally, but on the LEFT when Windows itself runs in a
+    // right-to-left language (e.g. Hebrew Windows) — measure both sides.
+    const wco = (
+      navigator as Navigator & {
+        windowControlsOverlay?: EventTarget & { getTitlebarAreaRect(): DOMRect; visible: boolean };
+      }
+    ).windowControlsOverlay;
+    const measure = () => {
+      const r = wco?.visible ? wco.getTitlebarAreaRect() : null;
+      const root = document.documentElement.style;
+      if (!r || r.width <= 0) {
+        // No measurement: keep the CSS default (140px on the right).
+        root.removeProperty("--titlebar-reserve-left");
+        root.removeProperty("--titlebar-reserve-right");
+        return;
+      }
+      const left = Math.max(0, Math.round(r.x));
+      const right = Math.max(0, Math.round(window.innerWidth - (r.x + r.width)));
+      root.setProperty("--titlebar-reserve-left", `${left}px`);
+      root.setProperty("--titlebar-reserve-right", `${right}px`);
+    };
+    measure();
+    wco?.addEventListener("geometrychange", measure);
+    window.addEventListener("resize", measure);
+    const offQuickAccess = bridge.window.onQuickAccess(() => {
+      if (useSessionStore.getState().isUnlocked) useUIStore.getState().setPaletteOpen(true);
+      else document.querySelector<HTMLInputElement>('input[type="password"]')?.focus();
+    });
+    // Sleep / screen lock / user switch locks the vault right away.
+    const offSystemLock = bridge.window.onSystemLock?.(() => {
+      if (useSessionStore.getState().isUnlocked) lockApplication("inactivity");
+    });
+    return () => {
+      offQuickAccess();
+      offSystemLock?.();
+      wco?.removeEventListener("geometrychange", measure);
+      window.removeEventListener("resize", measure);
+    };
+  }, []);
+
+  // Browser-extension bridge (desktop only). Runs while locked too, so a
+  // connecting extension is told "locked" instead of getting no answer.
+  useEffect(() => BridgeService.start(), []);
+  // SSH agent (desktop, opt-in): answers ssh with keys from the vault.
+  useEffect(() => SshAgentService.start(), []);
 
   // Auto-lock on inactivity
   useAutoLock();
@@ -89,61 +183,14 @@ export function App() {
         <UnlockPage />
       ) : (
         <AppShell>
-          <Suspense fallback={<PageLoadingFallback />}>
-            {PAGES[activePage] ?? <VaultPage />}
-          </Suspense>
+          <Pages />
         </AppShell>
       )}
 
-      {/* Toast container — role="status"/aria-live so screen readers announce
-          new toasts (e.g. "Entry deleted", autosave errors) without the user
-          needing to be focused on this corner of the screen. aria-atomic is
-          deliberately false: only the newly-added toast should be announced,
-          not the entire stack re-read every time one more toast appears. */}
-      <div
-        className="fixed bottom-4 right-4 z-[300] flex flex-col gap-2 pointer-events-none"
-        role="status"
-        aria-live="polite"
-        aria-atomic="false"
-        style={{ minWidth: 280 }}
-      >
-        {toasts.map((toast) => (
-          <div
-            key={toast.id}
-            className="pointer-events-auto flex items-start gap-3 px-4 py-3 rounded-xl border shadow-xl backdrop-blur-sm"
-            style={{
-              background: "var(--bg-elevated)",
-              borderColor:
-                toast.type === "success"
-                  ? "var(--success)"
-                  : toast.type === "error"
-                    ? "var(--danger)"
-                    : "var(--border-default)",
-              animation: "slideUp 200ms ease both",
-            }}
-          >
-            <span className="text-base mt-0.5">
-              {toast.type === "success" ? "✓" : toast.type === "error" ? "⚠" : "ℹ"}
-            </span>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-[var(--text-primary)] truncate">
-                {toast.title}
-              </p>
-              {toast.message && (
-                <p className="text-xs text-[var(--text-tertiary)] mt-0.5 truncate">
-                  {toast.message}
-                </p>
-              )}
-            </div>
-            <button
-              onClick={() => removeToast(toast.id)}
-              className="text-[var(--text-tertiary)] hover:text-[var(--text-primary)] transition-colors text-sm flex-shrink-0"
-            >
-              ✕
-            </button>
-          </div>
-        ))}
-      </div>
+      {isUnlocked && <PairingDialog />}
+      {isUnlocked && <PasskeyDialog />}
+      {isUnlocked && <SshApprovalDialog />}
+      <Toaster />
     </>
   );
 }

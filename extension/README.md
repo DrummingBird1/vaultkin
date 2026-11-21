@@ -1,9 +1,9 @@
-# SecureVault Browser Extension
+# Vaultkin Browser Extension
 
 A companion Chrome/Edge/Brave (MV3) extension that adds password autofill to
 your browsing experience. The extension does **not** decrypt your vault on
 its own — it receives an already-decrypted, minimal snapshot from the main
-SecureVault app via a permissioned message channel, and holds it in memory
+Vaultkin app via a permissioned message channel, and holds it in memory
 for up to 5 minutes of inactivity — the timeout value lives in
 `src/constants/shared.json`, imported directly by both this background
 worker and the main app's `src/constants/index.ts` (`EXTENSION_SESSION_TIMEOUT_MS`),
@@ -13,7 +13,7 @@ so the two can't drift out of sync.
 
 ```
 ┌────────────────────────┐         ┌─────────────────────────┐
-│  SecureVault Web App   │  send   │  Extension Background   │
+│  Vaultkin Web App   │  send   │  Extension Background   │
 │  (Settings → "Send to  │ ──────▶ │  Service Worker         │
 │   extension")          │ entries │  (in-memory cache only) │
 └────────────────────────┘         └────────┬────────────────┘
@@ -35,17 +35,34 @@ there by design (Settings hides the controls and explains why in that case).
 
 ## Development install
 
-1. Run the main app on `http://localhost:5173` (`pnpm run dev`) — that origin
-   is already allow-listed in `manifest.json`'s `externally_connectable`.
-2. Open `chrome://extensions/`.
-3. Enable **Developer mode** (top right).
-4. Click **Load unpacked** → select the `extension/` folder directly (the
-   plain, unbundled source — no build step needed for local dev, exactly
-   like before the build pipeline below existed).
-5. The SecureVault icon appears in the toolbar. Click it any time to see
-   cached-entry status, search, copy, or fill for the active tab.
-6. In the app: **Settings → Browser extension** → paste the extension ID
-   (shown on the `chrome://extensions` card) → **Send entries to extension**.
+The extension now has TypeScript sources shared with the app (the desktop
+bridge and the passkey shim), so it must be built; `extension/` can no
+longer be loaded unbundled.
+
+1. `pnpm run build:extension` (re-run after changes).
+2. Open `chrome://extensions/`, enable **Developer mode**, click
+   **Load unpacked** → select `dist/extension/`.
+3. **With the desktop app** (recommended, ADR 0007): in the app,
+   **Settings → Browser extension** → paste the extension ID shown on the
+   `chrome://extensions` card → **Set up browser connection**. Then open the
+   extension popup → **Connect**, and approve in the app if the 6-digit codes
+   match. Logins and passkeys for the current site come from the app on demand.
+
+**Firefox (128+):** the same build also writes `dist/extension-firefox/`. Open
+`about:debugging#/runtime/this-firefox` → **Load Temporary Add-on** → pick
+`dist/extension-firefox/manifest.json`. Settings → Browser extension →
+**Set up browser connection** registers the Firefox host too (fixed add-on id
+`securevault@securevault.app`), then Connect from the popup as above. 4. **With the web build** (`pnpm run dev`, `http://localhost:5173`):
+Settings → Browser extension → **Send entries to extension** (legacy
+5-minute snapshot).
+
+### Passkeys
+
+`src/webauthn-inject.ts` runs in the page's own JavaScript world and offers
+Vaultkin for `navigator.credentials.create/get` passkey requests. The app
+asks you to confirm every save and sign-in. Anything Vaultkin can't handle
+(app not connected, no passkey for the site, Cancel, non-ES256, conditional
+mediation) falls through to the browser's own passkey UI.
 
 ## Build
 
@@ -59,22 +76,19 @@ pnpm run build:extension      # bundles + minifies into dist/extension/,
 
 Both run in CI (`.github/workflows/ci.yml`'s `extension` job) on every
 change. `dist/extension/` is what you'd actually zip for a Chrome Web Store
-submission — `extension/` itself stays the unbundled source used by
-"Load unpacked" above, unchanged.
+submission, and also what you load unpacked during development.
 
 ## Production install
 
 Before publishing to the Chrome Web Store:
 
-1. Replace the placeholder origin in `manifest.json`'s
-   `externally_connectable.matches` and `content_security_policy` (currently
-   `https://*.your-securevault-host.com/*`) with wherever you actually host
-   the SecureVault web build. This is a template, not a real domain — leaving
-   it as-is just means the production origin can't reach the extension yet;
-   it's not otherwise a security hole.
-2. `pnpm run build:extension`, then zip the contents of `dist/extension/`
-   (not `extension/` — the dist output is what's actually minified/bundled)
-   and submit it.
+1. `pnpm run build:extension:release`. This build drops
+   `externally_connectable` and the localhost dev hosts (the desktop app
+   talks to the extension over native messaging, ADR 0007). It produces
+   `dist/extension/` (Chrome / Edge) and `dist/extension-firefox/`.
+2. Zip the contents of each folder (the release workflow does this) and
+   submit. See [docs/RELEASE.md](../docs/RELEASE.md) for the permission
+   justifications and the privacy policy link.
 3. Consider commissioning a proper designed icon — `icons/*.png` and
    `build/icon.png` (desktop app) are currently generated programmatically
    (`scripts/generate-icons.cjs`, a solid-color lock glyph). Functional and

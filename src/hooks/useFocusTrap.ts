@@ -1,8 +1,8 @@
 /**
  * @file src/hooks/useFocusTrap.ts
  * Traps Tab/Shift+Tab focus cycling inside a modal while it's open, and
- * restores focus to whatever triggered it on close. Every modal in this app
- * uses this — see CLAUDE.md's code style notes.
+ * restores focus to whatever triggered it on close. Used by <Modal>
+ * (src/components/ui/Modal.tsx), which every modal renders.
  */
 import { useEffect, useRef } from "react";
 
@@ -19,6 +19,8 @@ export function useFocusTrap<T extends HTMLElement>(active: boolean) {
 
     const container = containerRef.current;
     const focusFirst = () => {
+      // Respect a child that already took focus (autoFocus / its own effect).
+      if (container && container.contains(document.activeElement)) return;
       const focusable = container?.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR);
       (focusable?.[0] ?? container)?.focus();
     };

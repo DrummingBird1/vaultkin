@@ -26,8 +26,7 @@ export const BiometricService = {
       return "unavailable";
     }
     try {
-      const fn = (window as any).PublicKeyCredential
-        ?.isUserVerifyingPlatformAuthenticatorAvailable;
+      const fn = (window as any).PublicKeyCredential?.isUserVerifyingPlatformAuthenticatorAvailable;
       if (typeof fn !== "function") return "unavailable";
       const available = await fn.call((window as any).PublicKeyCredential);
       return available ? "available" : "unavailable";

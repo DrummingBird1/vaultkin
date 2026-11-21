@@ -1,253 +1,352 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
-/* ─── Design tokens ──────────────────────────────────────────────────────── */
-:root[data-theme="dark"] {
-  --bg-base: #0d0d12;
-  --bg-surface: #15151b;
-  --bg-elevated: #1c1c24;
-  --bg-overlay: #232330;
+@theme {
+  /* Fonts are bundled via @fontsource (src/main.tsx); Heebo covers Hebrew. */
+  --font-sans:
+    "Outfit Variable", "Heebo Variable", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: "Outfit Variable", "Heebo Variable", system-ui, sans-serif;
+  --font-mono: "DM Mono", ui-monospace, "Cascadia Code", monospace;
 
-  --text-primary: #f4f4f6;
-  --text-secondary: #b5b5be;
-  --text-tertiary: #6e6e78;
+  --radius-control: 0.75rem;
+  --radius-card: 1rem;
+  --radius-dialog: 1.25rem;
 
-  --border-subtle: #1f1f28;
-  --border-default: #2a2a36;
-  --border-strong: #3a3a48;
-
-  --accent: #6366f1;
-  --accent-rgb: 99, 102, 241;
-  --accent-dim: rgba(99, 102, 241, 0.12);
-
-  --success: #10b981;
-  --success-dim: rgba(16, 185, 129, 0.12);
-  --warning: #f59e0b;
-  --warning-dim: rgba(245, 158, 11, 0.12);
-  --danger: #ef4444;
-  --danger-dim: rgba(239, 68, 68, 0.12);
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+  --duration-fast: 120ms;
+  --duration-base: 200ms;
 }
 
-:root[data-theme="light"] {
-  --bg-base: #fafafb;
-  --bg-surface: #ffffff;
-  --bg-elevated: #f4f4f6;
-  --bg-overlay: #eaeaf0;
-
-  --text-primary: #15151b;
-  --text-secondary: #45454e;
-  --text-tertiary: #888892;
-
-  --border-subtle: #ededf1;
-  --border-default: #dddde3;
-  --border-strong: #bfbfc8;
-
-  --accent: #6366f1;
-  --accent-rgb: 99, 102, 241;
-  --accent-dim: rgba(99, 102, 241, 0.1);
-
-  --success: #059669;
-  --success-dim: rgba(5, 150, 105, 0.1);
-  --warning: #d97706;
-  --warning-dim: rgba(217, 119, 6, 0.1);
-  --danger: #dc2626;
-  --danger-dim: rgba(220, 38, 38, 0.1);
+/* Semantic color tokens exposed as Tailwind colors, so new code can write
+   bg-surface / text-muted / border-subtle instead of bg-(--bg-surface).
+   "inline" keeps them pointing at the runtime variables (themes + accent). */
+@theme inline {
+  --color-canvas: var(--bg-base); /* not "base": that would collide with text-base (font size) */
+  --color-surface: var(--bg-surface);
+  --color-elevated: var(--bg-elevated);
+  --color-overlay: var(--bg-overlay);
+  --color-fg: var(--text-primary);
+  --color-fg-muted: var(--text-secondary);
+  --color-fg-subtle: var(--text-tertiary);
+  --color-line: var(--border-default);
+  --color-line-subtle: var(--border-subtle);
+  --color-line-strong: var(--border-strong);
+  --color-accent: var(--accent);
+  --color-accent-solid: var(--accent-solid, var(--accent));
+  --color-accent-dim: var(--accent-dim);
+  --color-accent-text: var(--accent-text, var(--accent));
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
 }
 
-/* High Contrast — maximizes text/background contrast for low-vision users.
- * Pure black/white base plus brightened semantic colors (the dark theme's
- * success/warning/danger hues don't have enough contrast against #000 on
- * their own at normal text sizes). */
-:root[data-theme="high-contrast"] {
-  --bg-base: #000000;
-  --bg-surface: #000000;
-  --bg-elevated: #0a0a0a;
-  --bg-overlay: #1a1a1a;
+/*
+  The default border color has changed to `currentcolor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
 
-  --text-primary: #ffffff;
-  --text-secondary: #ffffff;
-  --text-tertiary: #e0e0e0;
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+*/
+@layer base {
+  :root {
+    --shadow-1: 0 1px 2px rgb(0 0 0 / 0.18);
+    --shadow-2: 0 8px 24px rgb(0 0 0 / 0.28);
+    --shadow-3: 0 24px 60px rgb(0 0 0 / 0.45);
+    --focus-ring: 0 0 0 2px var(--bg-base), 0 0 0 4px var(--accent);
+  }
+  :root[data-theme="light"] {
+    --shadow-1: 0 1px 2px rgb(16 16 32 / 0.06);
+    --shadow-2: 0 8px 24px rgb(16 16 32 / 0.1);
+    --shadow-3: 0 24px 60px rgb(16 16 32 / 0.18);
+  }
+  :root[data-theme="high-contrast"] {
+    --focus-ring: 0 0 0 2px #000, 0 0 0 4px #fff;
+  }
 
-  --border-subtle: #4d4d4d;
-  --border-default: #808080;
-  --border-strong: #ffffff;
+  /* One consistent, always-visible keyboard focus indicator (WCAG 2.4.7/2.4.11). */
+  :focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
+  }
+  /* Search fields that are the whole point of their dialog (command palette)
+     show focus through the caret and the dialog itself, not a box. */
+  [cmdk-input]:focus-visible {
+    box-shadow: none;
+  }
 
-  --accent: #9498ff;
-  --accent-rgb: 148, 152, 255;
-  --accent-dim: rgba(148, 152, 255, 0.25);
+  /* Thin, theme-aware scrollbars. */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-strong) transparent;
+  }
 
-  --success: #4ade80;
-  --success-dim: rgba(74, 222, 128, 0.25);
-  --warning: #fde047;
-  --warning-dim: rgba(253, 224, 71, 0.25);
-  --danger: #ff6b6b;
-  --danger-dim: rgba(255, 107, 107, 0.25);
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--border-default, currentcolor);
+  }
 }
 
-html,
-body,
-#root {
-  height: 100%;
+@utility sv-modal-backdrop {
+  @apply fixed inset-0 z-200 flex items-center justify-center p-4;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(4px);
+  animation: fadeIn 150ms ease both;
 }
-body {
-  margin: 0;
-  background: var(--bg-base);
+
+@utility sv-modal {
+  @apply w-full max-w-2xl rounded-2xl border p-6 max-h-[90vh] overflow-y-auto;
+  background: var(--bg-surface);
+  border-color: var(--border-default);
+  border-radius: var(--radius-dialog);
+  box-shadow: var(--shadow-3);
+  animation: slideUp var(--duration-base) var(--ease-out-soft) both;
+}
+
+@utility sv-modal-title {
+  @apply text-lg font-semibold;
   color: var(--text-primary);
-  font-family:
-    Outfit,
-    system-ui,
-    -apple-system,
-    "Segoe UI",
-    Roboto,
-    sans-serif;
-  font-feature-settings: "cv11";
-  -webkit-font-smoothing: antialiased;
-}
-* {
-  box-sizing: border-box;
 }
 
-/* ─── Design system: sv-* primitives ─────────────────────────────────────── */
+@utility sv-modal-subtitle {
+  @apply text-sm;
+  color: var(--text-secondary);
+}
 
-@layer components {
-  .sv-modal-backdrop {
-    @apply fixed inset-0 z-[200] flex items-center justify-center p-4;
-    background: rgba(0, 0, 0, 0.55);
-    backdrop-filter: blur(4px);
-    animation: fadeIn 150ms ease both;
-  }
-  .sv-modal {
-    @apply w-full max-w-2xl rounded-2xl border p-6 max-h-[90vh] overflow-y-auto;
-    background: var(--bg-surface);
-    border-color: var(--border-default);
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
-    animation: slideUp 200ms ease both;
-  }
-  .sv-modal-title {
-    @apply text-lg font-semibold;
-    color: var(--text-primary);
-  }
-  .sv-modal-subtitle {
-    @apply text-sm;
-    color: var(--text-secondary);
-  }
-
-  .sv-input {
-    @apply rounded-xl px-3 py-2 text-sm outline-none transition-colors;
-    background: var(--bg-elevated);
-    border: 1px solid var(--border-default);
-    color: var(--text-primary);
-  }
-  .sv-input:focus {
+@utility sv-input {
+  @apply rounded-xl px-3 py-2 text-sm outline-hidden transition-colors;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-default);
+  color: var(--text-primary);
+  &:focus {
     border-color: var(--accent);
   }
-  .sv-input::placeholder {
+  &::placeholder {
     color: var(--text-tertiary);
   }
+}
 
-  .sv-label {
-    @apply text-xs font-medium uppercase tracking-wider mb-1 block;
-    color: var(--text-secondary);
-  }
-  .sv-error {
-    @apply text-xs mt-1;
-    color: var(--danger);
-  }
-  .sv-hint {
-    @apply text-xs mt-1;
-    color: var(--text-tertiary);
-  }
+@utility sv-label {
+  @apply text-xs font-medium uppercase tracking-wider mb-1 block;
+  color: var(--text-secondary);
+}
 
-  .sv-btn-primary {
-    @apply px-4 py-2 rounded-xl text-sm font-medium transition-opacity;
-    background: var(--accent);
-    color: white;
-  }
-  .sv-btn-primary:hover:not(:disabled) {
+@utility sv-error {
+  @apply text-xs mt-1;
+  color: var(--danger);
+}
+
+@utility sv-hint {
+  @apply text-xs mt-1;
+  color: var(--text-tertiary);
+}
+
+@utility sv-btn-primary {
+  @apply px-4 py-2 rounded-xl text-sm font-medium transition-opacity;
+  background: var(--accent-solid, var(--accent));
+  color: white;
+  &:hover:not(:disabled) {
     opacity: 0.9;
   }
-  .sv-btn-primary:disabled {
+  &:disabled {
     opacity: 0.5;
     cursor: not-allowed;
   }
+}
 
-  .sv-btn-secondary {
-    @apply px-4 py-2 rounded-xl text-sm font-medium transition-colors;
-    background: var(--bg-elevated);
-    border: 1px solid var(--border-default);
-    color: var(--text-primary);
-  }
-  .sv-btn-secondary:hover:not(:disabled) {
+@utility sv-btn-secondary {
+  @apply px-4 py-2 rounded-xl text-sm font-medium transition-colors;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-default);
+  color: var(--text-primary);
+  &:hover:not(:disabled) {
     background: var(--bg-overlay);
   }
+}
 
-  .sv-btn-danger {
-    @apply px-4 py-2 rounded-xl text-sm font-medium transition-opacity;
-    background: var(--danger);
-    color: white;
-  }
-  .sv-btn-danger:hover:not(:disabled) {
+@utility sv-btn-danger {
+  @apply px-4 py-2 rounded-xl text-sm font-medium transition-opacity;
+  background: var(--danger);
+  color: white;
+  &:hover:not(:disabled) {
     opacity: 0.9;
   }
+}
 
-  .sv-btn-ghost {
-    @apply px-3 py-1.5 rounded-lg transition-colors;
-    color: var(--text-tertiary);
-  }
-  .sv-btn-ghost:hover {
+@utility sv-btn-ghost {
+  @apply px-3 py-1.5 rounded-lg transition-colors;
+  color: var(--text-tertiary);
+  &:hover {
     color: var(--text-primary);
     background: var(--bg-elevated);
   }
+}
 
-  .sv-card {
-    @apply rounded-2xl p-4 border;
-    background: var(--bg-surface);
-    border-color: var(--border-default);
-  }
+@utility sv-card {
+  @apply p-4 border;
+  border-radius: var(--radius-card);
+  background: var(--bg-surface);
+  border-color: var(--border-default);
+  box-shadow: var(--shadow-1);
+}
 
-  .sv-badge {
-    @apply text-[10px] font-medium px-2 py-0.5 rounded-full uppercase tracking-wide;
-  }
+@utility sv-badge {
+  @apply text-[10px] font-medium px-2 py-0.5 rounded-full uppercase tracking-wide;
+}
 
-  .sv-icon-btn {
-    @apply p-1.5 rounded-lg transition-colors;
-    color: var(--text-tertiary);
-  }
-  .sv-icon-btn:hover {
+@utility sv-icon-btn {
+  @apply p-1.5 rounded-lg transition-colors;
+  color: var(--text-tertiary);
+  &:hover {
     color: var(--text-primary);
     background: var(--bg-elevated);
   }
+}
 
-  .sv-divider {
-    @apply h-px my-3;
-    background: var(--border-subtle);
-  }
+@utility sv-divider {
+  @apply h-px my-3;
+  background: var(--border-subtle);
+}
 
-  .sv-tab {
-    @apply px-3 py-1.5 text-sm font-medium border-b-2 transition-colors;
-    color: var(--text-tertiary);
-    border-color: transparent;
-  }
-  .sv-tab.is-active {
-    color: var(--accent);
+@utility sv-tab {
+  @apply px-3 py-1.5 text-sm font-medium border-b-2 transition-colors;
+  color: var(--text-tertiary);
+  border-color: transparent;
+  &.is-active {
+    color: var(--accent-text, var(--accent));
     border-color: var(--accent);
   }
+}
 
-  .sv-progress {
-    @apply h-1.5 rounded-full overflow-hidden;
-    background: var(--bg-elevated);
+@utility is-active {
+  &.sv-tab {
+    color: var(--accent-text, var(--accent));
+    border-color: var(--accent);
   }
-  .sv-progress-bar {
-    @apply h-full rounded-full transition-all duration-300;
-    background: var(--accent);
+}
+
+@utility sv-progress {
+  @apply h-1.5 rounded-full overflow-hidden;
+  background: var(--bg-elevated);
+}
+
+@utility sv-progress-bar {
+  @apply h-full rounded-full transition-all duration-300;
+  background: var(--accent);
+}
+
+@layer utilities {
+  /* ─── Design tokens ──────────────────────────────────────────────────────── */
+  :root[data-theme="dark"] {
+    --bg-base: #0d0d12;
+    --bg-surface: #15151b;
+    --bg-elevated: #1c1c24;
+    --bg-overlay: #232330;
+
+    --text-primary: #f4f4f6;
+    --text-secondary: #b5b5be;
+    --text-tertiary: #8c8c96; /* 4.5:1 on every dark surface (was #6e6e78, 3.35) */
+
+    --border-subtle: #1f1f28;
+    --border-default: #2a2a36;
+    --border-strong: #3a3a48;
+
+    --accent: #6366f1;
+    --accent-solid: #6063f0; /* set at runtime from the chosen accent, see src/lib/contrast.ts */
+    --accent-rgb: 99, 102, 241;
+    --accent-dim: rgba(99, 102, 241, 0.12);
+
+    --success: #10b981;
+    --success-dim: rgba(16, 185, 129, 0.12);
+    --warning: #f59e0b;
+    --warning-dim: rgba(245, 158, 11, 0.12);
+    --danger: #ef4444;
+    --danger-dim: rgba(239, 68, 68, 0.12);
   }
+
+  :root[data-theme="light"] {
+    --bg-base: #fafafb;
+    --bg-surface: #ffffff;
+    --bg-elevated: #f4f4f6;
+    --bg-overlay: #eaeaf0;
+
+    --text-primary: #15151b;
+    --text-secondary: #45454e;
+    --text-tertiary: #676771; /* 4.5:1 on every light surface (was #888892, 3.51) */
+
+    --border-subtle: #ededf1;
+    --border-default: #dddde3;
+    --border-strong: #bfbfc8;
+
+    --accent: #6366f1;
+    --accent-solid: #6063f0; /* set at runtime from the chosen accent, see src/lib/contrast.ts */
+    --accent-rgb: 99, 102, 241;
+    --accent-dim: rgba(99, 102, 241, 0.1);
+
+    --success: #059669;
+    --success-dim: rgba(5, 150, 105, 0.1);
+    --warning: #d97706;
+    --warning-dim: rgba(217, 119, 6, 0.1);
+    --danger: #dc2626;
+    --danger-dim: rgba(220, 38, 38, 0.1);
+  }
+
+  /* High Contrast — maximizes text/background contrast for low-vision users.
+ * Pure black/white base plus brightened semantic colors (the dark theme's
+ * success/warning/danger hues don't have enough contrast against #000 on
+ * their own at normal text sizes). */
+  :root[data-theme="high-contrast"] {
+    --bg-base: #000000;
+    --bg-surface: #000000;
+    --bg-elevated: #0a0a0a;
+    --bg-overlay: #1a1a1a;
+
+    --text-primary: #ffffff;
+    --text-secondary: #ffffff;
+    --text-tertiary: #e0e0e0;
+
+    --border-subtle: #4d4d4d;
+    --border-default: #808080;
+    --border-strong: #ffffff;
+
+    --accent: #9498ff;
+    --accent-rgb: 148, 152, 255;
+    --accent-dim: rgba(148, 152, 255, 0.25);
+
+    --success: #4ade80;
+    --success-dim: rgba(74, 222, 128, 0.25);
+    --warning: #fde047;
+    --warning-dim: rgba(253, 224, 71, 0.25);
+    --danger: #ff6b6b;
+    --danger-dim: rgba(255, 107, 107, 0.25);
+  }
+
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+  body {
+    margin: 0;
+    background: var(--bg-base);
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+    font-feature-settings: "cv11";
+    -webkit-font-smoothing: antialiased;
+  }
+  * {
+    box-sizing: border-box;
+  }
+
+  /* ─── Design system: sv-* primitives ─────────────────────────────────────── */
 }
 
 /* ─── Extension content script styles (used by extension/src/content.js) ── */
 .sv-trigger {
   position: absolute;
-  right: 4px;
+  inset-inline-end: 4px;
   top: 50%;
   transform: translateY(-50%);
   background: transparent;
@@ -352,4 +451,104 @@ body {
   50% {
     box-shadow: 0 0 60px rgba(var(--accent-rgb), 0.35);
   }
+}
+
+/* ─── Animations ─────────────────────────────────────────────────────────── */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+@keyframes shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20%,
+  60% {
+    transform: translateX(-8px);
+  }
+  40%,
+  80% {
+    transform: translateX(8px);
+  }
+}
+@keyframes glow {
+  0%,
+  100% {
+    box-shadow: 0 0 40px rgba(var(--accent-rgb), 0.2);
+  }
+  50% {
+    box-shadow: 0 0 60px rgba(var(--accent-rgb), 0.35);
+  }
+}
+
+/* Respect the OS "reduce motion" setting: keep state changes, drop movement. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Hebrew: Heebo first and a slightly looser line height. Unlayered on purpose
+   so it wins over the body font set in the utilities layer. */
+:lang(he) body {
+  font-family: "Heebo Variable", "Outfit Variable", system-ui, sans-serif;
+  line-height: 1.55;
+}
+
+/* ─── Desktop window chrome (Electron, custom title bar) ──────────────────
+   html[data-titlebar="overlay"]: Windows/Linux, native buttons drawn over
+   the top-right corner (always physically right, also in RTL).
+   html[data-titlebar="inset"]: macOS traffic lights in the top-left. */
+.app-drag {
+  -webkit-app-region: drag;
+  app-region: drag;
+}
+.app-drag :is(button, a, input, select, textarea, [role="button"], kbd) {
+  -webkit-app-region: no-drag;
+  app-region: no-drag;
+}
+/* --titlebar-reserve-left/right are measured at runtime from the Window
+   Controls Overlay API (App.tsx). Caption buttons are on the right, or on the
+   left on right-to-left Windows; the default assumes right, 140px wide.
+   Physical left/right on purpose: the OS buttons don't follow the app's dir. */
+html[data-titlebar="overlay"] .titlebar-reserve-controls {
+  padding-left: calc(var(--titlebar-reserve-left, 0px) + 1.25rem);
+  padding-right: calc(var(--titlebar-reserve-right, 140px) + 1.25rem);
+}
+/* The sidebar header shares the top edge with the buttons when they are on the left. */
+html[data-titlebar="overlay"] .titlebar-reserve-traffic-lights {
+  padding-top: max(1.25rem, calc(var(--titlebar-reserve-left, 0px) * 0.33));
+}
+html[data-titlebar="inset"] .titlebar-reserve-traffic-lights {
+  padding-top: 2.5rem;
 }

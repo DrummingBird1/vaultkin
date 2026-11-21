@@ -1,17 +1,18 @@
 {
   "manifest_version": 3,
-  "name": "SecureVault",
+  "name": "__MSG_extName__",
+  "default_locale": "en",
   "version": "0.1.0",
-  "description": "Companion browser extension for SecureVault — autofill credentials and TOTP codes from your local vault.",
+  "description": "__MSG_extDescription__",
   "icons": {
-    "16":  "icons/icon-16.png",
-    "32":  "icons/icon-32.png",
-    "48":  "icons/icon-48.png",
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
     "128": "icons/icon-128.png"
   },
   "action": {
     "default_popup": "popup/popup.html",
-    "default_title": "SecureVault",
+    "default_title": "Vaultkin",
     "default_icon": {
       "16": "icons/icon-16.png",
       "32": "icons/icon-32.png"
@@ -23,27 +24,25 @@
   },
   "content_scripts": [
     {
-      "matches":  ["<all_urls>"],
-      "js":       ["src/content.js"],
-      "css":      ["src/content.css"],
-      "run_at":   "document_idle",
+      "matches": ["https://*/*", "http://localhost/*"],
+      "js": ["src/webauthn-inject.js"],
+      "run_at": "document_start",
+      "world": "MAIN",
       "all_frames": false
+    },
+    {
+      "matches": ["<all_urls>"],
+      "js": ["src/content.js"],
+      "run_at": "document_idle",
+      "all_frames": true
     }
   ],
-  "permissions": [
-    "activeTab",
-    "storage",
-    "scripting",
-    "clipboardWrite"
-  ],
+  "permissions": ["activeTab", "storage", "scripting", "clipboardWrite", "nativeMessaging"],
   "host_permissions": ["<all_urls>"],
   "externally_connectable": {
-    "matches": [
-      "http://localhost:5173/*",
-      "https://*.your-securevault-host.com/*"
-    ]
+    "matches": ["http://localhost:5173/*"]
   },
   "content_security_policy": {
-    "extension_pages": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self' http://localhost:5173 https://*.your-securevault-host.com; img-src 'self' data:;"
+    "extension_pages": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self' http://localhost:5173; img-src 'self' data:;"
   }
 }

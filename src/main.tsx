@@ -9,7 +9,11 @@ import { registerSW } from "virtual:pwa-register";
 import { App } from "./App";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { useUIStore } from "./store/ui.store";
-import "./i18n"; // side-effect: initializes i18next before any component renders
+import i18n from "./i18n"; // initializes i18next before any component renders
+import "@fontsource-variable/outfit";
+import "@fontsource-variable/heebo";
+import "@fontsource/dm-mono/400.css";
+import "@fontsource/dm-mono/500.css";
 import "./styles/globals.css";
 
 const root = document.getElementById("root");
@@ -37,20 +41,10 @@ ReactDOM.createRoot(root).render(
 if (!("electron" in window) && "serviceWorker" in navigator) {
   registerSW({
     onNeedRefresh() {
-      useUIStore
-        .getState()
-        .toastInfo(
-          "Update available",
-          "SecureVault will use the new version next time you fully restart it.",
-        );
+      useUIStore.getState().toastInfo(i18n.t("pwa.updateTitle"), i18n.t("pwa.updateBody"));
     },
     onOfflineReady() {
-      useUIStore
-        .getState()
-        .toastInfo(
-          "Ready for offline use",
-          "SecureVault can now open without an internet connection.",
-        );
+      useUIStore.getState().toastInfo(i18n.t("pwa.offlineTitle"), i18n.t("pwa.offlineBody"));
     },
   });
 }
