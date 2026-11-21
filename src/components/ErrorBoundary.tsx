@@ -38,7 +38,7 @@ export class ErrorBoundary extends React.Component<{ children: React.ReactNode }
           <p className="text-sm text-(--text-secondary) mb-4">
             SecureVault hit an unexpected error. Your vault is encrypted on disk — nothing was lost.
           </p>
-          <pre className="text-[11px] text-left text-(--text-tertiary) bg-(--bg-elevated) p-3 rounded-lg mb-4 overflow-auto max-h-32">
+          <pre className="text-[11px] text-start text-(--text-tertiary) bg-(--bg-elevated) p-3 rounded-lg mb-4 overflow-auto max-h-32">
             {this.state.error.message}
           </pre>
           <div className="flex gap-3 justify-center">

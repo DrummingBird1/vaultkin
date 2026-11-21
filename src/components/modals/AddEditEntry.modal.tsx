@@ -4,6 +4,7 @@
  * logic is in components/vault/entry-form/entry-form.ts and each tab's fields
  * in entry-form/fields.tsx.
  */
+import { useTranslation } from "react-i18next";
 import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { useVaultStore } from "../../store/vault.store";
 import { useUIStore } from "../../store/ui.store";
@@ -29,14 +30,10 @@ interface Props {
   onClose: () => void;
 }
 
-const TABS: Array<{ id: EntryTab; label: string }> = [
-  { id: "login", label: "Login" },
-  { id: "notes", label: "Notes" },
-  { id: "card", label: "Card" },
-  { id: "fields", label: "Custom" },
-];
+const TABS: EntryTab[] = ["login", "notes", "card", "fields"];
 
 export function AddEditEntryModal({ entry, folderId, onClose }: Props) {
+  const { t } = useTranslation();
   const isEdit = !!entry;
   const { vault, addEntry, updateEntry } = useVaultStore();
   const { toastSuccess } = useUIStore();
@@ -73,10 +70,10 @@ export function AddEditEntryModal({ entry, folderId, onClose }: Props) {
     const payload = buildPayload(s, { existing: entry, folderId });
     if (entry) {
       updateEntry(entry.id, payload);
-      toastSuccess("Entry updated", `"${payload.title}" saved.`);
+      toastSuccess(t("entry.updated"), t("entry.updatedBody", { title: payload.title }));
     } else {
       addEntry(payload);
-      toastSuccess("Entry added", `"${payload.title}" added to vault.`);
+      toastSuccess(t("entry.added"), t("entry.addedBody", { title: payload.title }));
     }
     onClose();
   };
@@ -85,14 +82,14 @@ export function AddEditEntryModal({ entry, folderId, onClose }: Props) {
     <Modal onClose={onClose} labelledBy={ids.heading} onSubmit={submit}>
       <div className="flex items-center justify-between mb-6">
         <h2 id={ids.heading} className="text-lg font-semibold text-(--text-primary)">
-          {isEdit ? "Edit Entry" : "Add Entry"}
+          {isEdit ? t("entry.edit") : t("entry.add")}
         </h2>
         <div className="flex items-center gap-3">
           <button
             type="button"
             className={`p-1.5 rounded-lg transition-colors ${s.favorite ? "text-amber-400" : "text-(--text-tertiary) hover:text-amber-400"}`}
             onClick={() => set("favorite", !s.favorite)}
-            aria-label={s.favorite ? "Remove from favorites" : "Add to favorites"}
+            aria-label={s.favorite ? t("entry.favoriteRemove") : t("entry.favoriteAdd")}
             aria-pressed={s.favorite}
           >
             <IconStar className="w-4 h-4" />
@@ -101,7 +98,7 @@ export function AddEditEntryModal({ entry, folderId, onClose }: Props) {
             type="button"
             onClick={onClose}
             className="text-(--text-tertiary) hover:text-(--text-primary) p-1 rounded-lg transition-colors"
-            aria-label="Close"
+            aria-label={t("entry.close")}
           >
             <IconClose className="w-4 h-4" />
           </button>
@@ -111,7 +108,7 @@ export function AddEditEntryModal({ entry, folderId, onClose }: Props) {
       <div className="flex gap-3 mb-5">
         <div className="flex-1">
           <label className="sv-label" htmlFor={ids.title}>
-            Title *
+            {t("entry.title")} *
           </label>
           <input
             id={ids.title}
@@ -119,15 +116,15 @@ export function AddEditEntryModal({ entry, folderId, onClose }: Props) {
             className="sv-input w-full"
             value={s.title}
             onChange={(e) => set("title", e.target.value)}
-            placeholder="e.g. GitHub Work"
+            placeholder={t("entry.titlePlaceholder")}
             aria-invalid={!!errors.title}
             aria-required="true"
           />
-          {errors.title && <p className="sv-error">{errors.title}</p>}
+          {errors.title && <p className="sv-error">{t(errors.title)}</p>}
         </div>
         <div className="w-36">
           <label className="sv-label" htmlFor={ids.category}>
-            Category
+            {t("entry.category")}
           </label>
           <select
             id={ids.category}
@@ -137,7 +134,7 @@ export function AddEditEntryModal({ entry, folderId, onClose }: Props) {
           >
             {CATEGORIES.map((c) => (
               <option key={c.value} value={c.value}>
-                {c.emoji} {c.label}
+                {c.emoji} {t(`entry.categories.${c.value}`)}
               </option>
             ))}
           </select>
@@ -146,25 +143,25 @@ export function AddEditEntryModal({ entry, folderId, onClose }: Props) {
 
       <div
         role="tablist"
-        aria-label="Entry sections"
+        aria-label={t("entry.sections")}
         className="flex gap-1 mb-5 border-b border-(--border-subtle)"
       >
-        {TABS.map((t) => (
+        {TABS.map((id) => (
           <button
-            key={t.id}
+            key={id}
             type="button"
             role="tab"
-            id={`${ids.panel}-${t.id}`}
-            aria-selected={tab === t.id}
+            id={`${ids.panel}-${id}`}
+            aria-selected={tab === id}
             aria-controls={ids.panel}
             className={`px-3 py-1.5 text-sm font-medium rounded-t-lg -mb-px border-b-2 transition-colors ${
-              tab === t.id
+              tab === id
                 ? "text-(--accent) border-(--accent)"
                 : "text-(--text-tertiary) border-transparent hover:text-(--text-secondary)"
             }`}
-            onClick={() => setTab(t.id)}
+            onClick={() => setTab(id)}
           >
-            {t.label}
+            {t(`entry.tabs.${id}`)}
           </button>
         ))}
       </div>
@@ -183,10 +180,10 @@ export function AddEditEntryModal({ entry, folderId, onClose }: Props) {
 
       <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-(--border-subtle)">
         <button type="button" onClick={onClose} className="sv-btn-secondary px-5">
-          Cancel
+          {t("entry.cancel")}
         </button>
         <button type="submit" className="sv-btn-primary px-5">
-          {isEdit ? "Save Changes" : "Add Entry"}
+          {isEdit ? t("entry.save") : t("entry.add")}
         </button>
       </div>
     </Modal>

@@ -90,7 +90,7 @@ export function TagInput({
               // onMouseDown (not onClick) fires before the input's onBlur, so
               // the suggestion click registers before blur closes the list.
               onMouseDown={() => commit(s)}
-              className="block w-full text-left px-3 py-2 text-sm text-(--text-primary) hover:bg-(--accent-dim) hover:text-(--accent)"
+              className="block w-full text-start px-3 py-2 text-sm text-(--text-primary) hover:bg-(--accent-dim) hover:text-(--accent)"
             >
               {s}
             </button>

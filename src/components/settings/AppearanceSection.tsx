@@ -4,11 +4,7 @@ import { useUIStore, type Theme } from "../../store/ui.store";
 import { setLanguage, SUPPORTED_LANGUAGES, type SupportedLanguage } from "../../i18n";
 import { SettingsSection, Segmented, persistSettings } from "./shared";
 
-const THEME_OPTIONS: { value: Theme; label: string }[] = [
-  { value: "dark", label: "Dark" },
-  { value: "light", label: "Light" },
-  { value: "high-contrast", label: "High Contrast" },
-];
+const THEMES: Theme[] = ["dark", "light", "high-contrast"];
 
 const LANGUAGE_LABELS: Record<SupportedLanguage, string> = { en: "English", he: "עברית" };
 
@@ -22,42 +18,40 @@ const ACCENTS = [
 ];
 
 export function AppearanceSection() {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { theme, setTheme, accentColor, setAccent } = useUIStore();
 
   return (
-    <SettingsSection id="appearance" title="Appearance">
+    <SettingsSection id="appearance" title={t("settings.appearance.title")}>
       <div className="mb-5">
-        <span className="sv-label">Theme</span>
+        <span className="sv-label">{t("settings.appearance.theme")}</span>
         <Segmented
-          label="Theme"
-          options={THEME_OPTIONS}
+          label={t("settings.appearance.theme")}
+          options={THEMES.map((v) => ({ value: v, label: t(`settings.appearance.themes.${v}`) }))}
           value={theme}
           onChange={(v) => {
             setTheme(v);
             persistSettings({ theme: v });
           }}
         />
-        <p className="sv-hint mt-1">
-          High contrast maximizes text/background contrast for low-vision users.
-        </p>
+        <p className="sv-hint mt-1">{t("settings.appearance.themeHint")}</p>
       </div>
       <div className="mb-5">
-        <span className="sv-label">Language</span>
+        <span className="sv-label">{t("settings.appearance.language")}</span>
         <Segmented
-          label="Language"
+          label={t("settings.appearance.language")}
           options={SUPPORTED_LANGUAGES.map((l) => ({ value: l, label: LANGUAGE_LABELS[l] }))}
           value={i18n.language as SupportedLanguage}
           onChange={setLanguage}
         />
-        <p className="sv-hint mt-1">
-          Only the unlock screen is translated so far — everything past that point is still English
-          regardless of this setting.
-        </p>
       </div>
       <div>
-        <span className="sv-label">Accent color</span>
-        <div className="flex gap-2 flex-wrap" role="group" aria-label="Accent color">
+        <span className="sv-label">{t("settings.appearance.accent")}</span>
+        <div
+          className="flex gap-2 flex-wrap"
+          role="group"
+          aria-label={t("settings.appearance.accent")}
+        >
           {ACCENTS.map((a) => {
             const active = accentColor.hex.toLowerCase() === a.hex.toLowerCase();
             return (
@@ -68,7 +62,7 @@ export function AppearanceSection() {
                   setAccent(a.hex, a.name);
                   persistSettings({ accentColor: a.hex });
                 }}
-                aria-label={`Accent color ${a.name}`}
+                aria-label={t("settings.appearance.accentNamed", { name: a.name })}
                 aria-pressed={active}
                 className={`w-8 h-8 rounded-full border-2 transition-transform ${active ? "scale-110 border-(--text-primary)" : "border-transparent hover:scale-105"}`}
                 style={{ background: a.hex }}

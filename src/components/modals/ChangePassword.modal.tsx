@@ -112,7 +112,7 @@ export function ChangePasswordModal({ onClose }: Props) {
             <label className="sv-label">Current Password</label>
             <div className="relative">
               <input
-                className={`sv-input w-full pr-10 font-mono ${errors.current ? "border-(--danger)" : ""}`}
+                className={`sv-input w-full pe-10 font-mono ${errors.current ? "border-(--danger)" : ""}`}
                 type={showCur ? "text" : "password"}
                 value={current}
                 onChange={(e) => setCurrent(e.target.value)}
@@ -120,7 +120,7 @@ export function ChangePasswordModal({ onClose }: Props) {
               />
               <button
                 type="button"
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-(--text-tertiary)"
+                className="absolute end-3 top-1/2 -translate-y-1/2 text-(--text-tertiary)"
                 onClick={() => setShowCur((v) => !v)}
               >
                 {showCur ? "🙈" : "👁️"}
@@ -132,7 +132,7 @@ export function ChangePasswordModal({ onClose }: Props) {
             <label className="sv-label">New Password</label>
             <div className="relative">
               <input
-                className={`sv-input w-full pr-10 font-mono ${errors.newPw ? "border-(--danger)" : ""}`}
+                className={`sv-input w-full pe-10 font-mono ${errors.newPw ? "border-(--danger)" : ""}`}
                 type={showNew ? "text" : "password"}
                 value={newPw}
                 onChange={(e) => setNewPw(e.target.value)}
@@ -140,7 +140,7 @@ export function ChangePasswordModal({ onClose }: Props) {
               />
               <button
                 type="button"
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-(--text-tertiary)"
+                className="absolute end-3 top-1/2 -translate-y-1/2 text-(--text-tertiary)"
                 onClick={() => setShowNew((v) => !v)}
               >
                 {showNew ? "🙈" : "👁️"}

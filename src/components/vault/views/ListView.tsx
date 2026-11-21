@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import React, { useCallback, useEffect, useState } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { EntryRow } from "../EntryRow";
@@ -15,6 +16,7 @@ export function ListView({
   onFavorite,
   onReorder,
 }: EntryViewProps & { onReorder: (fromId: string, toId: string) => void }) {
+  const { t } = useTranslation();
   const [el, setEl] = useState<HTMLDivElement | null>(null);
   const ref = useCallback((node: HTMLDivElement | null) => setEl(node), []);
   const drag = useDragReorder({ disabled: !!query, onReorder });
@@ -33,7 +35,7 @@ export function ListView({
   }, [selectedId]);
 
   return (
-    <div ref={ref} className="h-full overflow-y-auto" role="list" aria-label="Entries">
+    <div ref={ref} className="h-full overflow-y-auto" role="list" aria-label={t("vault.entries")}>
       <div className="relative" style={{ height: virtualizer.getTotalSize() }}>
         {virtualizer.getVirtualItems().map((row) => {
           const entry = entries[row.index];
@@ -46,7 +48,7 @@ export function ListView({
               onDragOver={drag.onDragOver(entry.id)}
               onDrop={drag.onDrop(entry.id)}
               onDragEnd={drag.onDragEnd}
-              className="absolute top-0 left-0 w-full pb-1"
+              className="absolute top-0 start-0 w-full pb-1"
               style={{
                 transform: `translateY(${row.start}px)`,
                 opacity: drag.overId === entry.id ? 0.5 : 1,

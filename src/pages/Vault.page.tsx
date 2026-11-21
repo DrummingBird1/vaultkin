@@ -5,6 +5,7 @@
  * selection and the dialogs they open. Views own their own virtualization
  * and scroll-into-view; this file owns which dialog is open.
  */
+import { useTranslation } from "react-i18next";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useVaultStore } from "../store/vault.store";
 import { useUIStore } from "../store/ui.store";
@@ -22,7 +23,7 @@ import { GridView } from "../components/vault/views/GridView";
 import { ListView } from "../components/vault/views/ListView";
 import { ServiceView } from "../components/vault/views/ServiceView";
 import { useBulkSelection } from "../hooks/useBulkSelection";
-import { useKeyboardShortcuts } from "../hooks/useKeyboardShortcuts";
+import { useSlashToSearch } from "../hooks/useKeyboardShortcuts";
 import { useArrowNavigation } from "../hooks/useArrowNavigation";
 import { groupByService } from "../core/vault/grouping";
 import { downloadText } from "../lib/download";
@@ -38,6 +39,7 @@ type Dialog =
   | null;
 
 export function VaultPage() {
+  const { t } = useTranslation();
   const {
     filteredEntries,
     selectedEntryId,
@@ -93,7 +95,16 @@ export function VaultPage() {
   });
 
   const add = useCallback(() => setDialog({ kind: "edit", entry: null }), []);
-  useKeyboardShortcuts({ onNewEntry: add, onFocusSearch: () => searchRef.current?.focus() });
+  useSlashToSearch(() => searchRef.current?.focus());
+
+  // Palette / Ctrl+N ask for a new entry via a counter in ui.store.
+  const newEntryRequest = useUIStore((s) => s.newEntryRequest);
+  const seenRequest = useRef(newEntryRequest);
+  useEffect(() => {
+    if (newEntryRequest === seenRequest.current) return;
+    seenRequest.current = newEntryRequest;
+    add();
+  }, [newEntryRequest, add]);
 
   // "Fix" from the Health dashboard: it sets editEntryId and switches here.
   useEffect(() => {
@@ -109,25 +120,26 @@ export function VaultPage() {
     deleteEntry(entry.id);
     selectEntry(null);
     close();
-    toastSuccess("Entry deleted", `"${entry.title}" permanently removed.`);
+    toastSuccess(t("vault.deleted"), t("vault.deletedBody", { title: entry.title }));
   };
 
   const bulkDelete = () => {
     if (bulk.count === 0) return;
-    if (!window.confirm(`Delete ${bulk.count} entries? This cannot be undone.`)) return;
+    if (!window.confirm(t("vault.bulkConfirm", { count: bulk.count }))) return;
     for (const id of bulk.selected) deleteEntry(id);
-    toastSuccess(`${bulk.count} entries deleted`, "");
+    toastSuccess(t("vault.bulkDeleted", { count: bulk.count }), "");
     bulk.clear();
   };
 
   const exportCsv = () => {
-    if (!vault?.entries.length) return toastError("Nothing to export", "Vault is empty.");
+    if (!vault?.entries.length)
+      return toastError(t("vault.exportEmpty"), t("vault.exportEmptyBody"));
     downloadText(
       `securevault-export-${Date.now()}.csv`,
       ImportExportService.exportCSV(vault.entries),
       "text/csv;charset=utf-8",
     );
-    toastSuccess("Export ready", "CSV file saved.");
+    toastSuccess(t("vault.exportReady"), t("vault.exportReadyBody"));
     close();
   };
 
@@ -154,7 +166,7 @@ export function VaultPage() {
       {dialog?.kind === "delete" && (
         <ConfirmDeleteModal
           title={dialog.entry.title}
-          description="All passwords, TOTP secrets, and custom fields will be lost."
+          description={t("vault.deleteDescription")}
           onConfirm={() => confirmDelete(dialog.entry)}
           onCancel={close}
         />
@@ -180,12 +192,10 @@ export function VaultPage() {
                 <IconEmptyVault className="w-14 h-14 text-(--text-tertiary)" />
                 <div>
                   <p className="font-semibold text-(--text-primary)">
-                    {isEmptyVault ? "Your vault is empty" : "No results found"}
+                    {isEmptyVault ? t("vault.empty.title") : t("vault.empty.noResults")}
                   </p>
                   <p className="text-sm text-(--text-tertiary) mt-1">
-                    {isEmptyVault
-                      ? "Add your first entry to get started"
-                      : "Try a different search term"}
+                    {isEmptyVault ? t("vault.empty.body") : t("vault.empty.tryAnother")}
                   </p>
                 </div>
                 {isEmptyVault && (
@@ -193,7 +203,7 @@ export function VaultPage() {
                     onClick={add}
                     className="flex items-center gap-1.5 text-sm font-medium px-5 py-2.5 rounded-xl bg-(--accent-solid) text-white hover:opacity-90 transition-opacity"
                   >
-                    <IconPlus className="w-4 h-4" /> Add Entry
+                    <IconPlus className="w-4 h-4" /> {t("vault.addEntry")}
                   </button>
                 )}
               </div>

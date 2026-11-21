@@ -3,6 +3,7 @@
  * Presentational pieces of the Add/Edit Entry form, one per tab.
  * Each takes the form state + a setter; no store access here.
  */
+import { useTranslation } from "react-i18next";
 import React, { useId, useState } from "react";
 import type { CustomField } from "../../../core/vault/schema";
 import { analyzeStrength } from "../../../core/password/strength";
@@ -18,9 +19,9 @@ interface TabProps {
 }
 
 const STRENGTH_COLORS = ["#ef4444", "#f97316", "#eab308", "#22c55e", "#10b981"];
-const STRENGTH_LABELS = ["Very Weak", "Weak", "Fair", "Strong", "Very Strong"];
 
 export function StrengthBar({ password }: { password: string }) {
+  const { t } = useTranslation();
   if (!password) return null;
   const a = analyzeStrength(password);
   const color = STRENGTH_COLORS[a.score] ?? STRENGTH_COLORS[0];
@@ -37,10 +38,10 @@ export function StrengthBar({ password }: { password: string }) {
       </div>
       <div className="flex justify-between items-center">
         <span className="text-[11px]" style={{ color }}>
-          {STRENGTH_LABELS[a.score] ?? "Unknown"}
+          {t(`entry.strength.${a.score}`)}
         </span>
         <span className="text-[11px] text-(--text-tertiary)">
-          {Math.round(a.effectiveEntropy)} bits
+          {t("entry.strength.bits", { bits: Math.round(a.effectiveEntropy) })}
         </span>
       </div>
     </div>
@@ -56,12 +57,13 @@ function RevealButton({
   onToggle: () => void;
   what: string;
 }) {
+  const { t } = useTranslation();
   return (
     <button
       type="button"
-      className="absolute right-3 top-1/2 -translate-y-1/2 text-(--text-tertiary) hover:text-(--text-secondary) transition-colors"
+      className="absolute end-3 top-1/2 -translate-y-1/2 text-(--text-tertiary) hover:text-(--text-secondary) transition-colors"
       onClick={onToggle}
-      aria-label={shown ? `Hide ${what}` : `Show ${what}`}
+      aria-label={shown ? t("entry.hide", { what }) : t("entry.show", { what })}
       aria-pressed={shown}
     >
       {shown ? <IconEyeOff className="w-4 h-4" /> : <IconEye className="w-4 h-4" />}
@@ -75,17 +77,18 @@ export function LoginTab({
   errors,
   allTags,
 }: TabProps & { errors: { url?: string; totp?: string }; allTags: string[] }) {
+  const { t } = useTranslation();
   const ids = { user: useId(), url: useId(), pw: useId(), totp: useId() };
   const [showPw, setShowPw] = useState(false);
   const [showTotp, setShowTotp] = useState(false);
-  const liveTotpErr = errors.totp || totpError(s.totpSecret);
+  const liveTotpErr = t(errors.totp || totpError(s.totpSecret) || "", { defaultValue: "" });
 
   return (
     <>
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label className="sv-label" htmlFor={ids.user}>
-            Username / Email
+            {t("entry.username")}
           </label>
           <input
             id={ids.user}
@@ -98,7 +101,7 @@ export function LoginTab({
         </div>
         <div>
           <label className="sv-label" htmlFor={ids.url}>
-            URL
+            {t("entry.url")}
           </label>
           <input
             id={ids.url}
@@ -110,14 +113,14 @@ export function LoginTab({
             autoComplete="off"
             aria-invalid={!!errors.url}
           />
-          {errors.url && <p className="sv-error">{errors.url}</p>}
+          {errors.url && <p className="sv-error">{t(errors.url)}</p>}
         </div>
       </div>
 
       <div>
         <div className="flex items-center justify-between mb-1.5">
           <label className="sv-label mb-0" htmlFor={ids.pw}>
-            Password
+            {t("entry.password")}
           </label>
           <button
             type="button"
@@ -137,31 +140,35 @@ export function LoginTab({
             }}
             className="text-xs text-(--accent) hover:underline font-medium"
           >
-            Generate
+            {t("entry.generate")}
           </button>
         </div>
         <div className="relative">
           <input
             id={ids.pw}
-            className="sv-input w-full pr-10 font-mono"
+            className="sv-input w-full pe-10 font-mono"
             type={showPw ? "text" : "password"}
             value={s.password}
             onChange={(e) => set("password", e.target.value)}
             autoComplete="new-password"
           />
-          <RevealButton shown={showPw} onToggle={() => setShowPw((v) => !v)} what="password" />
+          <RevealButton
+            shown={showPw}
+            onToggle={() => setShowPw((v) => !v)}
+            what={t("entry.what.password")}
+          />
         </div>
         <StrengthBar password={s.password} />
       </div>
 
       <div>
         <label className="sv-label" htmlFor={ids.totp}>
-          TOTP Secret (2FA)
+          {t("entry.totp")}
         </label>
         <div className="relative">
           <input
             id={ids.totp}
-            className={`sv-input w-full pr-10 font-mono text-sm ${liveTotpErr ? "border-(--danger)" : ""}`}
+            className={`sv-input w-full pe-10 font-mono text-sm ${liveTotpErr ? "border-(--danger)" : ""}`}
             type={showTotp ? "text" : "password"}
             value={s.totpSecret}
             onChange={(e) => set("totpSecret", cleanTotpSecret(e.target.value))}
@@ -172,17 +179,17 @@ export function LoginTab({
           <RevealButton
             shown={showTotp}
             onToggle={() => setShowTotp((v) => !v)}
-            what="TOTP secret"
+            what={t("entry.what.totp")}
           />
         </div>
         {liveTotpErr && <p className="sv-error">{liveTotpErr}</p>}
         {s.totpSecret && !liveTotpErr && (
-          <p className="text-[11px] text-(--success) mt-1">✓ Valid TOTP secret</p>
+          <p className="text-[11px] text-(--success) mt-1">{t("entry.totpValid")}</p>
         )}
       </div>
 
       <div>
-        <span className="sv-label">Tags</span>
+        <span className="sv-label">{t("entry.tags")}</span>
         <TagInput value={s.tags} onChange={(t) => set("tags", t)} suggestions={allTags} />
       </div>
     </>
@@ -190,11 +197,12 @@ export function LoginTab({
 }
 
 export function NotesTab({ s, set }: TabProps) {
+  const { t } = useTranslation();
   const id = useId();
   return (
     <div>
       <label className="sv-label" htmlFor={id}>
-        Secure Notes
+        {t("entry.notes")}
       </label>
       <textarea
         id={id}
@@ -202,19 +210,20 @@ export function NotesTab({ s, set }: TabProps) {
         rows={10}
         value={s.notes}
         onChange={(e) => set("notes", e.target.value)}
-        placeholder="Store any sensitive text here..."
+        placeholder={t("entry.notesPlaceholder")}
       />
     </div>
   );
 }
 
 export function CardTab({ s, set }: TabProps) {
+  const { t } = useTranslation();
   const ids = { num: useId(), holder: useId(), exp: useId(), cvv: useId() };
   return (
     <div className="grid grid-cols-2 gap-3">
       <div className="col-span-2">
         <label className="sv-label" htmlFor={ids.num}>
-          Card Number
+          {t("entry.cardNumber")}
         </label>
         <input
           id={ids.num}
@@ -229,7 +238,7 @@ export function CardTab({ s, set }: TabProps) {
       </div>
       <div className="col-span-2">
         <label className="sv-label" htmlFor={ids.holder}>
-          Cardholder Name
+          {t("entry.cardHolder")}
         </label>
         <input
           id={ids.holder}
@@ -242,7 +251,7 @@ export function CardTab({ s, set }: TabProps) {
       </div>
       <div>
         <label className="sv-label" htmlFor={ids.exp}>
-          Expiry
+          {t("entry.cardExpiry")}
         </label>
         <input
           id={ids.exp}
@@ -256,7 +265,7 @@ export function CardTab({ s, set }: TabProps) {
       </div>
       <div>
         <label className="sv-label" htmlFor={ids.cvv}>
-          CVV
+          {t("entry.cardCvv")}
         </label>
         <input
           id={ids.cvv}
@@ -284,6 +293,7 @@ function CustomFieldRow({
   onRemove: () => void;
 }) {
   const [shown, setShown] = useState(false);
+  const { t } = useTranslation();
   const secret = field.type === "password";
   return (
     <div className="flex gap-2 items-start p-3 bg-(--bg-elevated) rounded-xl border border-(--border-subtle)">
@@ -291,43 +301,46 @@ function CustomFieldRow({
         <div className="flex gap-2">
           <input
             className="sv-input flex-1 text-sm"
-            aria-label="Field label"
+            aria-label={t("entry.fieldLabel")}
             placeholder="Label"
             value={field.label}
             onChange={(e) => onChange({ label: e.target.value })}
           />
           <select
             className="sv-input text-sm w-28"
-            aria-label="Field type"
+            aria-label={t("entry.fieldType")}
             value={field.type}
             onChange={(e) => onChange({ type: e.target.value as CustomField["type"] })}
           >
-            <option value="text">Text</option>
-            <option value="password">Secret</option>
-            <option value="url">URL</option>
-            <option value="email">Email</option>
-            <option value="phone">Phone</option>
-            <option value="note">Note</option>
+            {(["text", "password", "url", "email", "phone", "note"] as const).map((v) => (
+              <option key={v} value={v}>
+                {t(`entry.fieldTypes.${v}`)}
+              </option>
+            ))}
           </select>
         </div>
         <div className="relative">
           <input
-            className="sv-input w-full text-sm pr-10"
-            aria-label={field.label ? `${field.label} value` : "Field value"}
+            className="sv-input w-full text-sm pe-10"
+            aria-label={field.label || t("entry.fieldValue")}
             type={secret && !shown ? "password" : "text"}
             placeholder="Value"
             value={field.value}
             onChange={(e) => onChange({ value: e.target.value })}
           />
           {secret && (
-            <RevealButton shown={shown} onToggle={() => setShown((v) => !v)} what="value" />
+            <RevealButton
+              shown={shown}
+              onToggle={() => setShown((v) => !v)}
+              what={t("entry.what.value")}
+            />
           )}
         </div>
       </div>
       <button
         type="button"
         onClick={onRemove}
-        aria-label={`Remove field ${field.label || ""}`.trim()}
+        aria-label={`${t("entry.removeField")} ${field.label}`.trim()}
         className="mt-1 text-(--danger) hover:opacity-70 p-1 rounded-lg transition-opacity"
       >
         ✕
@@ -337,6 +350,7 @@ function CustomFieldRow({
 }
 
 export function CustomFieldsTab({ s, set }: TabProps) {
+  const { t } = useTranslation();
   const update = (id: string, patch: Partial<CustomField>) =>
     set(
       "customFields",
@@ -345,9 +359,7 @@ export function CustomFieldsTab({ s, set }: TabProps) {
   return (
     <div className="flex flex-col gap-3">
       {s.customFields.length === 0 && (
-        <p className="text-sm text-(--text-tertiary) text-center py-4">
-          No custom fields yet. Add fields for SSH keys, recovery codes, etc.
-        </p>
+        <p className="text-sm text-(--text-tertiary) text-center py-4">{t("entry.noFields")}</p>
       )}
       {s.customFields.map((f) => (
         <CustomFieldRow
@@ -372,7 +384,7 @@ export function CustomFieldsTab({ s, set }: TabProps) {
         }
         className="sv-btn-secondary text-sm py-2"
       >
-        + Add Custom Field
+        {t("entry.addField")}
       </button>
     </div>
   );

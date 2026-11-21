@@ -26,6 +26,9 @@ interface UIState {
   viewMode: ViewMode;
   toasts: Toast[];
   editEntryId: string | null; // cross-page request to open edit modal
+  /** Bumped to ask the Vault page to open the Add Entry dialog (palette, Ctrl+N). */
+  newEntryRequest: number;
+  paletteOpen: boolean;
 
   setTheme: (t: Theme) => void;
   setAccent: (hex: string, name?: string) => void;
@@ -40,6 +43,8 @@ interface UIState {
   toastError: (title: string, message?: string) => void;
   toastInfo: (title: string, message?: string) => void;
   openEditEntry: (id: string) => void;
+  requestNewEntry: () => void;
+  setPaletteOpen: (open: boolean) => void;
   consumeEditEntry: () => string | null;
 }
 
@@ -53,6 +58,8 @@ export const useUIStore = create<UIState>((set, get) => ({
   viewMode: "grid",
   toasts: [],
   editEntryId: null,
+  newEntryRequest: 0,
+  paletteOpen: false,
 
   setTheme: (t) => set({ theme: t }),
   setAccent: (hex, name) => set({ accentColor: { hex, name: name ?? hex } }),
@@ -78,6 +85,11 @@ export const useUIStore = create<UIState>((set, get) => ({
   toastInfo: (title, message) => get().addToast({ type: "info", title, message }),
 
   openEditEntry: (id) => set({ editEntryId: id }),
+  requestNewEntry: () => {
+    get().setActivePage("vault");
+    set({ newEntryRequest: get().newEntryRequest + 1 });
+  },
+  setPaletteOpen: (open) => set({ paletteOpen: open }),
   consumeEditEntry: () => {
     const id = get().editEntryId;
     if (id) set({ editEntryId: null });

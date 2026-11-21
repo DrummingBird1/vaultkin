@@ -1,65 +1,68 @@
 /**
  * @file src/hooks/useKeyboardShortcuts.ts
- * Global hotkeys: Ctrl/⌘+K search · +N new · +L lock · +G generator · +, settings,
- * and "/" to focus search when not typing.
+ * App-wide hotkeys, registered once by AppShell:
+ *   Ctrl/⌘+K command palette · +N new entry · +L lock · +G generator · +, settings
+ * and useSlashToSearch() for the Vault page's "/" → focus search.
  *
- * The window listener is registered ONCE and reads the latest handlers from a
- * ref. Re-subscribing on every render broke the shortcuts: a keydown makes
- * the auto-lock activity tracker re-render the tree synchronously, and a
- * listener removed + re-added during that same dispatch is skipped by the
- * browser, so Ctrl+L / Ctrl+K / Ctrl+N silently did nothing.
+ * Listeners are registered ONCE and read the latest handlers from a ref.
+ * Re-subscribing on every render broke the shortcuts: a keydown makes the
+ * auto-lock activity tracker re-render the tree synchronously, and a listener
+ * removed + re-added during that same dispatch is skipped by the browser.
  */
 import { useEffect, useRef } from "react";
 import { useUIStore } from "../store/ui.store";
 import { lockApplication } from "../store";
 
-export interface ShortcutHandlers {
-  onNewEntry?: () => void;
-  onFocusSearch?: () => void;
-}
-
-export function useKeyboardShortcuts(handlers: ShortcutHandlers = {}): void {
-  const ref = useRef(handlers);
-  ref.current = handlers;
-
+export function useKeyboardShortcuts(): void {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      const h = ref.current;
-      const mod = e.ctrlKey || e.metaKey;
-      // Lock always works; every other shortcut is ignored while a dialog is open.
-      if (mod && e.key.toLowerCase() === "l") {
+      if (!(e.ctrlKey || e.metaKey) || e.altKey) return;
+      const key = e.key.toLowerCase();
+      // Lock always works, even with a dialog open.
+      if (key === "l") {
         e.preventDefault();
         lockApplication("manual");
         return;
       }
-      if (document.querySelector('[aria-modal="true"]')) return;
-      if (!mod) {
-        if (e.key === "/" && !isTypingInForm(e.target)) {
-          e.preventDefault();
-          h.onFocusSearch?.();
-        }
+      const ui = useUIStore.getState();
+      // Ctrl+K toggles the palette (closes it when it is the open dialog).
+      if (key === "k") {
+        e.preventDefault();
+        if (ui.paletteOpen) ui.setPaletteOpen(false);
+        else if (!document.querySelector('[aria-modal="true"]')) ui.setPaletteOpen(true);
         return;
       }
-      const { setActivePage } = useUIStore.getState();
-      switch (e.key.toLowerCase()) {
-        case "k":
-          e.preventDefault();
-          h.onFocusSearch?.();
-          break;
+      if (document.querySelector('[aria-modal="true"]')) return;
+      switch (key) {
         case "n":
-          if (!h.onNewEntry) return;
           e.preventDefault();
-          h.onNewEntry();
+          ui.requestNewEntry();
           break;
         case "g":
           e.preventDefault();
-          setActivePage("generator");
+          ui.setActivePage("generator");
           break;
         case ",":
           e.preventDefault();
-          setActivePage("settings");
+          ui.setActivePage("settings");
           break;
       }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+}
+
+/** "/" focuses the search box when not typing and no dialog is open. */
+export function useSlashToSearch(focus: () => void): void {
+  const ref = useRef(focus);
+  ref.current = focus;
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "/" || e.ctrlKey || e.metaKey || e.altKey) return;
+      if (isTypingInForm(e.target) || document.querySelector('[aria-modal="true"]')) return;
+      e.preventDefault();
+      ref.current();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);

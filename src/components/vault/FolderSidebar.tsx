@@ -146,7 +146,7 @@ export function FolderSidebar() {
   };
 
   return (
-    <aside className="w-52 shrink-0 border-r border-(--border-subtle) p-3 flex flex-col gap-1 overflow-y-auto">
+    <aside className="w-52 shrink-0 border-e border-(--border-subtle) p-3 flex flex-col gap-1 overflow-y-auto">
       <div className="flex items-center justify-between px-1 mb-1">
         <span className="text-xs font-medium uppercase tracking-wider text-(--text-tertiary)">
           Folders
@@ -161,7 +161,7 @@ export function FolderSidebar() {
         </button>
       </div>
       <button
-        className={`flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm text-left transition-colors ${
+        className={`flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm text-start transition-colors ${
           !activeFolderId
             ? "bg-(--accent-dim) text-(--accent)"
             : "text-(--text-secondary) hover:bg-(--bg-elevated)"

@@ -291,13 +291,13 @@ export function UnlockPage() {
                         placeholder={t("unlock.passwordPlaceholder")}
                         autoComplete="current-password"
                         aria-label={t("unlock.passwordLabel")}
-                        className="w-full bg-(--bg-elevated) border border-(--border-default) rounded-xl px-4 py-3 text-sm font-mono text-(--text-primary) placeholder-(--text-tertiary) outline-hidden focus:border-(--accent) transition-all pr-10"
+                        className="w-full bg-(--bg-elevated) border border-(--border-default) rounded-xl px-4 py-3 text-sm font-mono text-(--text-primary) placeholder-(--text-tertiary) outline-hidden focus:border-(--accent) transition-all pe-10"
                         style={error ? { borderColor: "var(--danger)" } : {}}
                       />
                       <button
                         type="button"
                         aria-label={showPw ? t("unlock.hidePassword") : t("unlock.showPassword")}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-(--text-tertiary)"
+                        className="absolute end-3 top-1/2 -translate-y-1/2 text-(--text-tertiary)"
                         onClick={() => setShowPw((v) => !v)}
                       >
                         {showPw ? <IconEyeOff /> : <IconEye />}

@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import React, { useState } from "react";
 import { useSessionStore } from "../../store/session.store";
 import { useVaultStore } from "../../store/vault.store";
@@ -11,6 +12,7 @@ import { SettingsSection, persistSettings } from "./shared";
 type Dialog = "change-pw" | "qr" | "upgrade-kdf" | "recovery-kit" | null;
 
 export function SecuritySection() {
+  const { t } = useTranslation();
   const { autoLockMs, setAutoLockMs, sessionKeys } = useSessionStore();
   const lockOnHide = useVaultStore((s) => !!s.vault?.settings.lockOnHide);
   const [dialog, setDialog] = useState<Dialog>(null);
@@ -18,7 +20,7 @@ export function SecuritySection() {
   const isLegacyKdf = sessionKeys?.kdf.name === "PBKDF2-SHA256";
 
   return (
-    <SettingsSection id="security" title="Security">
+    <SettingsSection id="security" title={t("settings.security.title")}>
       {dialog === "change-pw" && <ChangePasswordModal onClose={close} />}
       {dialog === "qr" && <VaultBackupQRModal onClose={close} />}
       {dialog === "upgrade-kdf" && <UpgradeEncryptionModal onClose={close} />}
@@ -26,18 +28,15 @@ export function SecuritySection() {
 
       {isLegacyKdf && (
         <div className="mb-5 p-3 rounded-xl border border-(--accent)/30 bg-(--accent-dim)">
-          <p className="text-sm text-(--text-primary) mb-2">
-            This vault still uses the older PBKDF2-SHA256 key derivation. Upgrade to Argon2id for
-            stronger protection against offline brute-force attacks.
-          </p>
+          <p className="text-sm text-(--text-primary) mb-2">{t("settings.security.legacyKdf")}</p>
           <button onClick={() => setDialog("upgrade-kdf")} className="sv-btn-primary text-sm px-4">
-            Upgrade encryption
+            {t("settings.security.upgrade")}
           </button>
         </div>
       )}
       <div className="mb-5">
         <label className="sv-label" htmlFor="auto-lock">
-          Auto-lock after
+          {t("settings.security.autoLock")}
         </label>
         <select
           id="auto-lock"
@@ -55,9 +54,7 @@ export function SecuritySection() {
             </option>
           ))}
         </select>
-        <p className="text-xs text-(--text-tertiary) mt-1">
-          Locks the vault after this much keyboard / mouse inactivity.
-        </p>
+        <p className="text-xs text-(--text-tertiary) mt-1">{t("settings.security.autoLockHint")}</p>
       </div>
       <label className="flex items-center gap-2 mb-5 text-sm text-(--text-secondary) cursor-pointer">
         <input
@@ -66,16 +63,16 @@ export function SecuritySection() {
           onChange={(e) => persistSettings({ lockOnHide: e.target.checked })}
           className="rounded-sm border-(--border-default)"
         />
-        Lock immediately when switching to another tab or window
+        {t("settings.security.lockOnHide")}
       </label>
       <button onClick={() => setDialog("change-pw")} className="sv-btn-secondary w-full mb-2">
-        Change master password
+        {t("settings.security.changePassword")}
       </button>
       <button onClick={() => setDialog("qr")} className="sv-btn-secondary w-full mb-2">
-        Export QR backup
+        {t("settings.security.qr")}
       </button>
       <button onClick={() => setDialog("recovery-kit")} className="sv-btn-secondary w-full">
-        Recovery Kit
+        {t("settings.security.recoveryKit")}
       </button>
     </SettingsSection>
   );

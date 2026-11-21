@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import React from "react";
 import { IconPlus, IconSearch, IconTag } from "../icons";
 
@@ -21,6 +22,7 @@ export function VaultToolbar({
   onExport: () => void;
   onAdd: () => void;
 }) {
+  const { t } = useTranslation();
   return (
     <div className="flex items-center gap-3 px-5 py-3 border-b border-(--border-subtle)">
       <div className="relative flex-1">
@@ -31,27 +33,27 @@ export function VaultToolbar({
         <input
           ref={searchRef}
           type="search"
-          aria-label="Search entries"
+          aria-label={t("vault.search")}
           className="w-full bg-(--bg-elevated) border border-(--border-default) rounded-xl ps-9 pe-4 py-2 text-sm text-(--text-primary) placeholder-(--text-tertiary) outline-hidden focus:border-(--accent) transition-colors"
-          placeholder="Search entries…"
+          placeholder={t("vault.searchPlaceholder")}
           value={search}
           onChange={(e) => onSearch(e.target.value)}
         />
       </div>
       <button onClick={onTags} className={ghost}>
-        <IconTag className="w-3.5 h-3.5" /> Tags
+        <IconTag className="w-3.5 h-3.5" /> {t("vault.tags")}
       </button>
       <button onClick={onImport} className={ghost}>
-        Import
+        {t("vault.import")}
       </button>
       <button onClick={onExport} className={ghost}>
-        Export
+        {t("vault.export")}
       </button>
       <button
         onClick={onAdd}
         className="flex items-center gap-1.5 text-sm font-medium px-4 py-2 rounded-xl bg-(--accent-solid) text-white hover:opacity-90 transition-opacity"
       >
-        <IconPlus className="w-4 h-4" /> Add Entry
+        <IconPlus className="w-4 h-4" /> {t("vault.addEntry")}
       </button>
     </div>
   );

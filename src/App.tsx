@@ -8,7 +8,7 @@ import { useUIStore } from "./store/ui.store";
 import { useSessionStore } from "./store/session.store";
 import { useAutoLock } from "./hooks/useAutoLock";
 import { useHashRoute } from "./hooks/useHashRoute";
-import type { SettingsSectionId } from "./pages/Settings.page";
+import type { SettingsSectionId } from "./pages/settings-sections";
 import { AppLifecycle } from "./services/app-lifecycle.service";
 import { AppShell } from "./components/layout/AppShell";
 import { UnlockPage } from "./pages/Unlock.page";

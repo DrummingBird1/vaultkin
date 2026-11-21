@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import React, { useEffect } from "react";
 import type { ServiceGroup } from "../../../core/vault/grouping";
 import { EntryRow } from "../EntryRow";
@@ -19,6 +20,7 @@ export function ServiceView({
   expanded: Set<string>;
   onToggleGroup: (key: string) => void;
 }) {
+  const { t } = useTranslation();
   useEffect(() => {
     if (selectedId)
       document
@@ -52,9 +54,11 @@ export function ServiceView({
                 url={group.key !== "(no domain)" ? group.key : undefined}
                 className="w-6 h-6 rounded-lg bg-(--bg-elevated) text-xs shrink-0"
               />
-              <span className="text-sm font-medium text-(--text-primary) flex-1">{group.key}</span>
+              <span className="text-sm font-medium text-(--text-primary) flex-1">
+                {group.key === "(no domain)" ? t("vault.noDomain") : group.key}
+              </span>
               <span className="text-xs text-(--text-tertiary)">
-                {group.entries.length} account{group.entries.length === 1 ? "" : "s"}
+                {t("vault.accounts", { count: group.entries.length })}
               </span>
             </button>
             {open && (

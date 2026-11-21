@@ -92,7 +92,7 @@ export function EntryDetail({
 
   return (
     <div
-      className="w-80 shrink-0 border-l border-(--border-subtle) bg-(--bg-surface) flex flex-col"
+      className="w-80 shrink-0 border-s border-(--border-subtle) bg-(--bg-surface) flex flex-col"
       style={{ animation: "slideUp 200ms ease both" }}
     >
       <div className="flex items-center justify-between p-4 border-b border-(--border-subtle)">

@@ -188,7 +188,7 @@ export function CreateVaultModal({ onClose }: Props) {
             <div className="relative">
               <input
                 ref={inputRef}
-                className={`sv-input w-full pr-10 font-mono ${errors.password ? "border-(--danger)" : ""}`}
+                className={`sv-input w-full pe-10 font-mono ${errors.password ? "border-(--danger)" : ""}`}
                 type={showPw ? "text" : "password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -198,7 +198,7 @@ export function CreateVaultModal({ onClose }: Props) {
               />
               <button
                 type="button"
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-(--text-tertiary) hover:text-(--text-secondary)"
+                className="absolute end-3 top-1/2 -translate-y-1/2 text-(--text-tertiary) hover:text-(--text-secondary)"
                 onClick={() => setShowPw((v) => !v)}
               >
                 {showPw ? "🙈" : "👁️"}
@@ -239,7 +239,7 @@ export function CreateVaultModal({ onClose }: Props) {
             <label className="sv-label">Confirm Master Password *</label>
             <div className="relative">
               <input
-                className={`sv-input w-full pr-10 font-mono ${errors.confirm ? "border-(--danger)" : ""}`}
+                className={`sv-input w-full pe-10 font-mono ${errors.confirm ? "border-(--danger)" : ""}`}
                 type={showConfirm ? "text" : "password"}
                 value={confirm}
                 onChange={(e) => setConfirm(e.target.value)}
@@ -249,7 +249,7 @@ export function CreateVaultModal({ onClose }: Props) {
               />
               <button
                 type="button"
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-(--text-tertiary) hover:text-(--text-secondary)"
+                className="absolute end-3 top-1/2 -translate-y-1/2 text-(--text-tertiary) hover:text-(--text-secondary)"
                 onClick={() => setShowConfirm((v) => !v)}
               >
                 {showConfirm ? "🙈" : "👁️"}

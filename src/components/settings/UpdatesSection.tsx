@@ -1,9 +1,11 @@
+import { useTranslation } from "react-i18next";
 import React, { useEffect, useState } from "react";
 import type { UpdateStatus } from "../../types/electron-bridge";
 import { SettingsSection } from "./shared";
 
 /** Desktop-only: window.electron exists only in the Electron build. Manual trigger only. */
 export function UpdatesSection() {
+  const { t } = useTranslation();
   const supported = "electron" in window && !!window.electron?.updates;
   const [status, setStatus] = useState<UpdateStatus | null>(null);
 
@@ -24,8 +26,8 @@ export function UpdatesSection() {
   return (
     <SettingsSection
       id="updates"
-      title="App updates"
-      description="Checks GitHub Releases for a newer version. Nothing happens automatically — this only runs when you click the button, and nothing downloads or installs without another explicit click."
+      title={t("settings.updates.title")}
+      description={t("settings.updates.description")}
     >
       <div className="flex items-center gap-3" aria-live="polite">
         <button
@@ -33,11 +35,13 @@ export function UpdatesSection() {
           disabled={status?.status === "checking" || status?.status === "downloading"}
           className="sv-btn-secondary disabled:opacity-50"
         >
-          Check for updates
+          {t("settings.updates.check")}
         </button>
-        {status?.status === "checking" && <span className="sv-hint">Checking…</span>}
+        {status?.status === "checking" && (
+          <span className="sv-hint">{t("settings.updates.checking")}</span>
+        )}
         {status?.status === "not-available" && (
-          <span className="sv-hint">You're on the latest version.</span>
+          <span className="sv-hint">{t("settings.updates.latest")}</span>
         )}
         {status?.status === "error" && (
           <span className="sv-hint text-(--danger)">{status.message}</span>
@@ -47,18 +51,20 @@ export function UpdatesSection() {
             onClick={() => window.electron?.updates.download().catch(fail)}
             className="sv-btn-primary"
           >
-            Download v{status.version}
+            {t("settings.updates.download", { version: status.version })}
           </button>
         )}
         {status?.status === "downloading" && (
-          <span className="sv-hint">Downloading… {status.percent}%</span>
+          <span className="sv-hint">
+            {t("settings.updates.downloading", { percent: status.percent })}
+          </span>
         )}
         {status?.status === "downloaded" && (
           <button
             onClick={() => window.electron?.updates.quitAndInstall()}
             className="sv-btn-primary"
           >
-            Restart & install v{status.version}
+            {t("settings.updates.install", { version: status.version })}
           </button>
         )}
       </div>

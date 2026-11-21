@@ -2,6 +2,7 @@
  * @file entry-form.ts
  * Pure, testable logic behind the Add/Edit Entry form: URL normalization and
  * validation, TOTP secret cleanup, entry-type inference, payload building.
+ * Validation returns i18n KEYS (entry.errors.*); the UI translates them.
  */
 import type { CategoryType, CustomField, EntryType, VaultEntry } from "../../../core/vault/schema";
 import { validateBase32Secret } from "../../../core/totp/base32";
@@ -25,15 +26,16 @@ export interface EntryFormState {
   cardCVV: string;
 }
 
-export const CATEGORIES: Array<{ value: CategoryType; label: string; emoji: string }> = [
-  { value: "websites", label: "Website", emoji: "🌐" },
-  { value: "apps", label: "App", emoji: "📱" },
-  { value: "finance", label: "Finance", emoji: "💳" },
-  { value: "gaming", label: "Gaming", emoji: "🎮" },
-  { value: "servers", label: "Server", emoji: "🖥️" },
-  { value: "identity", label: "Identity", emoji: "🪪" },
-  { value: "email", label: "Email", emoji: "📧" },
-  { value: "custom", label: "Custom", emoji: "📁" },
+/** Label: t(`entry.categories.${value}`). */
+export const CATEGORIES: Array<{ value: CategoryType; emoji: string }> = [
+  { value: "websites", emoji: "🌐" },
+  { value: "apps", emoji: "📱" },
+  { value: "finance", emoji: "💳" },
+  { value: "gaming", emoji: "🎮" },
+  { value: "servers", emoji: "🖥️" },
+  { value: "identity", emoji: "🪪" },
+  { value: "email", emoji: "📧" },
+  { value: "custom", emoji: "📁" },
 ];
 
 export function initialState(entry?: VaultEntry | null): EntryFormState {
@@ -84,9 +86,7 @@ export function cleanTotpSecret(raw: string): string {
 }
 
 export function totpError(secret: string): string {
-  return secret && !validateBase32Secret(secret)
-    ? "Invalid Base32 secret. Expected characters A–Z, 2–7."
-    : "";
+  return secret && !validateBase32Secret(secret) ? "entry.errors.totpBase32" : "";
 }
 
 /**
@@ -111,10 +111,10 @@ export interface ValidationErrors {
 
 export function validate(s: EntryFormState): ValidationErrors {
   const e: ValidationErrors = {};
-  if (!s.title.trim()) e.title = "Title is required.";
+  if (!s.title.trim()) e.title = "entry.errors.title";
   const url = normalizeUrl(s.url);
-  if (url && !isValidWebUrl(url)) e.url = "Enter a valid https:// URL.";
-  if (s.totpSecret && !validateBase32Secret(s.totpSecret)) e.totp = "Invalid TOTP secret.";
+  if (url && !isValidWebUrl(url)) e.url = "entry.errors.url";
+  if (s.totpSecret && !validateBase32Secret(s.totpSecret)) e.totp = "entry.errors.totp";
   return e;
 }
 

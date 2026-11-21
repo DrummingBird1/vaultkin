@@ -39,9 +39,9 @@ describe("entry-form", () => {
   it("validates title, URL and TOTP", () => {
     const s = { ...initialState(), url: "javascript:x", totpSecret: "!!" };
     expect(validate(s)).toEqual({
-      title: "Title is required.",
-      url: "Enter a valid https:// URL.",
-      totp: "Invalid TOTP secret.",
+      title: "entry.errors.title",
+      url: "entry.errors.url",
+      totp: "entry.errors.totp",
     });
     expect(validate({ ...initialState(), title: "ok", url: "example.com" })).toEqual({});
   });

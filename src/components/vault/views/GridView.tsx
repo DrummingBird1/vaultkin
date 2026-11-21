@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import React, { useCallback, useEffect, useState } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import type { VaultEntry } from "../../../core/vault/schema";
@@ -14,6 +15,7 @@ const ROW_HEIGHT_PX = 132;
  * mount-only effect could miss it).
  */
 export function GridView({ entries, selectedId, query, onSelect, onFavorite }: EntryViewProps) {
+  const { t } = useTranslation();
   const [el, setEl] = useState<HTMLDivElement | null>(null);
   const ref = useCallback((node: HTMLDivElement | null) => setEl(node), []);
   const [cols, setCols] = useState(4);
@@ -42,14 +44,14 @@ export function GridView({ entries, selectedId, query, onSelect, onFavorite }: E
   }, [selectedId, cols]);
 
   return (
-    <div ref={ref} className="h-full overflow-y-auto" role="list" aria-label="Entries">
+    <div ref={ref} className="h-full overflow-y-auto" role="list" aria-label={t("vault.entries")}>
       <div className="relative" style={{ height: virtualizer.getTotalSize() }}>
         {virtualizer.getVirtualItems().map((row) => {
           const rowEntries: VaultEntry[] = entries.slice(row.index * cols, row.index * cols + cols);
           return (
             <div
               key={row.key}
-              className="absolute top-0 left-0 w-full grid"
+              className="absolute top-0 start-0 w-full grid"
               style={{
                 transform: `translateY(${row.start}px)`,
                 gridTemplateColumns: `repeat(${cols}, 1fr)`,

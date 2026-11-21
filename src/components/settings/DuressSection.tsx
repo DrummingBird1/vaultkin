@@ -1,9 +1,11 @@
+import { useTranslation } from "react-i18next";
 import React, { useState } from "react";
 import { useUIStore } from "../../store/ui.store";
 import { DuressService } from "../../services/duress.service";
 import { SettingsSection } from "./shared";
 
 export function DuressSection() {
+  const { t } = useTranslation();
   const { toastSuccess } = useUIStore();
   const [enrolled, setEnrolled] = useState(() => DuressService.isEnrolled());
   const [pw, setPw] = useState("");
@@ -13,7 +15,7 @@ export function DuressSection() {
   const enroll = async () => {
     setErr("");
     if (pw !== confirm) {
-      setErr("Passwords do not match.");
+      setErr(t("settings.duress.mismatch"));
       return;
     }
     try {
@@ -21,32 +23,29 @@ export function DuressSection() {
       setEnrolled(true);
       setPw("");
       setConfirm("");
-      toastSuccess(
-        "Duress password set",
-        "Entering it will wipe the local vault and show a decoy.",
-      );
+      toastSuccess(t("settings.duress.setToast"), t("settings.duress.setToastBody"));
     } catch (e: unknown) {
-      setErr(e instanceof Error ? e.message : "Failed to set duress password.");
+      setErr(e instanceof Error ? e.message : t("settings.duress.failed"));
     }
   };
 
   const disable = () => {
     DuressService.disenroll();
     setEnrolled(false);
-    toastSuccess("Duress password removed", "");
+    toastSuccess(t("settings.duress.removedToast"), "");
   };
 
   return (
     <SettingsSection
       id="duress"
-      title="Duress password"
-      description="A second password that, when entered at unlock, silently wipes the local vault and opens an empty decoy. For coercion scenarios."
+      title={t("settings.duress.title")}
+      description={t("settings.duress.description")}
     >
       {enrolled ? (
         <div className="flex items-center justify-between gap-3">
-          <span className="text-sm text-(--success)">✓ A duress password is set.</span>
+          <span className="text-sm text-(--success)">{t("settings.duress.isSet")}</span>
           <button onClick={disable} className="sv-btn-secondary text-sm px-4">
-            Remove
+            {t("settings.duress.remove")}
           </button>
         </div>
       ) : (
@@ -54,8 +53,8 @@ export function DuressSection() {
           <input
             className="sv-input w-full"
             type="password"
-            aria-label="Duress password"
-            placeholder="Duress password (min 6 chars)"
+            aria-label={t("settings.duress.password")}
+            placeholder={t("settings.duress.passwordPlaceholder")}
             value={pw}
             onChange={(e) => setPw(e.target.value)}
             autoComplete="new-password"
@@ -63,8 +62,8 @@ export function DuressSection() {
           <input
             className="sv-input w-full"
             type="password"
-            aria-label="Confirm duress password"
-            placeholder="Confirm duress password"
+            aria-label={t("settings.duress.confirm")}
+            placeholder={t("settings.duress.confirm")}
             value={confirm}
             onChange={(e) => setConfirm(e.target.value)}
             autoComplete="new-password"
@@ -79,12 +78,9 @@ export function DuressSection() {
             disabled={!pw || !confirm}
             className="sv-btn-secondary disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            Set duress password
+            {t("settings.duress.set")}
           </button>
-          <p className="sv-hint">
-            ⚠ Must differ from your master password. Stored as a SHA-256 hash only. Cloud backups
-            are not wiped — remove those separately for full protection.
-          </p>
+          <p className="sv-hint">{t("settings.duress.hint")}</p>
         </div>
       )}
     </SettingsSection>

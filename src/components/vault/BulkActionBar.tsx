@@ -19,7 +19,7 @@ export function BulkActionBar({
   if (count === 0) return null;
   return (
     <div
-      className="fixed bottom-6 left-1/2 -translate-x-1/2 z-150 flex items-center gap-3 px-4 py-3 rounded-2xl border border-(--border-default) bg-(--bg-elevated) shadow-2xl"
+      className="fixed bottom-6 start-1/2 -translate-x-1/2 z-150 flex items-center gap-3 px-4 py-3 rounded-2xl border border-(--border-default) bg-(--bg-elevated) shadow-2xl"
       style={{ animation: "slideUp 150ms ease both" }}
     >
       <span className="text-sm font-medium text-(--text-primary)">{count} selected</span>

@@ -1,35 +1,36 @@
 /**
  * @file src/components/layout/TopBar.tsx
- * Page title + view mode toggle + auto-lock countdown + theme toggle.
+ * Page title · command-palette trigger · view mode · auto-lock countdown · theme toggle.
  */
 import React, { useEffect, useState } from "react";
-import { useUIStore } from "../../store/ui.store";
+import { useTranslation } from "react-i18next";
+import { LayoutGrid, List, Moon, Search, Sun, Waypoints } from "lucide-react";
+import { useUIStore, type ViewMode } from "../../store/ui.store";
 import { useSessionStore } from "../../store/session.store";
 import { useVaultStore } from "../../store/vault.store";
 
-const TITLES: Record<string, string> = {
-  vault: "Vault",
-  authenticator: "Authenticator",
-  generator: "Password Generator",
-  health: "Password Health",
-  settings: "Settings",
-};
+const VIEWS: Array<{ id: ViewMode; icon: typeof List }> = [
+  { id: "grid", icon: LayoutGrid },
+  { id: "list", icon: List },
+  { id: "service", icon: Waypoints },
+];
+
+const isMac = typeof navigator !== "undefined" && /Mac|iPhone|iPad/.test(navigator.platform);
 
 export function TopBar() {
-  const { activePage, theme, setTheme, viewMode, setViewMode } = useUIStore();
+  const { t } = useTranslation();
+  const { activePage, theme, setTheme, viewMode, setViewMode, setPaletteOpen } = useUIStore();
   const { autoLockMs, lastActivityAt, isUnlocked } = useSessionStore();
   const [now, setNow] = useState(Date.now());
 
   useEffect(() => {
     if (!isUnlocked) return;
-    const t = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(t);
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
   }, [isUnlocked]);
 
-  // setViewMode(v) alone only updated the in-memory ui.store — it never
-  // persisted to vault.settings.viewMode, so the choice silently reverted
-  // to "grid" on next unlock. This wrapper writes both.
-  const handleSetViewMode = (v: "grid" | "list" | "service") => {
+  // Persist the view choice into vault settings too (ui.store alone reverts on next unlock).
+  const chooseView = (v: ViewMode) => {
     setViewMode(v);
     const vault = useVaultStore.getState().vault;
     if (vault)
@@ -40,86 +41,74 @@ export function TopBar() {
   };
 
   const remainingMs = Math.max(0, autoLockMs - (now - lastActivityAt));
-  const min = Math.floor(remainingMs / 60_000);
-  const sec = Math.floor((remainingMs % 60_000) / 1000);
+  const time = `${Math.floor(remainingMs / 60_000)}:${Math.floor((remainingMs % 60_000) / 1000)
+    .toString()
+    .padStart(2, "0")}`;
 
   return (
-    <header className="flex items-center justify-between px-5 py-3 border-b border-(--border-subtle) bg-(--bg-surface)">
-      <h1 className="text-base font-display font-medium">{TITLES[activePage] ?? activePage}</h1>
-      <div className="flex items-center gap-2">
+    <header className="flex items-center gap-4 px-5 py-3 border-b border-(--border-subtle) bg-(--bg-surface)">
+      <h1 className="text-base font-display font-medium shrink-0">
+        {t(`topbar.titles.${activePage}`)}
+      </h1>
+
+      <button
+        type="button"
+        onClick={() => setPaletteOpen(true)}
+        aria-label={t("topbar.openPalette")}
+        aria-keyshortcuts={isMac ? "Meta+K" : "Control+K"}
+        className="flex-1 max-w-md mx-auto flex items-center gap-2 px-3 py-1.5 rounded-xl border border-(--border-default) bg-(--bg-elevated) text-sm text-(--text-tertiary) hover:border-(--border-strong) transition-colors"
+      >
+        <Search aria-hidden="true" className="w-4 h-4" />
+        <span className="flex-1 text-start">{t("topbar.search")}</span>
+        <kbd
+          className="text-[10px] border border-(--border-default) rounded px-1.5 py-0.5"
+          dir="ltr"
+        >
+          {isMac ? "⌘K" : "Ctrl K"}
+        </kbd>
+      </button>
+
+      <div className="flex items-center gap-2 shrink-0">
         {isUnlocked && (
-          <span className="text-xs text-(--text-tertiary) tabular-nums" title="Auto-lock countdown">
-            Locks in {min}:{sec.toString().padStart(2, "0")}
+          <span
+            className="text-xs text-(--text-tertiary) tabular-nums"
+            title={t("topbar.autoLockCountdown")}
+          >
+            {t("topbar.locksIn", { time })}
           </span>
         )}
         {activePage === "vault" && (
-          <div className="flex items-center bg-(--bg-elevated) rounded-lg p-0.5">
-            <button
-              onClick={() => handleSetViewMode("grid")}
-              aria-label="Grid view"
-              aria-pressed={viewMode === "grid"}
-              className={`px-2 py-1 text-xs rounded-sm ${viewMode === "grid" ? "bg-(--bg-surface) text-(--text-primary)" : "text-(--text-tertiary)"}`}
-            >
-              Grid
-            </button>
-            <button
-              onClick={() => handleSetViewMode("list")}
-              aria-label="List view"
-              aria-pressed={viewMode === "list"}
-              className={`px-2 py-1 text-xs rounded-sm ${viewMode === "list" ? "bg-(--bg-surface) text-(--text-primary)" : "text-(--text-tertiary)"}`}
-            >
-              List
-            </button>
-            <button
-              onClick={() => handleSetViewMode("service")}
-              aria-label="Service view"
-              aria-pressed={viewMode === "service"}
-              className={`px-2 py-1 text-xs rounded-sm ${viewMode === "service" ? "bg-(--bg-surface) text-(--text-primary)" : "text-(--text-tertiary)"}`}
-            >
-              Service
-            </button>
+          <div
+            role="group"
+            aria-label={t("topbar.view.label")}
+            className="flex items-center bg-(--bg-elevated) rounded-lg p-0.5"
+          >
+            {VIEWS.map(({ id, icon: Icon }) => (
+              <button
+                key={id}
+                onClick={() => chooseView(id)}
+                aria-label={t(`topbar.view.${id}Label`)}
+                aria-pressed={viewMode === id}
+                title={t(`topbar.view.${id}`)}
+                className={`p-1.5 rounded-sm ${viewMode === id ? "bg-(--bg-surface) text-(--text-primary)" : "text-(--text-tertiary) hover:text-(--text-secondary)"}`}
+              >
+                <Icon aria-hidden="true" className="w-4 h-4" />
+              </button>
+            ))}
           </div>
         )}
         <button
           onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-          aria-label={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
+          aria-label={theme === "dark" ? t("topbar.toLight") : t("topbar.toDark")}
           className="p-2 rounded-lg text-(--text-tertiary) hover:text-(--text-primary) hover:bg-(--bg-elevated) transition-colors"
         >
-          {theme === "dark" ? <IconSun /> : <IconMoon />}
+          {theme === "dark" ? (
+            <Sun aria-hidden="true" className="w-4 h-4" />
+          ) : (
+            <Moon aria-hidden="true" className="w-4 h-4" />
+          )}
         </button>
       </div>
     </header>
-  );
-}
-
-function IconSun() {
-  return (
-    <svg
-      className="w-4 h-4"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <circle cx="12" cy="12" r="5" />
-      <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
-    </svg>
-  );
-}
-function IconMoon() {
-  return (
-    <svg
-      className="w-4 h-4"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-    </svg>
   );
 }
