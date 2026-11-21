@@ -1,0 +1,131 @@
+/**
+ * Electron E2E: the real desktop window, hardened settings, custom title bar,
+ * and the Quick Access hotkey path. Runs with a fresh, temporary profile so it
+ * never touches the user's real SecureVault data.
+ */
+import {
+  test,
+  expect,
+  _electron as electron,
+  type ElectronApplication,
+  type Page,
+} from "@playwright/test";
+import fs from "fs";
+import os from "os";
+import path from "path";
+
+const root = path.resolve(__dirname, "..");
+const MASTER = "correct-horse-battery-staple-77!";
+const SHOTS = process.env.SV_SHOTS_DIR;
+
+let app: ElectronApplication;
+let win: Page;
+let profile: string;
+
+test.beforeAll(async () => {
+  profile = fs.mkdtempSync(path.join(os.tmpdir(), "sv-e2e-"));
+  app = await electron.launch({
+    args: [root, `--user-data-dir=${profile}`],
+    env: { ...process.env, VITE_DEV_SERVER_URL: "http://localhost:5173", SV_NO_DEVTOOLS: "1" },
+  });
+  win = await app.firstWindow();
+  await win.waitForLoadState("domcontentloaded");
+});
+
+test.afterAll(async () => {
+  await app?.close();
+  fs.rmSync(profile, { recursive: true, force: true });
+});
+
+test("window is hardened (sandbox, isolation, no node in the page)", async () => {
+  const prefs = await app.evaluate(({ BrowserWindow }) => {
+    const w = BrowserWindow.getAllWindows().find(
+      (x) => !x.webContents.getURL().startsWith("devtools://"),
+    )!;
+    const p = w.webContents.getLastWebPreferences()!;
+    return {
+      sandbox: p.sandbox,
+      contextIsolation: p.contextIsolation,
+      nodeIntegration: p.nodeIntegration,
+    };
+  });
+  expect(prefs).toEqual({ sandbox: true, contextIsolation: true, nodeIntegration: false });
+  expect(await win.evaluate(() => typeof (globalThis as { require?: unknown }).require)).toBe(
+    "undefined",
+  );
+  expect(await win.evaluate(() => Object.keys(window.electron ?? {}).sort())).toEqual([
+    "platform",
+    "updates",
+    "version",
+    "window",
+  ]);
+});
+
+test("first run → create vault → app shell with custom title bar", async () => {
+  await win.getByRole("button", { name: /create.*vault/i }).click();
+  await win.getByLabel(/^master password/i).fill(MASTER);
+  await win.getByLabel(/confirm/i).fill(MASTER);
+  await win.getByRole("button", { name: /^create vault$/i }).click();
+  await expect(win.getByText(/your vault is empty/i)).toBeVisible({ timeout: 45_000 });
+  await win.getByRole("button", { name: /skip for now/i }).click();
+
+  const platform = await win.evaluate(() => window.electron?.platform);
+  await expect(win.locator("html")).toHaveAttribute(
+    "data-titlebar",
+    platform === "darwin" ? "inset" : "overlay",
+  );
+  if (SHOTS) await win.screenshot({ path: path.join(SHOTS, "electron-shell.png") });
+
+  if (platform !== "darwin") {
+    // The native window buttons are drawn over the top-right corner; the top
+    // bar must keep its own controls out from under them.
+    // On right-to-left Windows the buttons are on the left instead; either way
+    // no top-bar control may overlap the caption-button area.
+    const geo = await win.evaluate(() => {
+      const wco = (
+        navigator as unknown as { windowControlsOverlay: { getTitlebarAreaRect(): DOMRect } }
+      ).windowControlsOverlay;
+      const area = wco.getTitlebarAreaRect();
+      const header = document.querySelector("header")!;
+      const rects = [...header.querySelectorAll("button")].map((b) => b.getBoundingClientRect());
+      return {
+        area: { left: area.x, right: area.x + area.width },
+        minLeft: Math.min(...rects.map((r) => r.left)),
+        maxRight: Math.max(...rects.map((r) => r.right)),
+      };
+    });
+    expect(geo.minLeft).toBeGreaterThanOrEqual(geo.area.left);
+    expect(geo.maxRight).toBeLessThanOrEqual(geo.area.right);
+  }
+});
+
+test("Quick Access hotkey path opens the command palette", async () => {
+  // Same code path as the global shortcut: main → renderer "sv-quick-access".
+  await app.evaluate(({ BrowserWindow }) => {
+    const w = BrowserWindow.getAllWindows().find(
+      (x) => !x.webContents.getURL().startsWith("devtools://"),
+    )!;
+    w.minimize();
+    w.restore();
+    w.show();
+    w.webContents.send("sv-quick-access");
+  });
+  await expect(win.getByRole("combobox")).toBeVisible();
+  await win.waitForTimeout(400); // let the open animation finish for the screenshot
+  if (SHOTS) await win.screenshot({ path: path.join(SHOTS, "electron-quick-access.png") });
+  await win.keyboard.press("Escape");
+});
+
+test("title-bar theme IPC rejects anything but #rrggbb", async () => {
+  const results = await win.evaluate(async () => {
+    const w = window.electron!.window!;
+    const ok = await w
+      .setTitleBarTheme({ color: "#ffffff", symbolColor: "#000000" })
+      .then(() => "ok");
+    const bad = await w
+      .setTitleBarTheme({ color: "red; background:url(x)", symbolColor: "#000" } as never)
+      .then(() => "ignored");
+    return [ok, bad];
+  });
+  expect(results).toEqual(["ok", "ignored"]);
+});

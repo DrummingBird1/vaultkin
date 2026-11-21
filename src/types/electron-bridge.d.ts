@@ -18,6 +18,11 @@ export type UpdateStatus =
 export interface ElectronBridge {
   platform: string;
   version: string;
+  /** Present in builds with the custom title bar / Quick Access (M2+). */
+  window?: {
+    setTitleBarTheme: (colors: { color: string; symbolColor: string }) => Promise<void>;
+    onQuickAccess: (callback: () => void) => () => void;
+  };
   updates: {
     check: () => Promise<void>;
     download: () => Promise<void>;

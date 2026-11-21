@@ -86,6 +86,13 @@ export function App() {
       css.getPropertyValue(v).trim(),
     );
     document.documentElement.style.setProperty("--accent-text", readableAccent(hex, surfaces));
+    // Desktop: native window controls follow the theme.
+    window.electron?.window
+      ?.setTitleBarTheme({
+        color: css.getPropertyValue("--bg-surface").trim(),
+        symbolColor: css.getPropertyValue("--text-secondary").trim(),
+      })
+      .catch(() => {});
     const rgb = hex
       .replace("#", "")
       .match(/.{2}/g)!
@@ -93,6 +100,47 @@ export function App() {
       .join(",");
     document.documentElement.style.setProperty("--accent-rgb", rgb);
   }, [theme, accentColor]);
+
+  // Desktop window chrome + Quick Access hotkey (Electron only).
+  useEffect(() => {
+    const bridge = window.electron;
+    if (!bridge?.window) return;
+    document.documentElement.dataset.titlebar = bridge.platform === "darwin" ? "inset" : "overlay";
+    // Reserve exactly the space of the native caption buttons. They are on the
+    // right normally, but on the LEFT when Windows itself runs in a
+    // right-to-left language (e.g. Hebrew Windows) — measure both sides.
+    const wco = (
+      navigator as Navigator & {
+        windowControlsOverlay?: EventTarget & { getTitlebarAreaRect(): DOMRect; visible: boolean };
+      }
+    ).windowControlsOverlay;
+    const measure = () => {
+      const r = wco?.visible ? wco.getTitlebarAreaRect() : null;
+      const root = document.documentElement.style;
+      if (!r || r.width <= 0) {
+        // No measurement: keep the CSS default (140px on the right).
+        root.removeProperty("--titlebar-reserve-left");
+        root.removeProperty("--titlebar-reserve-right");
+        return;
+      }
+      const left = Math.max(0, Math.round(r.x));
+      const right = Math.max(0, Math.round(window.innerWidth - (r.x + r.width)));
+      root.setProperty("--titlebar-reserve-left", `${left}px`);
+      root.setProperty("--titlebar-reserve-right", `${right}px`);
+    };
+    measure();
+    wco?.addEventListener("geometrychange", measure);
+    window.addEventListener("resize", measure);
+    const offQuickAccess = bridge.window.onQuickAccess(() => {
+      if (useSessionStore.getState().isUnlocked) useUIStore.getState().setPaletteOpen(true);
+      else document.querySelector<HTMLInputElement>('input[type="password"]')?.focus();
+    });
+    return () => {
+      offQuickAccess();
+      wco?.removeEventListener("geometrychange", measure);
+      window.removeEventListener("resize", measure);
+    };
+  }, []);
 
   // Auto-lock on inactivity
   useAutoLock();

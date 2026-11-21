@@ -46,7 +46,7 @@ export function TopBar() {
     .padStart(2, "0")}`;
 
   return (
-    <header className="flex items-center gap-4 px-5 py-3 border-b border-(--border-subtle) bg-(--bg-surface)">
+    <header className="app-drag titlebar-reserve-controls flex items-center gap-4 px-5 py-3 border-b border-(--border-subtle) bg-(--bg-surface)">
       <h1 className="text-base font-display font-medium shrink-0">
         {t(`topbar.titles.${activePage}`)}
       </h1>

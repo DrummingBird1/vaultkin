@@ -12,13 +12,25 @@ import type { UpdateStatus } from "./update.service";
 contextBridge.exposeInMainWorld("electron", {
   platform: process.platform,
   version: process.versions.electron,
+  window: {
+    /** Recolor the native window controls (Windows/Linux) to match the theme. */
+    setTitleBarTheme: (colors: { color: string; symbolColor: string }): Promise<void> =>
+      ipcRenderer.invoke("sv-set-titlebar-theme", colors),
+    /** Global Quick Access hotkey pressed; returns an unsubscribe function. */
+    onQuickAccess: (callback: () => void): (() => void) => {
+      const listener = () => callback();
+      ipcRenderer.on("sv-quick-access", listener);
+      return () => ipcRenderer.removeListener("sv-quick-access", listener);
+    },
+  },
   updates: {
     check: (): Promise<void> => ipcRenderer.invoke("sv-check-for-updates"),
     download: (): Promise<void> => ipcRenderer.invoke("sv-download-update"),
     quitAndInstall: (): Promise<void> => ipcRenderer.invoke("sv-quit-and-install"),
     /** Returns an unsubscribe function. */
     onStatus: (callback: (status: UpdateStatus) => void): (() => void) => {
-      const listener = (_event: Electron.IpcRendererEvent, status: UpdateStatus) => callback(status);
+      const listener = (_event: Electron.IpcRendererEvent, status: UpdateStatus) =>
+        callback(status);
       ipcRenderer.on("sv-update-status", listener);
       return () => ipcRenderer.removeListener("sv-update-status", listener);
     },

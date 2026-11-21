@@ -43,7 +43,8 @@
     "test:mutation": "stryker run",
     "changeset": "changeset",
     "changeset:version": "changeset version",
-    "lighthouse": "lhci autorun --config=config/lighthouserc.cjs"
+    "lighthouse": "lhci autorun --config=config/lighthouserc.cjs",
+    "test:e2e:electron": "pnpm run build:electron && playwright test --config config/playwright.electron.config.ts"
   },
   "dependencies": {
     "@fontsource-variable/heebo": "^5.3.0",

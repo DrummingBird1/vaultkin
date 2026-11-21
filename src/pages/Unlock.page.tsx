@@ -209,6 +209,8 @@ export function UnlockPage() {
 
   return (
     <>
+      {/* Lets the frameless desktop window be dragged from the top edge. */}
+      <div aria-hidden="true" className="app-drag fixed top-0 inset-x-0 h-11 z-10" />
       {showCreate && <CreateVaultModal onClose={() => setShowCreate(false)} />}
       <div
         className="min-h-screen bg-(--bg-base) flex items-center justify-center p-6"

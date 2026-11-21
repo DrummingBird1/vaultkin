@@ -30,7 +30,7 @@ export function Sidebar() {
 
   return (
     <aside className="w-56 shrink-0 bg-(--bg-surface) border-e border-(--border-subtle) flex flex-col">
-      <div className="p-5 flex items-center gap-2">
+      <div className="app-drag titlebar-reserve-traffic-lights p-5 flex items-center gap-2">
         <div className="w-8 h-8 rounded-lg bg-(--accent-dim) border border-(--accent)/20 flex items-center justify-center text-(--accent-text)">
           <Lock aria-hidden="true" className="w-4 h-4" />
         </div>

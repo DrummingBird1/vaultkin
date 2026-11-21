@@ -68,6 +68,17 @@
     outline: none;
     box-shadow: var(--focus-ring);
   }
+  /* Search fields that are the whole point of their dialog (command palette)
+     show focus through the caret and the dialog itself, not a box. */
+  [cmdk-input]:focus-visible {
+    box-shadow: none;
+  }
+
+  /* Thin, theme-aware scrollbars. */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-strong) transparent;
+  }
 
   *,
   ::after,
@@ -512,4 +523,32 @@
 :lang(he) body {
   font-family: "Heebo Variable", "Outfit Variable", system-ui, sans-serif;
   line-height: 1.55;
+}
+
+/* ─── Desktop window chrome (Electron, custom title bar) ──────────────────
+   html[data-titlebar="overlay"]: Windows/Linux, native buttons drawn over
+   the top-right corner (always physically right, also in RTL).
+   html[data-titlebar="inset"]: macOS traffic lights in the top-left. */
+.app-drag {
+  -webkit-app-region: drag;
+  app-region: drag;
+}
+.app-drag :is(button, a, input, select, textarea, [role="button"], kbd) {
+  -webkit-app-region: no-drag;
+  app-region: no-drag;
+}
+/* --titlebar-reserve-left/right are measured at runtime from the Window
+   Controls Overlay API (App.tsx). Caption buttons are on the right, or on the
+   left on right-to-left Windows; the default assumes right, 140px wide.
+   Physical left/right on purpose: the OS buttons don't follow the app's dir. */
+html[data-titlebar="overlay"] .titlebar-reserve-controls {
+  padding-left: calc(var(--titlebar-reserve-left, 0px) + 1.25rem);
+  padding-right: calc(var(--titlebar-reserve-right, 140px) + 1.25rem);
+}
+/* The sidebar header shares the top edge with the buttons when they are on the left. */
+html[data-titlebar="overlay"] .titlebar-reserve-traffic-lights {
+  padding-top: max(1.25rem, calc(var(--titlebar-reserve-left, 0px) * 0.33));
+}
+html[data-titlebar="inset"] .titlebar-reserve-traffic-lights {
+  padding-top: 2.5rem;
 }
