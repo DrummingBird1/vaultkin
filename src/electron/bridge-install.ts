@@ -40,14 +40,25 @@ function unixDirs(): string[] {
       ].map((d) => path.join(h, d));
 }
 
+/** Standalone host shipped with packaged builds (scripts/build-bridge-host.mjs). */
+export function packagedHostPath(): string {
+  const name = `vaultkin-bridge-host${process.platform === "win32" ? ".exe" : ""}`;
+  return path.join(process.resourcesPath, "bridge-host", name);
+}
+
 /**
- * The command the browser runs: a wrapper that starts bridge-host.js with this
- * app's Electron binary in Node mode (the plain app binary writes a CRLF to
- * stdout on Windows, which breaks native messaging). Requires the RunAsNode
- * fuse to stay enabled; when it is turned off in hardening, ship a standalone
- * host binary instead.
+ * The command the browser runs.
+ * - Packaged: the standalone host binary (the app binary has RunAsNode off).
+ * - Dev: a wrapper that starts bridge-host.js with Electron in Node mode (the
+ *   plain app binary writes a CRLF to stdout on Windows, which breaks native
+ *   messaging).
  */
 function hostCommand(dir: string): string {
+  if (app.isPackaged) {
+    const exe = packagedHostPath();
+    if (!fs.existsSync(exe)) throw new Error(`Browser bridge host missing: ${exe}`);
+    return exe;
+  }
   const hostJs = path.join(__dirname, "bridge-host.js");
   if (process.platform === "win32") {
     const cmd = path.join(dir, "securevault-host.cmd");

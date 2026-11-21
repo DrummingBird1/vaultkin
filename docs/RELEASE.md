@@ -30,25 +30,25 @@ then run `release/win-unpacked/Vaultkin.exe` and check:
 - [ ] **Create and reopen.** Create a vault, add an entry, lock, unlock. This
       runs Argon2 (WebAssembly) under the production CSP.
 - [ ] **Browser extension.** Settings → Browser extension → Set up, then
-      Connect from the extension. Pair and fill a login.
+      Connect from the extension. Pair and fill a login. The registered host
+      must be `resources/bridge-host/vaultkin-bridge-host(.exe)`, and
+      `electron-fuses read` must show RunAsNode Disabled.
 - [ ] **Remember this device.** Windows Hello prompt appears, and the vault
       unlocks with it.
 - [ ] **SSH agent.** `ssh-add -L` with `SSH_AUTH_SOCK` set lists the key.
 
 ## Release blockers (open)
 
-- **RunAsNode fuse is ON.** The extension's native-messaging host runs as
-  `Vaultkin.exe` with `ELECTRON_RUN_AS_NODE=1`. Turning the fuse off
-  (as `electron-builder.ts` intended) broke the extension in packaged builds.
-  - Fix: ship a standalone host binary (for example a Node SEA, or a small
-    native relay), point `bridge-install.ts` at it, then set the fuse to
-    `false`.
-  - The inspector and `NODE_OPTIONS` fuses are already off, which limits
-    abuse.
+- **macOS bridge host is single-arch.** `build:bridge-host` wraps the
+  runner's own Node binary, so the universal DMG carries one architecture's
+  host. Before a macOS release, build the host for x64 and arm64 and `lipo`
+  them into one binary (or ship per-arch DMGs).
 - **Code signing.** There are no certificates yet, so Windows SmartScreen and
   macOS Gatekeeper will warn:
   - Windows: Authenticode or Azure Trusted Signing (`CSC_LINK` /
-    `CSC_KEY_PASSWORD` or the Trusted Signing action).
+    `CSC_KEY_PASSWORD` or the Trusted Signing action). Sign
+    `resources/bridge-host/vaultkin-bridge-host.exe` too: it's a Node binary
+    with the host injected, so Node's original signature is no longer valid.
   - macOS: Developer ID and notarization (`APPLE_ID`,
     `APPLE_APP_SPECIFIC_PASSWORD`, `APPLE_TEAM_ID`).
 - **`publish` target.** `electron-builder.ts` points at

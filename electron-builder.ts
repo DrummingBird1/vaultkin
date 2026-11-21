@@ -57,13 +57,10 @@ async function hardenElectronFuses(context: AfterPackContext): Promise<void> {
 
   await flipFuses(electronBinaryPath, {
     version: FuseVersion.V1,
-    // ON for now: the browser-extension native-messaging host
-    // (dist/electron/bridge-host.js) runs as `Vaultkin.exe` with
-    // ELECTRON_RUN_AS_NODE=1 (the GUI binary can't speak the stdio protocol).
-    // Turning this off broke the extension in packaged builds. Release
-    // blocker tracked in docs/RELEASE.md: ship a standalone host binary, then
-    // set this to false. The inspector / NODE_OPTIONS fuses below stay off.
-    [FuseV1Options.RunAsNode]: true,
+    // Off: the browser-extension native-messaging host ships as its own
+    // binary (resources/bridge-host, built by scripts/build-bridge-host.mjs),
+    // so nothing needs to run this app binary as plain Node.
+    [FuseV1Options.RunAsNode]: false,
     [FuseV1Options.EnableCookieEncryption]: true,
     [FuseV1Options.EnableNodeOptionsEnvironmentVariable]: false,
     [FuseV1Options.EnableNodeCliInspectArguments]: false,
@@ -85,6 +82,8 @@ const config: Configuration = {
 
   // package.json's own "main" (dist/electron/main.js) is reused as-is —
   // no extraMetadata override needed.
+  // Standalone native-messaging host (built per OS by build:bridge-host).
+  extraResources: [{ from: "dist/bridge-host", to: "bridge-host" }],
   files: [
     "dist/electron/**/*",
     "!dist/electron/**/*.test.js",

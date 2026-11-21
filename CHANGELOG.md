@@ -3,6 +3,9 @@
 ## [Unreleased] — M6 release preparation (2026-11-21)
 
 ### Changed
+- The browser extension's native-messaging host now ships as its own small
+  program, so the desktop app's "run as Node" fuse is turned off in release
+  builds (one less way to abuse the signed app binary).
 - The app is renamed **Vaultkin** (was SecureVault). Existing data keeps
   working: the desktop app and the `sv` CLI keep using an old `SecureVault`
   data folder if one exists. Internal identifiers stay unchanged so nothing

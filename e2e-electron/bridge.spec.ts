@@ -39,6 +39,12 @@ const SOCKET =
     ? String.raw`\\.\pipe\sv-e2e-` + `${process.pid}-${Date.now()}`
     : path.join(os.tmpdir(), `sv-e2e-${process.pid}-${Date.now()}.sock`);
 const HOST_JS = path.join(root, "dist", "electron", "bridge-host.js");
+const STANDALONE_HOST = path.join(
+  root,
+  "dist",
+  "bridge-host",
+  `vaultkin-bridge-host${process.platform === "win32" ? ".exe" : ""}`,
+);
 
 let app: ElectronApplication;
 let win: Page;
@@ -54,10 +60,15 @@ class FakeBrowser {
 
   /** `args`: what the browser passes — Chrome: the origin; Firefox: manifest path + add-on id. */
   constructor(origin: string | string[]) {
-    // Exactly what the installed host wrapper runs: Electron in Node mode + bridge-host.js.
-    this.proc = spawn(electronBin, [HOST_JS, ...[origin].flat()], {
-      env: { ...process.env, ELECTRON_RUN_AS_NODE: "1", SV_BRIDGE_SOCKET: SOCKET },
-    });
+    // Exactly what the browser runs: the standalone host shipped in release
+    // builds when it has been built (pnpm build:bridge-host), otherwise the
+    // dev wrapper's Electron in Node mode + bridge-host.js.
+    const args = [origin].flat();
+    this.proc = fs.existsSync(STANDALONE_HOST)
+      ? spawn(STANDALONE_HOST, args, { env: { ...process.env, SV_BRIDGE_SOCKET: SOCKET } })
+      : spawn(electronBin, [HOST_JS, ...args], {
+          env: { ...process.env, ELECTRON_RUN_AS_NODE: "1", SV_BRIDGE_SOCKET: SOCKET },
+        });
     this.proc.stdout.on("data", (chunk: Buffer) => {
       this.buf = Buffer.concat([this.buf, chunk]);
       while (this.buf.length >= 4) {

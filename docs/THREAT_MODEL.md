@@ -43,7 +43,7 @@ bridge between them (ADR 0007), and optional WebDAV sync. Cryptography details a
 | **D**enial of service | Duress wipes the local vault | By design; synced copies are untouched (documented) | Accepted |
 | **E**levation of privilege | Renderer compromise reaches Node | `sandbox`, `contextIsolation`, no `nodeIntegration`; IPC handlers check the sender and validate input | Done |
 | E | A site gains camera, mic, HID or similar | Every permission request and check is denied | Done (M4) |
-| E | `ELECTRON_RUN_AS_NODE` abuse | Needed by the native host today. Disabling the RunAsNode fuse requires a standalone host binary first | **Open** |
+| E | `ELECTRON_RUN_AS_NODE` abuse | RunAsNode fuse off in packaged builds; the native host is a separate binary (`resources/bridge-host`) | **Mitigated** |
 
 ## Out of scope
 
