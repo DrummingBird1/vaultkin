@@ -1,9 +1,9 @@
-# SecureVault Browser Extension
+# Vaultkin Browser Extension
 
 A companion Chrome/Edge/Brave (MV3) extension that adds password autofill to
 your browsing experience. The extension does **not** decrypt your vault on
 its own — it receives an already-decrypted, minimal snapshot from the main
-SecureVault app via a permissioned message channel, and holds it in memory
+Vaultkin app via a permissioned message channel, and holds it in memory
 for up to 5 minutes of inactivity — the timeout value lives in
 `src/constants/shared.json`, imported directly by both this background
 worker and the main app's `src/constants/index.ts` (`EXTENSION_SESSION_TIMEOUT_MS`),
@@ -13,7 +13,7 @@ so the two can't drift out of sync.
 
 ```
 ┌────────────────────────┐         ┌─────────────────────────┐
-│  SecureVault Web App   │  send   │  Extension Background   │
+│  Vaultkin Web App   │  send   │  Extension Background   │
 │  (Settings → "Send to  │ ──────▶ │  Service Worker         │
 │   extension")          │ entries │  (in-memory cache only) │
 └────────────────────────┘         └────────┬────────────────┘
@@ -59,8 +59,8 @@ Settings → Browser extension → **Send entries to extension** (legacy
 ### Passkeys
 
 `src/webauthn-inject.ts` runs in the page's own JavaScript world and offers
-SecureVault for `navigator.credentials.create/get` passkey requests. The app
-asks you to confirm every save and sign-in. Anything SecureVault can't handle
+Vaultkin for `navigator.credentials.create/get` passkey requests. The app
+asks you to confirm every save and sign-in. Anything Vaultkin can't handle
 (app not connected, no passkey for the site, Cancel, non-ES256, conditional
 mediation) falls through to the browser's own passkey UI.
 

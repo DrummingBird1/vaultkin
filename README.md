@@ -1,4 +1,4 @@
-# 🔐 SecureVault
+# 🔐 Vaultkin
 
 A zero-knowledge password manager and 2FA authenticator built with React, TypeScript, Vite, and Electron. Cross-platform (Web / macOS / Windows / Linux), with an optional companion Chrome extension for autofill.
 

@@ -1,8 +1,8 @@
-# SecureVault
+# Vaultkin
 
 **Zero-knowledge password manager and 2FA authenticator** — built with React, Web Crypto API, Argon2id, and Electron.
 
-[![CI](https://github.com/securevault/securevault/actions/workflows/ci.yml/badge.svg)](https://github.com/securevault/securevault/actions)
+[![CI](https://github.com/vaultkin/vaultkin/actions/workflows/ci.yml/badge.svg)](https://github.com/vaultkin/vaultkin/actions)
 [![Coverage](https://codecov.io/gh/securevault/securevault/badge.svg)](https://codecov.io/gh/securevault/securevault)
 
 ---

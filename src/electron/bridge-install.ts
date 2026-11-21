@@ -87,7 +87,7 @@ export async function installNativeHost(
   fs.mkdirSync(dir, { recursive: true });
   const manifest = {
     name: HOST_NAME,
-    description: "SecureVault browser bridge",
+    description: "Vaultkin browser bridge",
     path: hostCommand(dir),
     type: "stdio",
     allowed_origins: ids.map((id) => `chrome-extension://${id}/`),

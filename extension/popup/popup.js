@@ -1,7 +1,7 @@
 /**
- * SecureVault — Popup UI
+ * Vaultkin — Popup UI
  *
- * Desktop mode (preferred): talks to the SecureVault app over the encrypted
+ * Desktop mode (preferred): talks to the Vaultkin app over the encrypted
  * native-messaging bridge via the background worker. Shows connection state,
  * the pairing code to compare with the app, and the logins for the current
  * site only.

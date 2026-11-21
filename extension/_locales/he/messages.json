@@ -1,12 +1,12 @@
 {
   "extName": {
-    "message": "SecureVault"
+    "message": "Vaultkin"
   },
   "extDescription": {
-    "message": "מילוי אוטומטי של פרטי התחברות, קודים חד־פעמיים ומפתחות גישה מאפליקציית SecureVault."
+    "message": "מילוי אוטומטי של פרטי התחברות, קודים חד־פעמיים ומפתחות גישה מאפליקציית Vaultkin."
   },
   "openMenu": {
-    "message": "SecureVault: הצגת פרטי ההתחברות לאתר הזה"
+    "message": "Vaultkin: הצגת פרטי ההתחברות לאתר הזה"
   },
   "menuTitle": {
     "message": "פרטי התחברות עבור $SITE$",
@@ -23,7 +23,7 @@
     "message": "הכספת נעולה. פתחו אותה באפליקציה ונסו שוב."
   },
   "notConnected": {
-    "message": "אין חיבור לאפליקציית SecureVault. פתחו את חלון התוסף כדי להתחבר."
+    "message": "אין חיבור לאפליקציית Vaultkin. פתחו את חלון התוסף כדי להתחבר."
   },
   "noLogins": {
     "message": "לא שמורים פרטי התחברות לאתר הזה."
@@ -51,7 +51,7 @@
     "message": "סגירה"
   },
   "saveTitle": {
-    "message": "לשמור את פרטי ההתחברות ב־SecureVault?"
+    "message": "לשמור את פרטי ההתחברות ב־Vaultkin?"
   },
   "updateTitle": {
     "message": "לעדכן את הסיסמה השמורה עבור $USER$?",
@@ -71,7 +71,7 @@
     "message": "לא עכשיו"
   },
   "saved": {
-    "message": "נשמר ב־SecureVault"
+    "message": "נשמר ב־Vaultkin"
   },
   "popupSearch": {
     "message": "חיפוש…"
@@ -83,22 +83,22 @@
     "message": "הכספת נעולה."
   },
   "popupLockedHint": {
-    "message": "פתחו את אפליקציית SecureVault כדי למלא פרטי התחברות."
+    "message": "פתחו את אפליקציית Vaultkin כדי למלא פרטי התחברות."
   },
   "popupNotInstalled": {
-    "message": "אפליקציית SecureVault עדיין לא מחוברת לדפדפן הזה. באפליקציה: הגדרות ← תוסף לדפדפן ← הגדרת חיבור לדפדפן."
+    "message": "אפליקציית Vaultkin עדיין לא מחוברת לדפדפן הזה. באפליקציה: הגדרות ← תוסף לדפדפן ← הגדרת חיבור לדפדפן."
   },
   "popupAppNotRunning": {
-    "message": "פתחו את אפליקציית SecureVault כדי למלא פרטי התחברות."
+    "message": "פתחו את אפליקציית Vaultkin כדי למלא פרטי התחברות."
   },
   "popupConnecting": {
-    "message": "מתחבר ל־SecureVault…"
+    "message": "מתחבר ל־Vaultkin…"
   },
   "popupDisconnected": {
-    "message": "אין חיבור לאפליקציית SecureVault."
+    "message": "אין חיבור לאפליקציית Vaultkin."
   },
   "popupUnpaired": {
-    "message": "חברו את הדפדפן הזה לאפליקציית SecureVault."
+    "message": "חברו את הדפדפן הזה לאפליקציית Vaultkin."
   },
   "popupRejected": {
     "message": "האפליקציה דחתה את החיבור."

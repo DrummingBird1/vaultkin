@@ -2,6 +2,13 @@
 
 ## [Unreleased] — M6 release preparation (2026-11-21)
 
+### Changed
+- The app is renamed **Vaultkin** (was SecureVault). Existing data keeps
+  working: the desktop app and the `sv` CLI keep using an old `SecureVault`
+  data folder if one exists. Internal identifiers stay unchanged so nothing
+  is orphaned: the IndexedDB names, `app://securevault`, the native-messaging
+  host and the Firefox add-on id, and the Windows Hello key.
+
 ### Fixed
 - Packaged desktop builds showed a blank window (a hardening fuse blocks
   loading the app from file://). The app is now served from

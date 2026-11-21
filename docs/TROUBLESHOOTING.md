@@ -1,4 +1,4 @@
-# פתרון תקלות — SecureVault
+# פתרון תקלות — Vaultkin
 
 ## תוכן עניינים
 - [המסך שחור / לבן ריק](#המסך-שחור--לבן-ריק)
@@ -132,7 +132,7 @@ npm install --legacy-peer-deps
 
 ### Debug
 1. פתח את ה-extension service worker:
-   - `chrome://extensions/` → SecureVault → "Service worker" link → DevTools.
+   - `chrome://extensions/` → Vaultkin → "Service worker" link → DevTools.
 2. ב-Console חפש logs: `[SV-Ext] Received N entries from main app`.
 3. אם אין הודעה — ה-message לא הגיע. בדוק `externally_connectable`.
 
@@ -215,5 +215,5 @@ npm rebuild keytar
 ## עוד תקלות?
 
 - 🐛 פתח issue ב-GitHub
-- 📋 תכלול: גרסה (`SecureVault Settings → About`), OS, browser, וצילום מסך של ה-Console.
+- 📋 תכלול: גרסה (`Vaultkin Settings → About`), OS, browser, וצילום מסך של ה-Console.
 - 🔒 **אל תכלול**: את ה-vault שלך, סיסמאות, או כל credential.

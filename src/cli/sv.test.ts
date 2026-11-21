@@ -80,7 +80,7 @@ describe("sv binary", () => {
   beforeAll(async () => {
     execFileSync("node", ["scripts/build-cli.mjs"], { cwd: ROOT });
     const { encryptedPayload } = await createVault(MASTER, data());
-    vaultFile = path.join(fs.mkdtempSync(path.join(os.tmpdir(), "sv-cli-")), "SecureVault.svault");
+    vaultFile = path.join(fs.mkdtempSync(path.join(os.tmpdir(), "sv-cli-")), "Vaultkin.svault");
     fs.writeFileSync(vaultFile, encryptedPayload);
   }, 60_000);
 

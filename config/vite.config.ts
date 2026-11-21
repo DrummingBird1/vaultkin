@@ -52,8 +52,8 @@ export default defineConfig(async () => ({
       registerType: "prompt",
       injectRegister: false,
       manifest: {
-        name: "SecureVault",
-        short_name: "SecureVault",
+        name: "Vaultkin",
+        short_name: "Vaultkin",
         description: "Zero-knowledge password manager and 2FA authenticator.",
         theme_color: "#0D0D12",
         background_color: "#0D0D12",

@@ -17,7 +17,7 @@ This file gives AI coding agents (Codex, Claude Code, Copilot, Cursor, Gemini an
 
 ## What this is
 
-**SecureVault** — a zero-knowledge password manager + 2FA authenticator. React + TypeScript + Vite + Electron, with a companion Chrome MV3 browser extension for autofill.
+**Vaultkin** — a zero-knowledge password manager + 2FA authenticator. React + TypeScript + Vite + Electron, with a companion Chrome MV3 browser extension for autofill.
 
 - Master password never leaves the device.
 - AES-256-GCM encryption, HMAC-SHA256 (Encrypt-then-MAC). KDF is **Argon2id (64 MiB, t=3, p=1)** via `hash-wasm`; PBKDF2-SHA256 600k vaults still open (KDF chosen from the vault header). Defaults live in `DEFAULT_KDF` in `src/core/vault/engine.ts` — see [docs/README.security.md](docs/README.security.md).
@@ -122,5 +122,5 @@ Load-bearing for the zero-knowledge model. Breaking them is a security regressio
 - **`ImportVault` 50 MB cap reads the full file into memory.** Streaming parser preferred for large LastPass exports.
 - **SSH agent (desktop, opt-in).** `src/electron/ssh-agent.ts` only frames the agent protocol on a per-user pipe/socket; keys and the approval dialog stay in the renderer (`ssh-agent.service.ts`). List + sign only (no add/remove), Ed25519 only, every sign approved (optional 10-minute per-key memory, cleared on lock). E2E drives it with the real Windows OpenSSH `ssh-add` / `ssh-keygen -Y sign`.
 - **Attachments.** Per-file AES-256-GCM key in `entry.attachments[]` (inside the vault), id bound as AAD; ciphertext in the separate IndexedDB `securevault-attachments` (`services/attachment-store.ts`). `IPCService.vault.delete()` clears them (duress, danger zone); unreferenced blobs are GC'd on unlock. Not synced over WebDAV yet.
-- **Folder sync (desktop).** `src/electron/folder-sync.ts` writes `SecureVault.svault` (ciphertext only, validated) to the user-chosen folder after each autosave; it remembers the hash it last read/wrote and returns `conflict` instead of overwriting another device's copy. Pull goes through the same RemoteUnlock → ConflictResolution flow as WebDAV. E2E uses `SV_FOLDER_SYNC_DIR` (unpackaged only).
+- **Folder sync (desktop).** `src/electron/folder-sync.ts` writes `Vaultkin.svault` (ciphertext only, validated) to the user-chosen folder after each autosave; it remembers the hash it last read/wrote and returns `conflict` instead of overwriting another device's copy. Pull goes through the same RemoteUnlock → ConflictResolution flow as WebDAV. E2E uses `SV_FOLDER_SYNC_DIR` (unpackaged only).
 - **`BulkActionBar` only supports delete**, not move-to-folder or add-tag — a known, scoped limitation, not an oversight.

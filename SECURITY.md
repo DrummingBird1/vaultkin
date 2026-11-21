@@ -1,6 +1,6 @@
 # Security Policy
 
-SecureVault is a zero-knowledge password manager. Vulnerabilities here can
+Vaultkin is a zero-knowledge password manager. Vulnerabilities here can
 directly expose people's credentials — please report responsibly rather than
 opening a public issue.
 

@@ -1,4 +1,4 @@
-# SecureVault threat model (STRIDE)
+# Vaultkin threat model (STRIDE)
 
 Scope: the Electron desktop app, the browser extension and the native-messaging
 bridge between them (ADR 0007), and optional WebDAV sync. Cryptography details are in

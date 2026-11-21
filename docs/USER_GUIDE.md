@@ -1,6 +1,6 @@
-# מדריך משתמש מלא — SecureVault
+# מדריך משתמש מלא — Vaultkin
 
-## מה זה SecureVault?
+## מה זה Vaultkin?
 
 מנהל סיסמאות ומאמת 2FA עם **הצפנה מקומית בלבד** (zero-knowledge):
 הסיסמה המאסטר שלך אף פעם לא יוצאת מהמכשיר, וגם המידע מוצפן לפני שהוא נכתב לדיסק. אם תשכח את סיסמת המאסטר — אין שחזור. זו הצורה היחידה לוודא שאף אחד מלבדך יכול לראות את המידע.
@@ -224,7 +224,7 @@ npm run electron:dist:linux    # AppImage / deb / rpm
 6. העתק את **Extension ID** מהדף.
 
 ### חיבור לאפליקציה
-1. ב-SecureVault: **Settings → Security → Browser extension**.
+1. ב-Vaultkin: **Settings → Security → Browser extension**.
 2. הדבק את ה-Extension ID.
 3. **Send entries to extension**.
 4. ה-extension מאחסן את ה-entries ב-זיכרון בלבד למשך 5 דקות (ואז מתנקה).
@@ -311,7 +311,7 @@ npm run electron:dist:linux    # AppImage / deb / rpm
 - **LastPass CSV**
 - **KeePass XML**
 - **Generic CSV**
-- **SecureVault QR codes**
+- **Vaultkin QR codes**
 
 זיהוי פורמט אוטומטי. בקונפליקטים: **Skip / Overwrite / Keep both**.
 

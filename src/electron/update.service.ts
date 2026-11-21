@@ -34,10 +34,16 @@ export function wireUpdater(win: BrowserWindow): void {
   };
 
   autoUpdater.on("checking-for-update", () => send({ status: "checking" }));
-  autoUpdater.on("update-available", (info) => send({ status: "available", version: info.version }));
+  autoUpdater.on("update-available", (info) =>
+    send({ status: "available", version: info.version }),
+  );
   autoUpdater.on("update-not-available", () => send({ status: "not-available" }));
-  autoUpdater.on("download-progress", (progress) => send({ status: "downloading", percent: Math.round(progress.percent) }));
-  autoUpdater.on("update-downloaded", (info) => send({ status: "downloaded", version: info.version }));
+  autoUpdater.on("download-progress", (progress) =>
+    send({ status: "downloading", percent: Math.round(progress.percent) }),
+  );
+  autoUpdater.on("update-downloaded", (info) =>
+    send({ status: "downloaded", version: info.version }),
+  );
   autoUpdater.on("error", (err) => {
     mainLog.error("autoUpdater error", { message: err.message, stack: err.stack });
     send({ status: "error", message: err.message });

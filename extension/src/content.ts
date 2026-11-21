@@ -1,8 +1,8 @@
 /**
- * SecureVault — content script (isolated world), runs in every frame.
+ * Vaultkin — content script (isolated world), runs in every frame.
  *
  *  - Inline menu: when a login field (username, password, one-time code) has
- *    focus, a small SecureVault button appears at its inline end. It and the
+ *    focus, a small Vaultkin button appears at its inline end. It and the
  *    menu live in ONE closed shadow root attached to <html>, positioned over
  *    the page — the page's own DOM is never restructured (the old version
  *    wrapped every password input in a <span>, which broke some layouts).

@@ -9,7 +9,8 @@ const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
 export function base32Decode(input: string): Uint8Array<ArrayBuffer> {
   const clean = input.replace(/\s+/g, "").replace(/=+$/, "").toUpperCase();
   const out: number[] = [];
-  let bits = 0, value = 0;
+  let bits = 0,
+    value = 0;
   for (const ch of clean) {
     const idx = ALPHABET.indexOf(ch);
     if (idx === -1) throw new Error(`Invalid Base32 character: ${ch}`);

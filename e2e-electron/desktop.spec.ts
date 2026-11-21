@@ -1,7 +1,7 @@
 /**
  * Electron E2E: the real desktop window, hardened settings, custom title bar,
  * and the Quick Access hotkey path. Runs with a fresh, temporary profile so it
- * never touches the user's real SecureVault data.
+ * never touches the user's real Vaultkin data.
  */
 import {
   test,
@@ -245,7 +245,7 @@ test("SSH agent: ssh-add lists the vault key; signing needs approval and verifie
   const pub = path.join(dir, "key.pub");
   const msg = path.join(dir, "msg.txt");
   fs.writeFileSync(pub, listed.trim().split("\n")[0] + "\n");
-  fs.writeFileSync(msg, "signed through the SecureVault agent\n");
+  fs.writeFileSync(msg, "signed through the Vaultkin agent\n");
   const signing = new Promise<number>((resolve) => {
     const c = execFile(`${OPENSSH_DIR}ssh-keygen`, ["-Y", "sign", "-f", pub, "-n", "file", msg], {
       env,
@@ -280,7 +280,7 @@ test("SSH agent: ssh-add lists the vault key; signing needs approval and verifie
 });
 
 test("folder sync writes only ciphertext and never overwrites another device's copy", async () => {
-  const file = path.join(SYNC_DIR, "SecureVault.svault");
+  const file = path.join(SYNC_DIR, "Vaultkin.svault");
   await win.evaluate(() => (location.hash = "#/settings/sync"));
   await win.getByRole("button", { name: /^choose folder$/i }).click();
   await expect(win.getByTestId("sync-folder")).toHaveText(SYNC_DIR);

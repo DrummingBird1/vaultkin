@@ -1,4 +1,4 @@
-# `sv`: SecureVault on the command line
+# `sv`: Vaultkin on the command line
 
 Read-only access to your vault from scripts and terminals: list entries,
 print a password, username, URL, notes, the current 2FA code, an SSH public
@@ -7,7 +7,7 @@ key or a custom field, and fill templates such as `.env` files.
 ## Setup
 
 1. In the desktop app, open **Settings → Sync → Sync folder** and choose a
-   folder. The app keeps an encrypted copy there (`SecureVault.svault`).
+   folder. The app keeps an encrypted copy there (`Vaultkin.svault`).
    `sv` reads that file. It finds it automatically, or you can pass `--vault`
    or set `SV_VAULT`.
 2. Build it: `pnpm build:cli`. Then run `node dist/cli/sv.cjs …`. With

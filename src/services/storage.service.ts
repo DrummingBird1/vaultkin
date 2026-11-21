@@ -5,8 +5,8 @@
  */
 
 const DB_NAME = "securevault";
-const STORE   = "vault";
-const KEY     = "vault";
+const STORE = "vault";
+const KEY = "vault";
 const DB_VERSION = 1;
 
 function open(): Promise<IDBDatabase> {
@@ -17,14 +17,14 @@ function open(): Promise<IDBDatabase> {
       if (!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE);
     };
     req.onsuccess = () => resolve(req.result);
-    req.onerror   = () => reject(req.error);
+    req.onerror = () => reject(req.error);
   });
 }
 
 function reqToPromise<T>(req: IDBRequest<T>): Promise<T> {
   return new Promise((resolve, reject) => {
     req.onsuccess = () => resolve(req.result);
-    req.onerror   = () => reject(req.error);
+    req.onerror = () => reject(req.error);
   });
 }
 

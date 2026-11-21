@@ -12,27 +12,36 @@ export function useDragReorder(opts: {
   const draggedId = useRef<string | null>(null);
   const [overId, setOverId] = useState<string | null>(null);
 
-  const onDragStart = useCallback((id: string) => (e: React.DragEvent) => {
-    if (opts.disabled) return;
-    draggedId.current = id;
-    e.dataTransfer.effectAllowed = "move";
-  }, [opts.disabled]);
+  const onDragStart = useCallback(
+    (id: string) => (e: React.DragEvent) => {
+      if (opts.disabled) return;
+      draggedId.current = id;
+      e.dataTransfer.effectAllowed = "move";
+    },
+    [opts.disabled],
+  );
 
-  const onDragOver = useCallback((id: string) => (e: React.DragEvent) => {
-    if (opts.disabled) return;
-    e.preventDefault();
-    if (overId !== id) setOverId(id);
-  }, [opts.disabled, overId]);
+  const onDragOver = useCallback(
+    (id: string) => (e: React.DragEvent) => {
+      if (opts.disabled) return;
+      e.preventDefault();
+      if (overId !== id) setOverId(id);
+    },
+    [opts.disabled, overId],
+  );
 
-  const onDrop = useCallback((id: string) => (e: React.DragEvent) => {
-    if (opts.disabled) return;
-    e.preventDefault();
-    if (draggedId.current && draggedId.current !== id) {
-      opts.onReorder(draggedId.current, id);
-    }
-    draggedId.current = null;
-    setOverId(null);
-  }, [opts]);
+  const onDrop = useCallback(
+    (id: string) => (e: React.DragEvent) => {
+      if (opts.disabled) return;
+      e.preventDefault();
+      if (draggedId.current && draggedId.current !== id) {
+        opts.onReorder(draggedId.current, id);
+      }
+      draggedId.current = null;
+      setOverId(null);
+    },
+    [opts],
+  );
 
   const onDragEnd = useCallback(() => {
     draggedId.current = null;

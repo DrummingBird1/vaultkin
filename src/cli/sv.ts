@@ -1,6 +1,6 @@
 /**
  * @file src/cli/sv.ts
- * `sv`: read-only command line access to a SecureVault vault file.
+ * `sv`: read-only command line access to a Vaultkin vault file.
  *
  *   sv list [filter]
  *   sv get <title|id> [field]           field: password (default), username, url,
@@ -47,14 +47,17 @@ function parseArgs(argv: string[]) {
 }
 
 function appDataDir(): string {
-  if (process.platform === "win32")
-    return path.join(process.env.APPDATA ?? os.homedir(), "securevault");
-  if (process.platform === "darwin")
-    return path.join(os.homedir(), "Library", "Application Support", "securevault");
-  return path.join(
-    process.env.XDG_CONFIG_HOME ?? path.join(os.homedir(), ".config"),
-    "securevault",
-  );
+  const base =
+    process.platform === "win32"
+      ? (process.env.APPDATA ?? os.homedir())
+      : process.platform === "darwin"
+        ? path.join(os.homedir(), "Library", "Application Support")
+        : (process.env.XDG_CONFIG_HOME ?? path.join(os.homedir(), ".config"));
+  // Packaged app uses "Vaultkin", dev uses "vaultkin"; the app keeps using a
+  // pre-rename "SecureVault"/"securevault" folder if one exists.
+  const names = ["SecureVault", "securevault", "Vaultkin", "vaultkin"];
+  const found = names.map((n) => path.join(base, n)).find((p) => fs.existsSync(p));
+  return found ?? path.join(base, "Vaultkin");
 }
 
 function vaultPath(opt: Record<string, string | true>): string {
@@ -62,7 +65,7 @@ function vaultPath(opt: Record<string, string | true>): string {
   if (process.env.SV_VAULT) return process.env.SV_VAULT;
   try {
     const c = JSON.parse(fs.readFileSync(path.join(appDataDir(), "folder-sync.json"), "utf8"));
-    if (typeof c.dir === "string") return path.join(c.dir, "SecureVault.svault");
+    if (typeof c.dir === "string") return path.join(c.dir, "Vaultkin.svault");
   } catch {
     /* no sync folder configured */
   }

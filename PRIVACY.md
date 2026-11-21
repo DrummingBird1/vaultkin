@@ -1,6 +1,6 @@
 # Privacy policy
 
-SecureVault is a local password manager. It has no accounts, no servers of
+Vaultkin is a local password manager. It has no accounts, no servers of
 its own, no analytics and no telemetry. This page lists everything the app
 and the browser extension send over the network, and when they send it.
 
@@ -29,7 +29,7 @@ Nothing else is requested:
 
 ## The browser extension
 
-- The extension talks only to the SecureVault desktop app on the same
+- The extension talks only to the Vaultkin desktop app on the same
   computer, over native messaging. That connection is end-to-end encrypted
   after a pairing you confirm.
 - For the site you're on, it receives only the matching logins:

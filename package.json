@@ -1,9 +1,9 @@
 {
-  "name": "securevault",
+  "name": "vaultkin",
   "version": "2.0.0",
   "description": "Zero-knowledge password manager & 2FA authenticator",
   "main": "dist/electron/main.js",
-  "homepage": "https://github.com/securevault/securevault",
+  "homepage": "https://github.com/vaultkin/vaultkin",
   "private": true,
   "packageManager": "pnpm@11.18.0",
   "engines": {

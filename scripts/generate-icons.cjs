@@ -58,11 +58,11 @@ function encodePNG(width, height, rgba) {
   const ihdrData = Buffer.alloc(13);
   ihdrData.writeUInt32BE(width, 0);
   ihdrData.writeUInt32BE(height, 4);
-  ihdrData[8] = 8;   // bit depth
-  ihdrData[9] = 6;   // color type: RGBA
-  ihdrData[10] = 0;  // compression
-  ihdrData[11] = 0;  // filter
-  ihdrData[12] = 0;  // interlace
+  ihdrData[8] = 8; // bit depth
+  ihdrData[9] = 6; // color type: RGBA
+  ihdrData[10] = 0; // compression
+  ihdrData[11] = 0; // filter
+  ihdrData[12] = 0; // interlace
   const ihdr = chunk("IHDR", ihdrData);
 
   // Each scanline prefixed with filter-type byte 0 (None).
@@ -82,13 +82,14 @@ function encodePNG(width, height, rgba) {
 // Solid brand-purple square with a white padlock silhouette. Simple analytic
 // shapes (no anti-aliasing) so it stays crisp and unambiguous even at 16px.
 
-const BG = [0x63, 0x66, 0xf1, 0xff];      // #6366F1 — app accent (Indigo)
-const FG = [0xff, 0xff, 0xff, 0xff];      // white glyph
+const BG = [0x63, 0x66, 0xf1, 0xff]; // #6366F1 — app accent (Indigo)
+const FG = [0xff, 0xff, 0xff, 0xff]; // white glyph
 
 function inRoundedRect(x, y, x0, y0, x1, y1, r) {
   const cx = Math.min(Math.max(x, x0 + r), x1 - r);
   const cy = Math.min(Math.max(y, y0 + r), y1 - r);
-  const dx = x - cx, dy = y - cy;
+  const dx = x - cx,
+    dy = y - cy;
   return dx * dx + dy * dy <= r * r;
 }
 
@@ -104,23 +105,30 @@ function renderLockIcon(size) {
   const shackleLegBottomY = size * 0.53;
 
   // Body: rounded rect in the lower half.
-  const bodyX0 = size * 0.26, bodyX1 = size * 0.74;
-  const bodyY0 = size * 0.50, bodyY1 = size * 0.82;
+  const bodyX0 = size * 0.26,
+    bodyX1 = size * 0.74;
+  const bodyY0 = size * 0.5,
+    bodyY1 = size * 0.82;
   const bodyR = size * 0.07;
 
   // Keyhole cut back to background color.
-  const keyholeCx = size * 0.5, keyholeCy = size * 0.615;
+  const keyholeCx = size * 0.5,
+    keyholeCy = size * 0.615;
   const keyholeR = size * 0.045;
-  const keyholeSlotX0 = size * 0.478, keyholeSlotX1 = size * 0.522;
-  const keyholeSlotY0 = keyholeCy, keyholeSlotY1 = size * 0.73;
+  const keyholeSlotX0 = size * 0.478,
+    keyholeSlotX1 = size * 0.522;
+  const keyholeSlotY0 = keyholeCy,
+    keyholeSlotY1 = size * 0.73;
 
   for (let py = 0; py < size; py++) {
     for (let px = 0; px < size; px++) {
-      const x = px + 0.5, y = py + 0.5;
+      const x = px + 0.5,
+        y = py + 0.5;
       let color = BG;
 
       // Shackle
-      const dx = x - cx, dy = y - shackleArcCenterY;
+      const dx = x - cx,
+        dy = y - shackleArcCenterY;
       const dist = Math.sqrt(dx * dx + dy * dy);
       let isShackle = false;
       if (y <= shackleArcCenterY) {
@@ -135,14 +143,19 @@ function renderLockIcon(size) {
       if (inRoundedRect(x, y, bodyX0, bodyY0, bodyX1, bodyY1, bodyR)) {
         color = FG;
         // Keyhole: circle + slot, cut back to background.
-        const kdx = x - keyholeCx, kdy = y - keyholeCy;
+        const kdx = x - keyholeCx,
+          kdy = y - keyholeCy;
         const inCircle = kdx * kdx + kdy * kdy <= keyholeR * keyholeR;
-        const inSlot = x >= keyholeSlotX0 && x <= keyholeSlotX1 && y >= keyholeSlotY0 && y <= keyholeSlotY1;
+        const inSlot =
+          x >= keyholeSlotX0 && x <= keyholeSlotX1 && y >= keyholeSlotY0 && y <= keyholeSlotY1;
         if (inCircle || inSlot) color = BG;
       }
 
       const i = (py * size + px) * 4;
-      buf[i] = color[0]; buf[i + 1] = color[1]; buf[i + 2] = color[2]; buf[i + 3] = color[3];
+      buf[i] = color[0];
+      buf[i + 1] = color[1];
+      buf[i + 2] = color[2];
+      buf[i + 3] = color[3];
     }
   }
   return buf;

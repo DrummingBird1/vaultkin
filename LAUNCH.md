@@ -1,4 +1,4 @@
-# Launching SecureVault
+# Launching Vaultkin
 
 Three launcher scripts at the project root, one per platform. All do the same thing: check Node, install deps on first run, start Electron + Vite in dev mode (HMR).
 
@@ -39,7 +39,7 @@ To make it double-clickable on macOS, rename to `launch.command`. On Linux, crea
 
 ```ini
 [Desktop Entry]
-Name=SecureVault
+Name=Vaultkin
 Exec=/absolute/path/to/launch.sh
 Icon=/absolute/path/to/icon.png
 Type=Application

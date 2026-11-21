@@ -3,7 +3,7 @@
  * @description Multi-format vault importer with conflict resolution.
  *
  * Supports: Bitwarden, 1Password, LastPass, KeePass XML, generic CSV,
- *           and SecureVault native format (.sv).
+ *           and Vaultkin native format (.sv).
  *
  * FLOW:
  *   1. User selects file or drags-and-drops

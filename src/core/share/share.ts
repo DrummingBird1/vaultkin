@@ -102,10 +102,10 @@ export async function openShare(
   try {
     f = JSON.parse(fileText);
   } catch {
-    throw new ShareInvalidError("Not a SecureVault share file");
+    throw new ShareInvalidError("Not a Vaultkin share file");
   }
   if (!f || f.v !== 1 || typeof f.data !== "string" || typeof f.iv !== "string")
-    throw new ShareInvalidError("Not a SecureVault share file");
+    throw new ShareInvalidError("Not a Vaultkin share file");
   const c = code.trim();
   if (!c.startsWith(KEY_PREFIX)) throw new ShareInvalidError("That isn't a share code");
   let raw: Uint8Array<ArrayBuffer>;

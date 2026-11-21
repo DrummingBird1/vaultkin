@@ -61,7 +61,7 @@ export function migrateVault(raw: unknown): { vault: VaultData; migrated: boolea
   }
   if (version > CURRENT_SCHEMA_VERSION) {
     throw new VaultCorruptError(
-      `Vault was written by a newer SecureVault (schema ${version}); update the app to open it.`,
+      `Vault was written by a newer Vaultkin (schema ${version}); update the app to open it.`,
     );
   }
   if (!Array.isArray(doc.entries) || !Array.isArray(doc.folders)) {

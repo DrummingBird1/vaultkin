@@ -1,8 +1,8 @@
 @echo off
-title SecureVault DEBUG
+title Vaultkin DEBUG
 cd /d "%~dp0"
 
-echo === SecureVault diagnostics ===
+echo === Vaultkin diagnostics ===
 echo.
 echo Current directory:
 cd

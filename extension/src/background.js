@@ -1,5 +1,5 @@
 /**
- * SecureVault — Background Service Worker (MV3)
+ * Vaultkin — Background Service Worker (MV3)
  *
  * Two sources of logins, in order:
  *  1. The desktop app over the end-to-end encrypted native-messaging bridge

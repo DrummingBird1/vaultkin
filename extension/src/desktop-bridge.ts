@@ -1,6 +1,6 @@
 /**
  * Extension endpoint of the desktop bridge (ADR 0007). Runs in the MV3
- * service worker. Talks to the SecureVault desktop app over native messaging
+ * service worker. Talks to the Vaultkin desktop app over native messaging
  * (host "com.securevault.bridge"); after pairing every request/answer is
  * sealed end to end (src/core/bridge/session.ts), so neither the host relay
  * nor the app's main process can read it.

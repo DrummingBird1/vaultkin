@@ -1,9 +1,9 @@
 /**
  * Runs in the PAGE's JavaScript world (manifest "world": "MAIN"). Offers
- * SecureVault as a passkey provider: navigator.credentials.create()/get()
+ * Vaultkin as a passkey provider: navigator.credentials.create()/get()
  * with a `publicKey` request are forwarded (via the isolated content script
  * and the background worker) to the desktop app, which asks the user and does
- * the cryptography. If SecureVault can't handle it — app not connected, no
+ * the cryptography. If Vaultkin can't handle it — app not connected, no
  * passkey for this site, user chose Cancel, unsupported algorithm,
  * conditional mediation — the browser's own implementation runs unchanged.
  *

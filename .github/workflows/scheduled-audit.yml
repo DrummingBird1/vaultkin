@@ -17,14 +17,14 @@ name: Scheduled audit
 
 on:
   schedule:
-    - cron: '17 3 * * *'
+    - cron: "17 3 * * *"
   workflow_dispatch: {}
 
 permissions:
   contents: read
 
 env:
-  NODE_VERSION: '22'
+  NODE_VERSION: "22"
 
 jobs:
   dependency-check:

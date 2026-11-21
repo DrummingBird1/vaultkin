@@ -13,7 +13,7 @@ process for longer than needed.
 ## Decision
 
 **Transport.** Chrome/Edge/Firefox native messaging. A host manifest
-(`com.securevault.bridge`) points the browser at the SecureVault executable,
+(`com.securevault.bridge`) points the browser at the Vaultkin executable,
 which, when launched with the extension origin as its argument, runs in
 *relay mode*: no window, no vault, just copying length-prefixed JSON frames
 between the browser's stdio and a per-user local socket (Windows named pipe /

@@ -1,4 +1,4 @@
-# Releasing SecureVault
+# Releasing Vaultkin
 
 ## How a release is built
 
@@ -22,7 +22,7 @@
 ## Packaged-build smoke test (do this before every release)
 
 `pnpm electron:build && pnpm exec electron-builder --dir --win -c.publish=null`,
-then run `release/win-unpacked/SecureVault.exe` and check:
+then run `release/win-unpacked/Vaultkin.exe` and check:
 
 - [ ] **Window.** The window shows the unlock or create screen, not a blank
       window. The renderer is served from `app://securevault`, and stderr shows
@@ -38,7 +38,7 @@ then run `release/win-unpacked/SecureVault.exe` and check:
 ## Release blockers (open)
 
 - **RunAsNode fuse is ON.** The extension's native-messaging host runs as
-  `SecureVault.exe` with `ELECTRON_RUN_AS_NODE=1`. Turning the fuse off
+  `Vaultkin.exe` with `ELECTRON_RUN_AS_NODE=1`. Turning the fuse off
   (as `electron-builder.ts` intended) broke the extension in packaged builds.
   - Fix: ship a standalone host binary (for example a Node SEA, or a small
     native relay), point `bridge-install.ts` at it, then set the fuse to
@@ -52,7 +52,7 @@ then run `release/win-unpacked/SecureVault.exe` and check:
   - macOS: Developer ID and notarization (`APPLE_ID`,
     `APPLE_APP_SPECIFIC_PASSWORD`, `APPLE_TEAM_ID`).
 - **`publish` target.** `electron-builder.ts` points at
-  `github.com/securevault/securevault`, a placeholder. Set the real
+  `github.com/vaultkin/vaultkin`, a placeholder. Set the real
   owner/repo.
 - **CI has never run on GitHub.** It's blocked by account billing. The
   release workflow changes are validated as YAML only.
@@ -64,7 +64,7 @@ then run `release/win-unpacked/SecureVault.exe` and check:
 
 - **License.** README says MIT, but there is no `LICENSE` file. The plan
   recommended GPL-3.0 or AGPL-3.0 for an open-source password manager.
-- **Name and brand.** Check that "SecureVault" can be used: trademarks, store
+- **Name and brand.** Check that "Vaultkin" can be used: trademarks, store
   listings, domain. Then decide on the final logo (the current lock icon is
   generic) and on store screenshots.
 - **Public repository.** Make the repo public, enable Private Vulnerability
@@ -76,11 +76,11 @@ then run `release/win-unpacked/SecureVault.exe` and check:
 ## Store submission notes
 
 - **Chrome Web Store / Edge Add-ons.** Upload
-  `SecureVault-extension-chrome-<tag>.zip`.
+  `Vaultkin-extension-chrome-<tag>.zip`.
   - Permissions to justify: `<all_urls>` (autofill on any site),
     `nativeMessaging` (desktop app), `scripting`, `storage`, `clipboardWrite`.
   - Privacy: link `PRIVACY.md`.
-- **Firefox AMO.** Upload `SecureVault-extension-firefox-<tag>.zip`.
+- **Firefox AMO.** Upload `Vaultkin-extension-firefox-<tag>.zip`.
   - Add-on id: `securevault@securevault.app`. It must stay fixed, because
     native messaging allows the add-on by this id.
   - AMO asks for the source code: link the repo and give

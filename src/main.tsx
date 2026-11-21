@@ -45,7 +45,7 @@ if (!("electron" in window) && "serviceWorker" in navigator) {
         .getState()
         .toastInfo(
           "Update available",
-          "SecureVault will use the new version next time you fully restart it.",
+          "Vaultkin will use the new version next time you fully restart it.",
         );
     },
     onOfflineReady() {
@@ -53,7 +53,7 @@ if (!("electron" in window) && "serviceWorker" in navigator) {
         .getState()
         .toastInfo(
           "Ready for offline use",
-          "SecureVault can now open without an internet connection.",
+          "Vaultkin can now open without an internet connection.",
         );
     },
   });

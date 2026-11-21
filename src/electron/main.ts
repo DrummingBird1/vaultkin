@@ -17,6 +17,7 @@ import {
   dialog,
 } from "electron";
 import * as path from "path";
+import * as fs from "fs";
 import { mainLog } from "./logger";
 import { wireUpdater, checkForUpdates, downloadUpdate, quitAndInstall } from "./update.service";
 import { bridgeSocketPath, startBridgeServer } from "./bridge-transport";
@@ -30,6 +31,17 @@ import { APP_ORIGIN, APP_URL, handleAppProtocol, registerAppScheme } from "./app
 
 const isDev = !!process.env.VITE_DEV_SERVER_URL || !app.isPackaged;
 
+// Renamed from SecureVault: keep using the old data folder if it exists, so an
+// existing vault, device-unlock key and settings are not orphaned. Must run
+// before anything reads userData (logger, crashReporter, IndexedDB).
+{
+  const appData = app.getPath("appData");
+  const legacy = ["SecureVault", "securevault"]
+    .map((n) => path.join(appData, n))
+    .find((p) => fs.existsSync(p));
+  if (legacy && !fs.existsSync(app.getPath("userData"))) app.setPath("userData", legacy);
+}
+
 // Production renderer is served from app://securevault (see app-protocol.ts).
 registerAppScheme();
 
@@ -39,8 +51,8 @@ registerAppScheme();
 // user who hits a native crash has something concrete to attach when
 // reporting it themselves, the same way mainLog exists for JS-level errors.
 crashReporter.start({
-  productName: "SecureVault",
-  companyName: "SecureVault",
+  productName: "Vaultkin",
+  companyName: "Vaultkin",
   uploadToServer: false,
   compress: true,
 });
@@ -57,7 +69,7 @@ process.on("unhandledRejection", (reason) => {
 
 /** Height of the custom title bar; the renderer reserves the same space. */
 const TITLEBAR_HEIGHT = 44;
-/** Global hotkey: bring SecureVault forward and open the command palette. */
+/** Global hotkey: bring Vaultkin forward and open the command palette. */
 const QUICK_ACCESS_ACCELERATOR = "CommandOrControl+Shift+Space";
 
 let mainWindow: BrowserWindow | null = null;
@@ -106,7 +118,7 @@ function createWindow(): void {
     minWidth: 800,
     minHeight: 600,
     backgroundColor: "#0D0D12",
-    title: "SecureVault",
+    title: "Vaultkin",
     autoHideMenuBar: true,
     // Frameless look with native window controls: on Windows/Linux the
     // minimize/maximize/close buttons are drawn by the OS over our top bar

@@ -1,12 +1,12 @@
 {
   "extName": {
-    "message": "SecureVault"
+    "message": "Vaultkin"
   },
   "extDescription": {
-    "message": "Autofill logins, one-time codes and passkeys from your SecureVault desktop app."
+    "message": "Autofill logins, one-time codes and passkeys from your Vaultkin desktop app."
   },
   "openMenu": {
-    "message": "SecureVault: show logins for this site"
+    "message": "Vaultkin: show logins for this site"
   },
   "menuTitle": {
     "message": "Logins for $SITE$",
@@ -20,10 +20,10 @@
     "message": "Loading…"
   },
   "locked": {
-    "message": "SecureVault is locked. Unlock the app, then try again."
+    "message": "Vaultkin is locked. Unlock the app, then try again."
   },
   "notConnected": {
-    "message": "Not connected to the SecureVault app. Open the extension popup to connect."
+    "message": "Not connected to the Vaultkin app. Open the extension popup to connect."
   },
   "noLogins": {
     "message": "No logins saved for this site."
@@ -51,7 +51,7 @@
     "message": "Close"
   },
   "saveTitle": {
-    "message": "Save this login to SecureVault?"
+    "message": "Save this login to Vaultkin?"
   },
   "updateTitle": {
     "message": "Update the saved password for $USER$?",
@@ -71,7 +71,7 @@
     "message": "Not now"
   },
   "saved": {
-    "message": "Saved to SecureVault"
+    "message": "Saved to Vaultkin"
   },
   "popupSearch": {
     "message": "Search…"
@@ -80,31 +80,31 @@
     "message": "No logins saved for this site."
   },
   "popupLockedTitle": {
-    "message": "SecureVault is locked."
+    "message": "Vaultkin is locked."
   },
   "popupLockedHint": {
-    "message": "Unlock the SecureVault app to fill logins."
+    "message": "Unlock the Vaultkin app to fill logins."
   },
   "popupNotInstalled": {
-    "message": "The SecureVault app isn't connected to this browser yet. In the app: Settings → Browser extension → Set up browser connection."
+    "message": "The Vaultkin app isn't connected to this browser yet. In the app: Settings → Browser extension → Set up browser connection."
   },
   "popupAppNotRunning": {
-    "message": "Open the SecureVault desktop app to fill logins."
+    "message": "Open the Vaultkin desktop app to fill logins."
   },
   "popupConnecting": {
-    "message": "Connecting to SecureVault…"
+    "message": "Connecting to Vaultkin…"
   },
   "popupDisconnected": {
-    "message": "Not connected to the SecureVault app."
+    "message": "Not connected to the Vaultkin app."
   },
   "popupUnpaired": {
-    "message": "Connect this browser to your SecureVault app."
+    "message": "Connect this browser to your Vaultkin app."
   },
   "popupRejected": {
     "message": "The app rejected the connection."
   },
   "popupPairing": {
-    "message": "Check that the SecureVault app shows this code, then approve it there."
+    "message": "Check that the Vaultkin app shows this code, then approve it there."
   },
   "popupRetry": {
     "message": "Retry"

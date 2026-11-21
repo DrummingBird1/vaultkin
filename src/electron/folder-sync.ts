@@ -13,7 +13,7 @@ import * as fs from "fs";
 import * as path from "path";
 import { createHash } from "crypto";
 
-export const FILE_NAME = "SecureVault.svault";
+export const FILE_NAME = "Vaultkin.svault";
 const MAX_BYTES = 64 * 1024 * 1024;
 
 interface Config {

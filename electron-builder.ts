@@ -33,7 +33,7 @@ import * as path from "path";
  * in src/electron/main.ts's BrowserWindow (contextIsolation/sandbox/
  * nodeIntegration: false). Fuses close off attack surface that exists
  * *before* any of that renderer-level config even runs:
- *   - runAsNode: without this off, `ELECTRON_RUN_AS_NODE=1 ./SecureVault ...`
+ *   - runAsNode: without this off, `ELECTRON_RUN_AS_NODE=1 ./Vaultkin ...`
  *     turns the packaged binary into a generic Node interpreter — a
  *     well-known Electron abuse vector for LOLBIN-style attacks.
  *   - nodeCliInspectArguments / nodeOptionsEnvironmentVariable: without
@@ -58,7 +58,7 @@ async function hardenElectronFuses(context: AfterPackContext): Promise<void> {
   await flipFuses(electronBinaryPath, {
     version: FuseVersion.V1,
     // ON for now: the browser-extension native-messaging host
-    // (dist/electron/bridge-host.js) runs as `SecureVault.exe` with
+    // (dist/electron/bridge-host.js) runs as `Vaultkin.exe` with
     // ELECTRON_RUN_AS_NODE=1 (the GUI binary can't speak the stdio protocol).
     // Turning this off broke the extension in packaged builds. Release
     // blocker tracked in docs/RELEASE.md: ship a standalone host binary, then
@@ -74,9 +74,9 @@ async function hardenElectronFuses(context: AfterPackContext): Promise<void> {
 }
 
 const config: Configuration = {
-  appId: "com.securevault.app",
-  productName: "SecureVault",
-  copyright: "Copyright (c) SecureVault contributors",
+  appId: "com.vaultkin.app",
+  productName: "Vaultkin",
+  copyright: "Copyright (c) Vaultkin contributors",
 
   directories: {
     output: "release",
@@ -134,8 +134,8 @@ const config: Configuration = {
   // header comment for why auto-polling is deliberately not wired in).
   publish: {
     provider: "github",
-    owner: "securevault",
-    repo: "securevault",
+    owner: "vaultkin",
+    repo: "vaultkin",
   },
 };
 

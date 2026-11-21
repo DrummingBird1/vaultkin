@@ -143,7 +143,7 @@ test("create() and get() return real PublicKeyCredential objects; null falls bac
   expect(res.json).toMatchObject({ type: "public-key", response: { publicKeyAlgorithm: -7 } });
   expect(res).toMatchObject({ getIsPKC: true, isAsr: true, userHandle: "user" });
   expect(res.sigLen).toBeGreaterThan(64);
-  expect(res.fallback).toBe("native-get"); // SecureVault returned null → browser handles it
+  expect(res.fallback).toBe("native-get"); // Vaultkin returned null → browser handles it
   expect(res.conditional).toBe("native-get"); // conditional mediation is never intercepted
   expect(res.notPasskey).toBe("native-create");
 });

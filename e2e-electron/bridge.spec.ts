@@ -1,6 +1,6 @@
 /**
  * Electron E2E for the extension bridge (ADR 0007), without a real browser:
- * the test spawns the relay exactly as Chrome would (SecureVault executable +
+ * the test spawns the relay exactly as Chrome would (Vaultkin executable +
  * extension origin argument, native-messaging stdio framing) and plays the
  * extension's side with the same protocol code the extension bundles.
  */

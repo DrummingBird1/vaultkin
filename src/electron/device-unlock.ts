@@ -121,7 +121,7 @@ export async function load(salt: string): Promise<string | null> {
   if (!s || s.salt !== salt || !keystoreAvailable()) return null;
   if (process.platform === "darwin" && systemPreferences.canPromptTouchID()) {
     try {
-      await systemPreferences.promptTouchID("unlock SecureVault");
+      await systemPreferences.promptTouchID("unlock Vaultkin");
     } catch {
       return null;
     }
