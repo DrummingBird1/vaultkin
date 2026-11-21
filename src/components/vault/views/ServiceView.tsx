@@ -47,7 +47,7 @@ export function ServiceView({
               {open ? (
                 <IconChevronDown className="w-4 h-4 text-(--text-tertiary) shrink-0" />
               ) : (
-                <IconChevronRight className="w-4 h-4 text-(--text-tertiary) shrink-0 rtl:-scale-x-100" />
+                <IconChevronRight className="w-4 h-4 text-(--text-tertiary) shrink-0" />
               )}
               <EntryFavicon
                 title={group.key}

@@ -2,6 +2,7 @@
  * @file src/components/vault/EntryDetail.tsx
  * Right-hand detail panel for the selected entry.
  */
+import { useTranslation } from "react-i18next";
 import React, { useState, useCallback, useEffect, useRef } from "react";
 import { useVaultStore } from "../../store/vault.store";
 import { useUIStore } from "../../store/ui.store";
@@ -23,6 +24,7 @@ export function EntryDetail({
   onDelete: () => void;
   onClose: () => void;
 }) {
+  const { t } = useTranslation();
   const [showPw, setShowPw] = useState(false);
   const [secondsLeft, setSecondsLeft] = useState(0);
   const [showHistory, setShowHistory] = useState(false);
@@ -46,7 +48,7 @@ export function EntryDetail({
       tags: v.tags,
       customFields: v.customFields,
     });
-    toastSuccess("Version restored", "Reverted to the selected previous version.");
+    toastSuccess(t("entryDetail.restored"), t("entryDetail.restoredBody"));
     setShowHistory(false);
   };
 
@@ -87,7 +89,11 @@ export function EntryDetail({
 
   const copyField = async (value: string, label: string) => {
     const ok = await ClipboardService.copy(value, label);
-    if (ok) toastSuccess(`${label} copied`, `Clears in ${ClipboardService.getRemainingSeconds()}s`);
+    if (ok)
+      toastSuccess(
+        t("entryDetail.copied", { label }),
+        t("entryDetail.clearsIn", { seconds: ClipboardService.getRemainingSeconds() }),
+      );
   };
 
   return (
@@ -110,14 +116,14 @@ export function EntryDetail({
         <div className="flex items-center gap-1 shrink-0">
           <button
             onClick={onEdit}
-            aria-label="Edit entry"
+            aria-label={t("entry.edit")}
             className="p-1.5 rounded-lg text-(--text-tertiary) hover:text-(--accent) hover:bg-(--accent-dim) transition-colors text-xs"
           >
-            Edit
+            {t("entryDetail.edit")}
           </button>
           <button
             onClick={onClose}
-            aria-label="Close entry details"
+            aria-label={t("entryDetail.close")}
             className="p-1.5 rounded-lg text-(--text-tertiary) hover:text-(--text-primary) transition-colors"
           >
             <IconClose />
@@ -130,7 +136,7 @@ export function EntryDetail({
         {entry.url && (
           <div>
             <label className="text-xs font-medium text-(--text-tertiary) uppercase tracking-wider">
-              URL
+              {t("entryDetail.url")}
             </label>
             <div className="flex items-center gap-2 mt-1">
               <a
@@ -142,11 +148,11 @@ export function EntryDetail({
                 {entry.url}
               </a>
               <button
-                onClick={() => copyField(entry.url!, "URL")}
-                aria-label="Copy URL"
+                onClick={() => copyField(entry.url!, t("entryDetail.url"))}
+                aria-label={t("entryDetail.copyUrl")}
                 className="text-(--text-tertiary) hover:text-(--accent) transition-colors text-xs shrink-0"
               >
-                Copy
+                {t("entryDetail.copy")}
               </button>
             </div>
           </div>
@@ -156,18 +162,18 @@ export function EntryDetail({
         {entry.username && (
           <div>
             <label className="text-xs font-medium text-(--text-tertiary) uppercase tracking-wider">
-              Username
+              {t("entryDetail.username")}
             </label>
             <div className="flex items-center gap-2 mt-1">
               <span className="text-sm text-(--text-primary) flex-1 truncate">
                 {entry.username}
               </span>
               <button
-                onClick={() => copyField(entry.username!, "Username")}
-                aria-label="Copy username"
+                onClick={() => copyField(entry.username!, t("entryDetail.username"))}
+                aria-label={t("entryDetail.copyUsername")}
                 className="text-(--text-tertiary) hover:text-(--accent) transition-colors text-xs"
               >
-                Copy
+                {t("entryDetail.copy")}
               </button>
             </div>
           </div>
@@ -177,7 +183,7 @@ export function EntryDetail({
         {entry.password && (
           <div>
             <label className="text-xs font-medium text-(--text-tertiary) uppercase tracking-wider">
-              Password
+              {t("entryDetail.password")}
             </label>
             <div className="flex items-center gap-2 mt-1">
               <span className="text-sm font-mono text-(--text-primary) flex-1">
@@ -185,17 +191,17 @@ export function EntryDetail({
               </span>
               <button
                 onClick={togglePw}
-                aria-label={showPw ? "Hide password" : "Show password"}
+                aria-label={showPw ? t("unlock.hidePassword") : t("unlock.showPassword")}
                 className="text-(--text-tertiary) hover:text-(--text-secondary) transition-colors text-xs"
               >
-                {showPw ? `Hide (${secondsLeft}s)` : "Show"}
+                {showPw ? t("entryDetail.hideIn", { seconds: secondsLeft }) : t("entryDetail.show")}
               </button>
               <button
-                onClick={() => copyField(entry.password!, "Password")}
-                aria-label="Copy password"
+                onClick={() => copyField(entry.password!, t("entryDetail.password"))}
+                aria-label={t("entryDetail.copyPassword")}
                 className="text-(--text-tertiary) hover:text-(--accent) transition-colors text-xs"
               >
-                Copy
+                {t("entryDetail.copy")}
               </button>
             </div>
           </div>
@@ -205,7 +211,7 @@ export function EntryDetail({
         {entry.notes && (
           <div>
             <label className="text-xs font-medium text-(--text-tertiary) uppercase tracking-wider">
-              Notes
+              {t("entryDetail.notes")}
             </label>
             <p className="text-sm text-(--text-secondary) mt-1 whitespace-pre-wrap leading-relaxed">
               {entry.notes}
@@ -216,10 +222,10 @@ export function EntryDetail({
         {/* TOTP badge */}
         {entry.totpSecret && (
           <div className="p-3 bg-(--accent-dim) border border-(--accent)/20 rounded-xl">
-            <p className="text-xs font-medium text-(--accent) mb-1">2FA Enabled</p>
-            <p className="text-xs text-(--text-tertiary)">
-              TOTP code available in Authenticator tab
+            <p className="text-xs font-medium text-(--accent) mb-1">
+              {t("entryDetail.twoFactorEnabled")}
             </p>
+            <p className="text-xs text-(--text-tertiary)">{t("entryDetail.totpHint")}</p>
           </div>
         )}
 
@@ -227,7 +233,7 @@ export function EntryDetail({
         {entry.tags.length > 0 && (
           <div>
             <label className="text-xs font-medium text-(--text-tertiary) uppercase tracking-wider">
-              Tags
+              {t("entryDetail.tags")}
             </label>
             <div className="flex flex-wrap gap-1.5 mt-1.5">
               {entry.tags.map((tag) => (
@@ -246,7 +252,7 @@ export function EntryDetail({
         {entry.customFields?.length > 0 && (
           <div>
             <label className="text-xs font-medium text-(--text-tertiary) uppercase tracking-wider">
-              Custom Fields
+              {t("entryDetail.customFields")}
             </label>
             <div className="mt-1.5 flex flex-col gap-2">
               {entry.customFields.map((f) => (
@@ -264,7 +270,7 @@ export function EntryDetail({
                     onClick={() => copyField(f.value, f.label)}
                     className="text-(--text-tertiary) hover:text-(--accent) text-xs"
                   >
-                    Copy
+                    {t("entryDetail.copy")}
                   </button>
                 </div>
               ))}
@@ -279,7 +285,8 @@ export function EntryDetail({
               onClick={() => setShowHistory((v) => !v)}
               className="text-xs font-medium text-(--text-tertiary) uppercase tracking-wider hover:text-(--accent) transition-colors"
             >
-              {showHistory ? "▾" : "▸"} Previous versions ({versions.length})
+              <span className="inline-block rtl:-scale-x-100">{showHistory ? "▾" : "▸"}</span>{" "}
+              {t("entryDetail.previousVersions", { count: versions.length })}
             </button>
             {showHistory && (
               <div className="mt-2 flex flex-col gap-1.5">
@@ -291,14 +298,16 @@ export function EntryDetail({
                     <div className="flex-1 min-w-0">
                       <p className="text-xs text-(--text-secondary) truncate">{v.title}</p>
                       <p className="text-[11px] text-(--text-tertiary)">
-                        {v.updatedAt ? new Date(v.updatedAt).toLocaleString() : "earlier version"}
+                        {v.updatedAt
+                          ? new Date(v.updatedAt).toLocaleString()
+                          : t("entryDetail.earlierVersion")}
                       </p>
                     </div>
                     <button
                       onClick={() => restoreVersion(v)}
                       className="text-(--accent) hover:underline text-xs shrink-0"
                     >
-                      Restore
+                      {t("entryDetail.restore")}
                     </button>
                   </div>
                 ))}
@@ -314,7 +323,7 @@ export function EntryDetail({
           onClick={onDelete}
           className="w-full text-sm text-(--danger) hover:bg-(--danger-dim) py-2 rounded-xl transition-colors"
         >
-          Delete Entry
+          {t("entryDetail.delete")}
         </button>
       </div>
     </div>

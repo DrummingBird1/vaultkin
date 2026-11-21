@@ -2,6 +2,7 @@
  * @file src/components/vault/EntryRow.tsx
  * List-view entry row.
  */
+import { useTranslation } from "react-i18next";
 import React from "react";
 import { IconStar } from "../icons";
 import { Highlight } from "./Highlight";
@@ -15,6 +16,7 @@ export const EntryRow = React.memo(function EntryRow({
   onClick,
   onFavorite,
 }: EntryItemProps) {
+  const { t } = useTranslation();
   return (
     <div
       onClick={onClick}
@@ -40,7 +42,7 @@ export const EntryRow = React.memo(function EntryRow({
       </div>
       {entry.totpSecret && (
         <span className="text-[10px] bg-(--accent-dim) text-(--accent) px-1.5 py-0.5 rounded-full border border-(--accent)/20">
-          2FA
+          {t("entryCard.twoFactor")}
         </span>
       )}
       <button
@@ -48,7 +50,7 @@ export const EntryRow = React.memo(function EntryRow({
           e.stopPropagation();
           onFavorite();
         }}
-        aria-label={entry.favorite ? "Remove from favorites" : "Add to favorites"}
+        aria-label={entry.favorite ? t("entry.favoriteRemove") : t("entry.favoriteAdd")}
         aria-pressed={entry.favorite}
         className={
           entry.favorite ? "text-amber-400" : "text-(--text-tertiary) hover:text-amber-400"

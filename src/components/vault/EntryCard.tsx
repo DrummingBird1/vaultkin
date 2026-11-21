@@ -2,6 +2,7 @@
  * @file src/components/vault/EntryCard.tsx
  * Grid-view entry tile.
  */
+import { useTranslation } from "react-i18next";
 import React from "react";
 import { IconStar } from "../icons";
 import { Highlight } from "./Highlight";
@@ -15,6 +16,7 @@ export const EntryCard = React.memo(function EntryCard({
   onClick,
   onFavorite,
 }: EntryItemProps) {
+  const { t } = useTranslation();
   return (
     <div
       onClick={onClick}
@@ -36,7 +38,7 @@ export const EntryCard = React.memo(function EntryCard({
             e.stopPropagation();
             onFavorite();
           }}
-          aria-label={entry.favorite ? "Remove from favorites" : "Add to favorites"}
+          aria-label={entry.favorite ? t("entry.favoriteRemove") : t("entry.favoriteAdd")}
           aria-pressed={entry.favorite}
           className={`opacity-0 group-hover:opacity-100 p-1 rounded-lg transition-all ${entry.favorite ? "opacity-100 text-amber-400" : "text-(--text-tertiary) hover:text-amber-400"}`}
         >
@@ -53,7 +55,7 @@ export const EntryCard = React.memo(function EntryCard({
       </div>
       {entry.totpSecret && (
         <span className="self-start text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-(--accent-dim) text-(--accent) border border-(--accent)/20">
-          2FA
+          {t("entryCard.twoFactor")}
         </span>
       )}
     </div>

@@ -6,8 +6,10 @@ import React, { useState, useEffect } from "react";
 import { generatePassword } from "../core/password/generator";
 import { analyzeStrength } from "../core/password/strength";
 import { useQuickCopy } from "../hooks/useQuickCopy";
+import { useTranslation } from "react-i18next";
 
 export function GeneratorPage() {
+  const { t } = useTranslation();
   const [length, setLength] = useState(20);
   const [uppercase, setUppercase] = useState(true);
   const [lowercase, setLowercase] = useState(true);
@@ -32,15 +34,11 @@ export function GeneratorPage() {
 
   return (
     <div className="p-8 max-w-2xl mx-auto">
-      <h1 className="text-2xl font-display font-medium mb-6">Password Generator</h1>
+      <h1 className="text-2xl font-display font-medium mb-6">{t("generator.title")}</h1>
 
       <div className="sv-card mb-5">
         <div className="bg-(--bg-elevated) rounded-xl p-5 mb-4 break-all font-mono text-lg text-center min-h-[60px] flex items-center justify-center">
-          {pw || (
-            <span className="text-(--text-tertiary) text-sm">
-              Select at least one character class
-            </span>
-          )}
+          {pw || <span className="text-(--text-tertiary) text-sm">{t("generator.noClasses")}</span>}
         </div>
         {strength && (
           <div className="flex gap-0.5 mb-3">
@@ -56,29 +54,29 @@ export function GeneratorPage() {
           </div>
         )}
         <div className="flex justify-between text-xs text-(--text-tertiary) mb-4">
-          <span>{strength?.label}</span>
+          <span>{strength ? t(`entry.strength.${strength.score}`) : ""}</span>
           <span>
             {strength
-              ? `${Math.round(strength.effectiveEntropy)} bits · ${strength.crackTimeDisplay}`
+              ? `${t("entry.strength.bits", { bits: Math.round(strength.effectiveEntropy) })} · ${strength.crackTimeDisplay}`
               : ""}
           </span>
         </div>
         <div className="flex gap-2">
           <button onClick={regenerate} className="sv-btn-primary flex-1">
-            Regenerate
+            {t("generator.regenerate")}
           </button>
           <button
-            onClick={() => pw && copy(pw, "Password")}
+            onClick={() => pw && copy(pw, t("generator.passwordLabel"))}
             className="sv-btn-secondary flex-1"
             disabled={!pw}
           >
-            Copy
+            {t("generator.copy")}
           </button>
         </div>
       </div>
 
       <div className="sv-card">
-        <label className="sv-label">Length: {length}</label>
+        <label className="sv-label">{t("generator.length", { length })}</label>
         <input
           type="range"
           min={4}
@@ -89,12 +87,12 @@ export function GeneratorPage() {
         />
 
         <div className="grid grid-cols-2 gap-3 text-sm">
-          <Check label="Uppercase (A-Z)" value={uppercase} onChange={setUppercase} />
-          <Check label="Lowercase (a-z)" value={lowercase} onChange={setLowercase} />
-          <Check label="Digits (0-9)" value={digits} onChange={setDigits} />
-          <Check label="Symbols (!@#…)" value={symbols} onChange={setSymbols} />
+          <Check label={t("generator.uppercase")} value={uppercase} onChange={setUppercase} />
+          <Check label={t("generator.lowercase")} value={lowercase} onChange={setLowercase} />
+          <Check label={t("generator.digits")} value={digits} onChange={setDigits} />
+          <Check label={t("generator.symbols")} value={symbols} onChange={setSymbols} />
           <Check
-            label="Exclude ambiguous (0/O, 1/l)"
+            label={t("generator.excludeAmbiguous")}
             value={excludeAmbiguous}
             onChange={setExcludeAmbiguous}
           />

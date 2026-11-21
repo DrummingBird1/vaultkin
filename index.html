@@ -18,13 +18,8 @@
     <!-- Security: no-referrer, no-sniff enforced via HTTP headers (see main.ts + vite.config.ts) -->
     <meta name="referrer" content="no-referrer" />
 
-    <!-- Fonts (preconnect for performance) -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin="" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" />
-    <link
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,400&family=Outfit:wght@300;400;500;600;700&display=swap"
-    />
+    <!-- Fonts are bundled (@fontsource, see src/main.tsx): no request to a
+         third-party font CDN, works offline and under a strict CSP. -->
 
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />

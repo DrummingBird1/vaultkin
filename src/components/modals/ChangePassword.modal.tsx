@@ -3,6 +3,7 @@
  * Re-encrypt vault with a new master password.
  */
 import React, { useState, useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import { useSessionStore } from "../../store/session.store";
 import { useVaultStore } from "../../store/vault.store";
 import { useUIStore } from "../../store/ui.store";
@@ -17,6 +18,7 @@ interface Props {
 }
 
 export function ChangePasswordModal({ onClose }: Props) {
+  const { t } = useTranslation();
   const { sessionKeys, unlock, autoLockMs } = useSessionStore();
   const { vault } = useVaultStore();
   const { toastSuccess } = useUIStore();
@@ -32,15 +34,17 @@ export function ChangePasswordModal({ onClose }: Props) {
 
   const strength = analyzeStrength(newPw);
   const SC = ["#ef4444", "#f97316", "#eab308", "#22c55e", "#10b981"];
-  const SL = ["Very Weak", "Weak", "Fair", "Strong", "Very Strong"];
 
   const handleChange = useCallback(async () => {
     const e: Record<string, string> = {};
-    if (!current) e.current = "Current password required.";
-    if (!newPw) e.newPw = "New password required.";
-    else if (strength.score < 3) e.newPw = `Too weak (${SL[strength.score]}).`;
-    if (newPw !== confirmPw) e.confirm = "Passwords do not match.";
-    if (current === newPw) e.newPw = "Must differ from current.";
+    if (!current) e.current = t("changePassword.errors.currentRequired");
+    if (!newPw) e.newPw = t("changePassword.errors.newRequired");
+    else if (strength.score < 3)
+      e.newPw = t("changePassword.errors.tooWeak", {
+        strength: t(`entry.strength.${strength.score}`),
+      });
+    if (newPw !== confirmPw) e.confirm = t("changePassword.errors.mismatch");
+    if (current === newPw) e.newPw = t("changePassword.errors.sameAsCurrent");
     setErrors(e);
     if (Object.keys(e).length > 0) return;
 
@@ -64,7 +68,7 @@ export function ChangePasswordModal({ onClose }: Props) {
       // would become undecryptable.
       unlock(newKeys, autoLockMs);
       setProgress(100);
-      toastSuccess("Password changed", "Vault re-encrypted with your new password.");
+      toastSuccess(t("changePassword.toast"), t("changePassword.toastBody"));
       // Drop the plaintext passwords from React state as soon as we're done.
       // The browser may still hold them on the JS heap until GC, but this
       // minimizes their lifetime and removes them from React DevTools.
@@ -74,27 +78,28 @@ export function ChangePasswordModal({ onClose }: Props) {
       setStep("done");
     } catch (err: unknown) {
       if (err instanceof WrongPasswordError) {
-        setErrors({ current: "Incorrect current password." });
+        setErrors({ current: t("changePassword.errors.incorrectCurrent") });
       } else {
         const msg = err instanceof Error ? err.message : String(err);
-        setErrors({ global: `Failed: ${msg}` });
+        setErrors({ global: t("changePassword.errors.failed", { message: msg }) });
       }
       setStep("form");
       setProgress(0);
     }
-  }, [current, newPw, confirmPw, strength, vault, sessionKeys, toastSuccess]);
+  }, [current, newPw, confirmPw, strength, vault, sessionKeys, toastSuccess, t]);
 
   return (
     <Modal
       onClose={onClose}
       dismissable={step !== "working"}
       className="max-w-sm"
-      label="Change master password"
+      label={t("changePassword.label")}
     >
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-lg font-semibold text-(--text-primary)">Change Master Password</h2>
+        <h2 className="text-lg font-semibold text-(--text-primary)">{t("changePassword.title")}</h2>
         <button
           onClick={onClose}
+          aria-label={t("changePassword.close")}
           className="text-(--text-tertiary) hover:text-(--text-primary) p-1 rounded-lg"
         >
           ✕
@@ -109,7 +114,7 @@ export function ChangePasswordModal({ onClose }: Props) {
             </div>
           )}
           <div>
-            <label className="sv-label">Current Password</label>
+            <label className="sv-label">{t("changePassword.current")}</label>
             <div className="relative">
               <input
                 className={`sv-input w-full pe-10 font-mono ${errors.current ? "border-(--danger)" : ""}`}
@@ -122,6 +127,7 @@ export function ChangePasswordModal({ onClose }: Props) {
                 type="button"
                 className="absolute end-3 top-1/2 -translate-y-1/2 text-(--text-tertiary)"
                 onClick={() => setShowCur((v) => !v)}
+                aria-label={showCur ? t("unlock.hidePassword") : t("unlock.showPassword")}
               >
                 {showCur ? "🙈" : "👁️"}
               </button>
@@ -129,7 +135,7 @@ export function ChangePasswordModal({ onClose }: Props) {
             {errors.current && <p className="sv-error">{errors.current}</p>}
           </div>
           <div>
-            <label className="sv-label">New Password</label>
+            <label className="sv-label">{t("changePassword.new")}</label>
             <div className="relative">
               <input
                 className={`sv-input w-full pe-10 font-mono ${errors.newPw ? "border-(--danger)" : ""}`}
@@ -142,6 +148,7 @@ export function ChangePasswordModal({ onClose }: Props) {
                 type="button"
                 className="absolute end-3 top-1/2 -translate-y-1/2 text-(--text-tertiary)"
                 onClick={() => setShowNew((v) => !v)}
+                aria-label={showNew ? t("unlock.hidePassword") : t("unlock.showPassword")}
               >
                 {showNew ? "🙈" : "👁️"}
               </button>
@@ -162,7 +169,7 @@ export function ChangePasswordModal({ onClose }: Props) {
             )}
           </div>
           <div>
-            <label className="sv-label">Confirm New Password</label>
+            <label className="sv-label">{t("changePassword.confirm")}</label>
             <input
               className={`sv-input w-full font-mono ${errors.confirm ? "border-(--danger)" : ""}`}
               type="password"
@@ -174,10 +181,10 @@ export function ChangePasswordModal({ onClose }: Props) {
           </div>
           <div className="flex justify-end gap-3 mt-2">
             <button onClick={onClose} className="sv-btn-secondary px-5">
-              Cancel
+              {t("changePassword.cancel")}
             </button>
             <button onClick={handleChange} className="sv-btn-primary px-5">
-              Change Password
+              {t("changePassword.submit")}
             </button>
           </div>
         </div>
@@ -195,7 +202,9 @@ export function ChangePasswordModal({ onClose }: Props) {
                 style={{ width: `${progress}%` }}
               />
             </div>
-            <p className="text-xs text-(--text-tertiary) text-center mt-2">Re-encrypting vault…</p>
+            <p className="text-xs text-(--text-tertiary) text-center mt-2">
+              {t("changePassword.working")}
+            </p>
           </div>
         </div>
       )}
@@ -205,9 +214,9 @@ export function ChangePasswordModal({ onClose }: Props) {
           <div className="w-14 h-14 rounded-full bg-(--success-dim) flex items-center justify-center text-3xl">
             ✅
           </div>
-          <h3 className="font-semibold text-(--text-primary)">Password Changed</h3>
+          <h3 className="font-semibold text-(--text-primary)">{t("changePassword.done")}</h3>
           <button onClick={onClose} className="sv-btn-primary px-8">
-            Done
+            {t("changePassword.close")}
           </button>
         </div>
       )}

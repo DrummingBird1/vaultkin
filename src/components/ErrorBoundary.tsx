@@ -4,6 +4,7 @@
  * screen when any child throws during render.
  */
 import React from "react";
+import i18n from "../i18n";
 
 interface State {
   error: Error | null;
@@ -34,19 +35,19 @@ export class ErrorBoundary extends React.Component<{ children: React.ReactNode }
       <div className="min-h-screen flex items-center justify-center p-6 bg-(--bg-base)">
         <div className="max-w-md sv-card text-center">
           <div className="text-4xl mb-3">⚠️</div>
-          <h2 className="text-xl font-semibold text-(--text-primary) mb-2">Something went wrong</h2>
-          <p className="text-sm text-(--text-secondary) mb-4">
-            SecureVault hit an unexpected error. Your vault is encrypted on disk — nothing was lost.
-          </p>
+          <h2 className="text-xl font-semibold text-(--text-primary) mb-2">
+            {i18n.t("errorBoundary.title")}
+          </h2>
+          <p className="text-sm text-(--text-secondary) mb-4">{i18n.t("errorBoundary.body")}</p>
           <pre className="text-[11px] text-start text-(--text-tertiary) bg-(--bg-elevated) p-3 rounded-lg mb-4 overflow-auto max-h-32">
             {this.state.error.message}
           </pre>
           <div className="flex gap-3 justify-center">
             <button onClick={this.reset} className="sv-btn-secondary px-4">
-              Try again
+              {i18n.t("errorBoundary.retry")}
             </button>
             <button onClick={this.reload} className="sv-btn-primary   px-4">
-              Reload
+              {i18n.t("errorBoundary.reload")}
             </button>
           </div>
         </div>

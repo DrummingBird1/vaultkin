@@ -6,6 +6,7 @@
  * cascades to descendants (vault.store.ts's deleteFolder), never deletes
  * entries — they're just unfiled.
  */
+import { useTranslation } from "react-i18next";
 import React, { useState, useMemo } from "react";
 import { useVaultStore } from "../../store/vault.store";
 import { IconFolder, IconFolderPlus, IconTrash, IconChevronRight, IconChevronDown } from "../icons";
@@ -49,6 +50,7 @@ function FolderNode({
   onDelete: (id: string, name: string) => void;
   onAddSubfolder: (parentId: string) => void;
 }) {
+  const { t } = useTranslation();
   const [expanded, setExpanded] = useState(true);
   const hasChildren = node.children.length > 0;
   const active = activeFolderId === node.folder.id;
@@ -61,12 +63,12 @@ function FolderNode({
             ? "bg-(--accent-dim) text-(--accent)"
             : "text-(--text-secondary) hover:bg-(--bg-elevated)"
         }`}
-        style={{ paddingLeft: depth * INDENT_PX + 8 }}
+        style={{ paddingInlineStart: depth * INDENT_PX + 8 }}
         onClick={() => onSelect(node.folder.id)}
       >
         <button
           type="button"
-          aria-label={expanded ? "Collapse" : "Expand"}
+          aria-label={expanded ? t("folders.collapse") : t("folders.expand")}
           onClick={(e) => {
             e.stopPropagation();
             setExpanded((v) => !v);
@@ -76,14 +78,14 @@ function FolderNode({
           {expanded ? (
             <IconChevronDown className="w-3.5 h-3.5" />
           ) : (
-            <IconChevronRight className="w-3.5 h-3.5" />
+            <IconChevronRight className="w-3.5 h-3.5 rtl:-scale-x-100" />
           )}
         </button>
         <IconFolder className="w-4 h-4 shrink-0" />
         <span className="flex-1 truncate">{node.folder.name}</span>
         <button
           type="button"
-          aria-label={`New subfolder in ${node.folder.name}`}
+          aria-label={t("folders.newSubfolderIn", { name: node.folder.name })}
           onClick={(e) => {
             e.stopPropagation();
             onAddSubfolder(node.folder.id);
@@ -94,7 +96,7 @@ function FolderNode({
         </button>
         <button
           type="button"
-          aria-label={`Delete folder ${node.folder.name}`}
+          aria-label={t("folders.deleteFolder", { name: node.folder.name })}
           onClick={(e) => {
             e.stopPropagation();
             onDelete(node.folder.id, node.folder.name);
@@ -121,6 +123,7 @@ function FolderNode({
 }
 
 export function FolderSidebar() {
+  const { t } = useTranslation();
   const { vault, searchQuery, setSearchQuery, addFolder, deleteFolder } = useVaultStore();
   const folders = vault?.folders ?? [];
   const tree = useMemo(() => buildTree(folders), [folders]);
@@ -131,16 +134,14 @@ export function FolderSidebar() {
   };
 
   const handleAddSubfolder = (parentId?: string) => {
-    const name = window.prompt(parentId ? "New subfolder name" : "New folder name");
+    const name = window.prompt(
+      parentId ? t("folders.newSubfolderName") : t("folders.newFolderName"),
+    );
     if (name?.trim()) addFolder(name.trim(), undefined, parentId);
   };
 
   const handleDelete = (id: string, name: string) => {
-    if (
-      window.confirm(
-        `Delete "${name}"? Subfolders are deleted too. Entries inside are kept, just unfiled.`,
-      )
-    ) {
+    if (window.confirm(t("folders.deleteConfirm", { name }))) {
       deleteFolder(id);
     }
   };
@@ -149,11 +150,11 @@ export function FolderSidebar() {
     <aside className="w-52 shrink-0 border-e border-(--border-subtle) p-3 flex flex-col gap-1 overflow-y-auto">
       <div className="flex items-center justify-between px-1 mb-1">
         <span className="text-xs font-medium uppercase tracking-wider text-(--text-tertiary)">
-          Folders
+          {t("folders.title")}
         </span>
         <button
           type="button"
-          aria-label="New folder"
+          aria-label={t("folders.newFolder")}
           onClick={() => handleAddSubfolder(undefined)}
           className="text-(--text-tertiary) hover:text-(--accent)"
         >
@@ -168,7 +169,7 @@ export function FolderSidebar() {
         }`}
         onClick={() => setSearchQuery({ folderId: undefined })}
       >
-        All items
+        {t("folders.allItems")}
       </button>
       {tree.map((node) => (
         <FolderNode

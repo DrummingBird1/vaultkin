@@ -11,6 +11,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import qrcode from "qrcode-generator";
 import { IPCService } from "../../services/ipc.service";
 import { Modal } from "../ui/Modal";
+import { useTranslation } from "react-i18next";
 
 interface Props {
   onClose: () => void;
@@ -19,6 +20,7 @@ interface Props {
 const CHUNK_SIZE = 700; // bytes of payload per QR (kept well under v40 capacity)
 
 export function VaultBackupQRModal({ onClose }: Props) {
+  const { t } = useTranslation();
   const [payload, setPayload] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [page, setPage] = useState(0);
@@ -28,10 +30,10 @@ export function VaultBackupQRModal({ onClose }: Props) {
       .load()
       .then((p) => {
         if (p) setPayload(p);
-        else setError("No vault found to back up.");
+        else setError(t("backupQr.noVault"));
       })
-      .catch(() => setError("Failed to read the vault."));
-  }, []);
+      .catch(() => setError(t("backupQr.readFailed")));
+  }, [t]);
 
   useEffect(() => {
     const h = (e: KeyboardEvent) => {
@@ -62,10 +64,10 @@ export function VaultBackupQRModal({ onClose }: Props) {
   }, [chunks, page]);
 
   return (
-    <Modal onClose={onClose} className="max-w-md" label="Vault QR backup">
+    <Modal onClose={onClose} className="max-w-md" label={t("backupQr.label")}>
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold text-(--text-primary)">QR Backup</h2>
-        <button onClick={onClose} aria-label="Close" className="sv-icon-btn">
+        <h2 className="text-lg font-semibold text-(--text-primary)">{t("backupQr.title")}</h2>
+        <button onClick={onClose} aria-label={t("entry.close")} className="sv-icon-btn">
           ✕
         </button>
       </div>
@@ -73,15 +75,13 @@ export function VaultBackupQRModal({ onClose }: Props) {
       {error && <p className="sv-error">{error}</p>}
 
       {!error && !payload && (
-        <p className="text-sm text-(--text-tertiary) text-center py-8">Loading vault…</p>
+        <p className="text-sm text-(--text-tertiary) text-center py-8">{t("backupQr.loading")}</p>
       )}
 
       {payload && chunks.length > 0 && (
         <>
           <p className="text-sm text-(--text-secondary) mb-4">
-            Scan all {chunks.length} code{chunks.length > 1 ? "s" : ""} in order to back up your
-            <strong> encrypted</strong> vault. They contain ciphertext only — your master password
-            is still required to open the result.
+            {t("backupQr.instructions", { count: chunks.length })}
           </p>
           <div
             className="bg-white rounded-xl p-4 flex items-center justify-center mb-4"
@@ -93,7 +93,7 @@ export function VaultBackupQRModal({ onClose }: Props) {
               disabled={page === 0}
               className="sv-btn-secondary px-4 disabled:opacity-40"
             >
-              ← Prev
+              {t("backupQr.prev")}
             </button>
             <span className="text-sm text-(--text-tertiary) tabular-nums">
               {page + 1} / {chunks.length}
@@ -103,7 +103,7 @@ export function VaultBackupQRModal({ onClose }: Props) {
               disabled={page === chunks.length - 1}
               className="sv-btn-secondary px-4 disabled:opacity-40"
             >
-              Next →
+              {t("backupQr.next")}
             </button>
           </div>
         </>

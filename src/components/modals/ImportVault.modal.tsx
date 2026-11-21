@@ -20,6 +20,7 @@ import { useUIStore } from "../../store/ui.store";
 import type { VaultEntry } from "../../core/vault/schema";
 import type { ImportResult } from "../../services/import-export.service";
 import { Modal } from "../ui/Modal";
+import { useTranslation } from "react-i18next";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -41,6 +42,7 @@ const FORMAT_LABELS: Record<string, string> = {
 // ─── ImportVaultModal ─────────────────────────────────────────────────────────
 
 export function ImportVaultModal({ onClose }: Props) {
+  const { t } = useTranslation();
   const { vault, addEntry, updateEntry } = useVaultStore();
   const { toastSuccess, toastError } = useUIStore();
 
@@ -60,7 +62,7 @@ export function ImportVaultModal({ onClose }: Props) {
   const processFile = useCallback(
     async (file: File) => {
       if (file.size > 50 * 1024 * 1024) {
-        toastError("File too large", "Import files must be under 50 MB.");
+        toastError(t("importVault.tooLarge"), t("importVault.tooLargeBody"));
         return;
       }
 
@@ -73,7 +75,7 @@ export function ImportVaultModal({ onClose }: Props) {
       setResult(parsed);
       setStep("preview");
     },
-    [toastError],
+    [toastError, t],
   );
 
   // ── Drop zone ──────────────────────────────────────────────────────────────
@@ -182,19 +184,21 @@ export function ImportVaultModal({ onClose }: Props) {
     setSkippedCount(skipped);
     setStep("done");
     toastSuccess(
-      "Import complete",
-      `${imported} entries imported${skipped > 0 ? `, ${skipped} skipped` : ""}.`,
+      t("importVault.complete"),
+      skipped > 0
+        ? t("importVault.completeBodySkipped", { count: imported, skipped })
+        : t("importVault.completeBody", { count: imported }),
     );
-  }, [result, vault, conflictPolicy, addEntry, updateEntry, toastSuccess]);
+  }, [result, vault, conflictPolicy, addEntry, updateEntry, toastSuccess, t]);
 
   // ─────────────────────────────────────────────────────────────────────────
 
   return (
-    <Modal onClose={onClose} label="Import vault">
+    <Modal onClose={onClose} label={t("importVault.label")}>
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="text-lg font-semibold text-(--text-primary)">Import Vault</h2>
+          <h2 className="text-lg font-semibold text-(--text-primary)">{t("importVault.title")}</h2>
           <p className="text-xs text-(--text-tertiary) mt-0.5">
             Bitwarden · 1Password · LastPass · KeePass · CSV
           </p>
@@ -203,7 +207,7 @@ export function ImportVaultModal({ onClose }: Props) {
           type="button"
           onClick={onClose}
           className="text-(--text-tertiary) hover:text-(--text-primary) p-1 rounded-lg transition-colors"
-          aria-label="Close"
+          aria-label={t("entry.close")}
         >
           ✕
         </button>
@@ -227,10 +231,10 @@ export function ImportVaultModal({ onClose }: Props) {
             }`}
           >
             <div className="text-4xl mb-3">📂</div>
-            <p className="font-medium text-(--text-primary) mb-1">Drop your export file here</p>
-            <p className="text-sm text-(--text-tertiary) mb-5">or click to browse</p>
+            <p className="font-medium text-(--text-primary) mb-1">{t("importVault.drop")}</p>
+            <p className="text-sm text-(--text-tertiary) mb-5">{t("importVault.orBrowse")}</p>
             <label className="sv-btn-secondary text-sm cursor-pointer">
-              Browse File
+              {t("importVault.browse")}
               <input
                 type="file"
                 className="hidden"
@@ -247,7 +251,9 @@ export function ImportVaultModal({ onClose }: Props) {
                 className="flex items-center gap-2 p-3 bg-(--bg-elevated) rounded-xl border border-(--border-subtle)"
               >
                 <span className="w-2 h-2 rounded-full bg-(--accent)" />
-                <span className="text-sm text-(--text-secondary)">{label}</span>
+                <span className="text-sm text-(--text-secondary)">
+                  {fmt === "csv" ? t("importVault.genericCsv") : label}
+                </span>
               </div>
             ))}
           </div>
@@ -263,21 +269,23 @@ export function ImportVaultModal({ onClose }: Props) {
               <span className="text-2xl">📄</span>
               <div>
                 <p className="font-medium text-(--text-primary) text-sm">{fileName}</p>
-                <p className="text-xs text-(--text-tertiary)">Detected: {detectedFormat}</p>
+                <p className="text-xs text-(--text-tertiary)">
+                  {t("importVault.detected", { format: detectedFormat })}
+                </p>
               </div>
             </div>
             <div className="grid grid-cols-3 gap-3">
               <div className="text-center">
                 <p className="text-2xl font-bold text-(--text-primary)">{result.imported}</p>
-                <p className="text-xs text-(--text-tertiary)">Entries found</p>
+                <p className="text-xs text-(--text-tertiary)">{t("importVault.found")}</p>
               </div>
               <div className="text-center">
                 <p className="text-2xl font-bold text-(--warning)">{result.skipped}</p>
-                <p className="text-xs text-(--text-tertiary)">Skipped</p>
+                <p className="text-xs text-(--text-tertiary)">{t("importVault.skipped")}</p>
               </div>
               <div className="text-center">
                 <p className="text-2xl font-bold text-(--danger)">{result.errors.length}</p>
-                <p className="text-xs text-(--text-tertiary)">Errors</p>
+                <p className="text-xs text-(--text-tertiary)">{t("importVault.errors")}</p>
               </div>
             </div>
           </div>
@@ -305,7 +313,7 @@ export function ImportVaultModal({ onClose }: Props) {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-(--text-primary) truncate">
-                    {e.title ?? "Untitled"}
+                    {e.title ?? t("importVault.untitled")}
                   </p>
                   <p className="text-xs text-(--text-tertiary) truncate">
                     {e.username ?? e.url ?? ""}
@@ -320,28 +328,28 @@ export function ImportVaultModal({ onClose }: Props) {
             ))}
             {result.entries.length > 20 && (
               <p className="text-xs text-(--text-tertiary) text-center py-2">
-                + {result.entries.length - 20} more entries
+                {t("importVault.more", { count: result.entries.length - 20 })}
               </p>
             )}
           </div>
 
           {/* Conflict policy */}
           <div className="mb-5">
-            <label className="sv-label">Duplicate handling</label>
+            <label className="sv-label">{t("importVault.duplicates")}</label>
             <div className="flex flex-col gap-2">
               {(
                 [
-                  [
-                    "skip",
-                    "Skip duplicates",
-                    "Keep your existing entries for any title+username match.",
-                  ],
+                  ["skip", t("importVault.policy.skip"), t("importVault.policy.skipDesc")],
                   [
                     "overwrite",
-                    "Overwrite existing",
-                    "Replace existing entries with imported versions.",
+                    t("importVault.policy.overwrite"),
+                    t("importVault.policy.overwriteDesc"),
                   ],
-                  ["keep_both", "Keep both", "Import everything, even if duplicates exist."],
+                  [
+                    "keep_both",
+                    t("importVault.policy.keepBoth"),
+                    t("importVault.policy.keepBothDesc"),
+                  ],
                 ] as Array<[ConflictPolicy, string, string]>
               ).map(([val, label, desc]) => (
                 <label
@@ -375,11 +383,11 @@ export function ImportVaultModal({ onClose }: Props) {
               onClick={() => setStep("upload")}
               className="sv-btn-secondary px-4"
             >
-              ← Back
+              {t("importVault.back")}
             </button>
             <div className="flex gap-3">
               <button type="button" onClick={onClose} className="sv-btn-secondary px-4">
-                Cancel
+                {t("entry.cancel")}
               </button>
               <button
                 type="button"
@@ -387,7 +395,7 @@ export function ImportVaultModal({ onClose }: Props) {
                 className="sv-btn-primary px-5"
                 disabled={result.imported === 0}
               >
-                Import {result.imported} Entries
+                {t("importVault.importN", { count: result.imported })}
               </button>
             </div>
           </div>
@@ -407,7 +415,9 @@ export function ImportVaultModal({ onClose }: Props) {
                 style={{ width: `${progress}%` }}
               />
             </div>
-            <p className="text-sm text-(--text-tertiary) text-center mt-2">{progress}% complete</p>
+            <p className="text-sm text-(--text-tertiary) text-center mt-2">
+              {t("importVault.progress", { percent: progress })}
+            </p>
           </div>
         </div>
       )}
@@ -419,18 +429,22 @@ export function ImportVaultModal({ onClose }: Props) {
             ✅
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-(--text-primary)">Import Complete</h3>
+            <h3 className="text-lg font-semibold text-(--text-primary)">
+              {t("importVault.complete")}
+            </h3>
             <p className="text-(--text-tertiary) mt-1">
-              <span className="text-(--success) font-semibold">{importedCount}</span> entries added
+              <span className="text-(--success) font-semibold">{importedCount}</span>{" "}
+              {t("importVault.added", { count: importedCount })}
               {skippedCount > 0 && (
                 <>
-                  , <span className="text-(--warning) font-semibold">{skippedCount}</span> skipped
+                  , <span className="text-(--warning) font-semibold">{skippedCount}</span>{" "}
+                  {t("importVault.skippedSuffix", { count: skippedCount })}
                 </>
               )}
             </p>
           </div>
           <button type="button" onClick={onClose} className="sv-btn-primary px-8 mt-2">
-            Done
+            {t("importVault.done")}
           </button>
         </div>
       )}

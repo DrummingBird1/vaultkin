@@ -4,6 +4,7 @@
  * comma-separated text field — a native <datalist> can't autocomplete one
  * segment of a comma-separated string, only the whole field.
  */
+import { useTranslation } from "react-i18next";
 import React, { useState, useRef } from "react";
 import { IconClose } from "../icons";
 
@@ -16,6 +17,7 @@ export function TagInput({
   onChange: (tags: string[]) => void;
   suggestions?: string[];
 }) {
+  const { t } = useTranslation();
   const [draft, setDraft] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -61,7 +63,7 @@ export function TagInput({
             <button
               type="button"
               onClick={() => removeTag(tag)}
-              aria-label={`Remove tag ${tag}`}
+              aria-label={t("tagInput.remove", { tag })}
               className="hover:opacity-70"
             >
               <IconClose className="w-3 h-3" />
@@ -76,8 +78,8 @@ export function TagInput({
           onKeyDown={handleKeyDown}
           onFocus={() => setShowSuggestions(true)}
           onBlur={() => setShowSuggestions(false)}
-          aria-label="Tags"
-          placeholder={value.length === 0 ? "Add tags…" : ""}
+          aria-label={t("entry.tags")}
+          placeholder={value.length === 0 ? t("tagInput.placeholder") : ""}
           className="flex-1 min-w-[80px] bg-transparent outline-hidden text-sm text-(--text-primary) placeholder-(--text-tertiary)"
         />
       </div>

@@ -50,7 +50,7 @@ export function SecuritySection() {
         >
           {AUTO_LOCK_OPTIONS.map((o) => (
             <option key={o.value} value={o.value}>
-              {o.label}
+              {t(o.labelKey)}
             </option>
           ))}
         </select>

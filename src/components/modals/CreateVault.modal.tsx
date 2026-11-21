@@ -15,6 +15,7 @@
  */
 
 import React, { useState, useEffect, useRef } from "react";
+import { Trans, useTranslation } from "react-i18next";
 import { analyzeStrength } from "../../core/password/strength";
 import { generatePassword } from "../../core/password/generator";
 import { createVault } from "../../core/vault/serializer";
@@ -31,6 +32,7 @@ interface Props {
 const STRENGTH_MIN = 3; // "Strong" or better required
 
 export function CreateVaultModal({ onClose }: Props) {
+  const { t } = useTranslation();
   const { unlock } = useSessionStore();
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -49,9 +51,8 @@ export function CreateVaultModal({ onClose }: Props) {
 
   const strength = analyzeStrength(password);
   const strengthColors = ["#ef4444", "#f97316", "#eab308", "#22c55e", "#10b981"];
-  const strengthLabels = ["Very Weak", "Weak", "Fair", "Strong", "Very Strong"];
   const strengthColor = strengthColors[strength.score] ?? strengthColors[0];
-  const strengthLabel = strengthLabels[strength.score] ?? "";
+  const strengthLabel = t(`entry.strength.${strength.score}`, { defaultValue: "" });
 
   function handleGenerateSuggestion() {
     const pw = generatePassword({
@@ -72,19 +73,19 @@ export function CreateVaultModal({ onClose }: Props) {
     const errs: Record<string, string> = {};
 
     if (!password) {
-      errs.password = "Master password is required.";
+      errs.password = t("createVault.errors.passwordRequired");
     } else if (strength.score < STRENGTH_MIN) {
-      errs.password = `Password too weak (${strengthLabel}). Use at least 12 characters with mixed types.`;
+      errs.password = t("createVault.errors.tooWeak", { strength: strengthLabel });
     }
 
     if (!confirm) {
-      errs.confirm = "Please confirm your master password.";
+      errs.confirm = t("createVault.errors.confirmRequired");
     } else if (password !== confirm) {
-      errs.confirm = "Passwords do not match.";
+      errs.confirm = t("createVault.errors.mismatch");
     }
 
     if (hint && hint.toLowerCase().includes(password.toLowerCase())) {
-      errs.hint = "Hint must not contain your password.";
+      errs.hint = t("createVault.errors.hintContainsPassword");
     }
 
     setErrors(errs);
@@ -137,7 +138,7 @@ export function CreateVaultModal({ onClose }: Props) {
       setProgress(100);
       setStep("done");
     } catch (err: any) {
-      setErrors({ global: err?.message ?? "Failed to create vault. Please try again." });
+      setErrors({ global: err?.message ?? t("createVault.errors.failed") });
       setStep("password");
       setProgress(0);
     }
@@ -148,7 +149,7 @@ export function CreateVaultModal({ onClose }: Props) {
       onClose={onClose}
       dismissable={step !== "creating"}
       className="max-w-md"
-      label="Create vault"
+      label={t("createVault.label")}
     >
       {/* Header */}
       <div className="flex items-center gap-4 mb-8">
@@ -159,8 +160,8 @@ export function CreateVaultModal({ onClose }: Props) {
           🔐
         </div>
         <div>
-          <h2 className="text-xl font-bold text-(--text-primary)">Create Your Vault</h2>
-          <p className="text-sm text-(--text-tertiary)">Choose a strong master password</p>
+          <h2 className="text-xl font-bold text-(--text-primary)">{t("createVault.title")}</h2>
+          <p className="text-sm text-(--text-tertiary)">{t("createVault.subtitle")}</p>
         </div>
       </div>
 
@@ -176,13 +177,13 @@ export function CreateVaultModal({ onClose }: Props) {
           {/* Master password */}
           <div>
             <div className="flex justify-between mb-1.5">
-              <label className="sv-label mb-0">Master Password *</label>
+              <label className="sv-label mb-0">{t("createVault.passwordLabel")}</label>
               <button
                 type="button"
                 onClick={handleGenerateSuggestion}
                 className="text-xs text-(--accent) hover:underline font-medium"
               >
-                Suggest strong password
+                {t("createVault.suggest")}
               </button>
             </div>
             <div className="relative">
@@ -192,14 +193,15 @@ export function CreateVaultModal({ onClose }: Props) {
                 type={showPw ? "text" : "password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter master password"
+                placeholder={t("createVault.passwordPlaceholder")}
                 autoComplete="new-password"
-                aria-label="Master password"
+                aria-label={t("createVault.passwordAria")}
               />
               <button
                 type="button"
                 className="absolute end-3 top-1/2 -translate-y-1/2 text-(--text-tertiary) hover:text-(--text-secondary)"
                 onClick={() => setShowPw((v) => !v)}
+                aria-label={showPw ? t("unlock.hidePassword") : t("unlock.showPassword")}
               >
                 {showPw ? "🙈" : "👁️"}
               </button>
@@ -224,7 +226,7 @@ export function CreateVaultModal({ onClose }: Props) {
                     {strengthLabel}
                   </span>
                   <span className="text-xs text-(--text-tertiary)">
-                    {Math.round(strength.effectiveEntropy)} bits entropy
+                    {t("createVault.entropy", { bits: Math.round(strength.effectiveEntropy) })}
                   </span>
                 </div>
                 {strength.feedback.length > 0 && (
@@ -236,51 +238,52 @@ export function CreateVaultModal({ onClose }: Props) {
 
           {/* Confirm password */}
           <div>
-            <label className="sv-label">Confirm Master Password *</label>
+            <label className="sv-label">{t("createVault.confirmLabel")}</label>
             <div className="relative">
               <input
                 className={`sv-input w-full pe-10 font-mono ${errors.confirm ? "border-(--danger)" : ""}`}
                 type={showConfirm ? "text" : "password"}
                 value={confirm}
                 onChange={(e) => setConfirm(e.target.value)}
-                placeholder="Confirm master password"
+                placeholder={t("createVault.confirmPlaceholder")}
                 autoComplete="new-password"
-                aria-label="Confirm master password"
+                aria-label={t("createVault.confirmAria")}
               />
               <button
                 type="button"
                 className="absolute end-3 top-1/2 -translate-y-1/2 text-(--text-tertiary) hover:text-(--text-secondary)"
                 onClick={() => setShowConfirm((v) => !v)}
+                aria-label={showConfirm ? t("unlock.hidePassword") : t("unlock.showPassword")}
               >
                 {showConfirm ? "🙈" : "👁️"}
               </button>
             </div>
             {errors.confirm && <p className="sv-error">{errors.confirm}</p>}
             {confirm && password === confirm && !errors.confirm && (
-              <p className="text-xs text-(--success) mt-1">✓ Passwords match</p>
+              <p className="text-xs text-(--success) mt-1">{t("createVault.match")}</p>
             )}
           </div>
 
           {/* Hint */}
           <div>
-            <label className="sv-label">Password Hint (optional)</label>
+            <label className="sv-label">{t("createVault.hintLabel")}</label>
             <input
               className={`sv-input w-full ${errors.hint ? "border-(--danger)" : ""}`}
               value={hint}
               onChange={(e) => setHint(e.target.value)}
-              placeholder="A clue — never the password itself"
+              placeholder={t("createVault.hintPlaceholder")}
             />
             {errors.hint && <p className="sv-error">{errors.hint}</p>}
-            <p className="text-xs text-(--text-tertiary) mt-1">
-              Stored locally, never synced. Must not contain your password.
-            </p>
+            <p className="text-xs text-(--text-tertiary) mt-1">{t("createVault.hintHelp")}</p>
           </div>
 
           {/* Security notice */}
           <div className="p-4 bg-(--bg-elevated) rounded-xl border border-(--border-subtle) text-xs text-(--text-tertiary) leading-relaxed">
-            🔒 <strong className="text-(--text-secondary)">Zero-knowledge design:</strong> Your
-            master password is never stored or transmitted. It derives your vault key using Argon2id
-            (64 MiB, 3 iterations). If you forget it, your vault cannot be recovered.
+            🔒{" "}
+            <Trans
+              i18nKey="createVault.notice"
+              components={{ strong: <strong className="text-(--text-secondary)" /> }}
+            />
           </div>
 
           <button
@@ -289,7 +292,7 @@ export function CreateVaultModal({ onClose }: Props) {
             className="sv-btn-primary w-full py-3 text-base font-semibold mt-1"
             disabled={!password || !confirm}
           >
-            Create Vault
+            {t("createVault.submit")}
           </button>
         </div>
       )}
@@ -303,10 +306,10 @@ export function CreateVaultModal({ onClose }: Props) {
           <div className="w-full max-w-xs text-center">
             <p className="text-sm font-medium text-(--text-primary) mb-3">
               {progress < 50
-                ? "Deriving vault key with Argon2id…"
+                ? t("createVault.progress.deriving")
                 : progress < 85
-                  ? "Encrypting vault with AES-256-GCM…"
-                  : "Saving to secure storage…"}
+                  ? t("createVault.progress.encrypting")
+                  : t("createVault.progress.saving")}
             </p>
             <div className="h-2 bg-(--bg-elevated) rounded-full overflow-hidden">
               <div
@@ -329,10 +332,8 @@ export function CreateVaultModal({ onClose }: Props) {
             ✅
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-(--text-primary)">Vault Created</h3>
-            <p className="text-sm text-(--text-tertiary) mt-1">
-              Your vault is encrypted and ready to use.
-            </p>
+            <h3 className="text-lg font-semibold text-(--text-primary)">{t("createVault.done")}</h3>
+            <p className="text-sm text-(--text-tertiary) mt-1">{t("createVault.doneBody")}</p>
           </div>
         </div>
       )}

@@ -12,6 +12,7 @@
  */
 
 import React, { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import type { VaultData, VaultEntry } from "../../core/vault/schema";
 import { mergeVaults } from "../../core/vault/merge";
 import { Modal } from "../ui/Modal";
@@ -79,6 +80,7 @@ interface Diff {
 }
 
 export function ConflictResolutionModal({ local, remote, onResolve, onCancel }: Props) {
+  const { t } = useTranslation();
   const [strategy, setStrategy] = useState<"local" | "remote" | "merge">("merge");
 
   const diffs = useMemo<Diff[]>(() => {
@@ -125,18 +127,32 @@ export function ConflictResolutionModal({ local, remote, onResolve, onCancel }: 
   }
 
   return (
-    <Modal onClose={onCancel} className="max-w-[720px]" label="Sync conflict">
-      <h2 className="sv-modal-title mb-1">Sync Conflict</h2>
-      <p className="sv-modal-subtitle mb-5">
-        The local and remote vaults have diverged. Choose how to merge.
-      </p>
+    <Modal onClose={onCancel} className="max-w-[720px]" label={t("conflict.label")}>
+      <h2 className="sv-modal-title mb-1">{t("conflict.title")}</h2>
+      <p className="sv-modal-subtitle mb-5">{t("conflict.description")}</p>
 
       {/* Stats */}
       <div className="grid grid-cols-4 gap-2 mb-5 text-center">
-        <Stat label="Conflicts" value={counts.conflicts} color="var(--danger)" />
-        <Stat label="Local only" value={counts.localOnly} color="var(--warning)" />
-        <Stat label="Remote only" value={counts.remoteOnly} color="var(--accent)" />
-        <Stat label="Identical" value={counts.identical} color="var(--text-tertiary)" />
+        <Stat
+          label={t("conflict.stats.conflicts")}
+          value={counts.conflicts}
+          color="var(--danger)"
+        />
+        <Stat
+          label={t("conflict.stats.localOnly")}
+          value={counts.localOnly}
+          color="var(--warning)"
+        />
+        <Stat
+          label={t("conflict.stats.remoteOnly")}
+          value={counts.remoteOnly}
+          color="var(--accent)"
+        />
+        <Stat
+          label={t("conflict.stats.identical")}
+          value={counts.identical}
+          color="var(--text-tertiary)"
+        />
       </div>
 
       {/* Diff list */}
@@ -150,7 +166,7 @@ export function ConflictResolutionModal({ local, remote, onResolve, onCancel }: 
         }}
       >
         {diffs.length === 0 ? (
-          <p className="text-sm text-(--text-tertiary) p-4 text-center">No differences detected.</p>
+          <p className="text-sm text-(--text-tertiary) p-4 text-center">{t("conflict.noDiffs")}</p>
         ) : (
           <ul>
             {diffs.map((d) => (
@@ -159,12 +175,15 @@ export function ConflictResolutionModal({ local, remote, onResolve, onCancel }: 
                 className="flex items-center gap-3 px-4 py-2 border-b border-(--border-subtle) last:border-b-0"
               >
                 <span className="sv-badge" style={statusBadgeStyle(d.status)}>
-                  {statusLabel(d.status)}
+                  {t(statusLabel(d.status))}
                 </span>
                 <span className="text-sm flex-1 truncate">{d.title}</span>
                 {d.status === "conflict" && (
                   <span className="text-xs text-(--text-tertiary)">
-                    L: {fmt(d.local?.updatedAt)} · R: {fmt(d.remote?.updatedAt)}
+                    {t("conflict.timestamps", {
+                      local: fmt(d.local?.updatedAt),
+                      remote: fmt(d.remote?.updatedAt),
+                    })}
                   </span>
                 )}
               </li>
@@ -175,36 +194,36 @@ export function ConflictResolutionModal({ local, remote, onResolve, onCancel }: 
 
       {/* Strategy picker */}
       <fieldset className="mb-5">
-        <legend className="sv-label">Resolution strategy</legend>
+        <legend className="sv-label">{t("conflict.strategy")}</legend>
         <StrategyOption
           value="merge"
           current={strategy}
           onChange={setStrategy}
-          title="Merge (recommended)"
-          description="Keep all entries. For conflicts, use the most recently updated version."
+          title={t("conflict.merge")}
+          description={t("conflict.mergeDescription")}
         />
         <StrategyOption
           value="local"
           current={strategy}
           onChange={setStrategy}
-          title="Keep local"
-          description="Discard the remote version. Re-uploads on next sync."
+          title={t("conflict.keepLocal")}
+          description={t("conflict.keepLocalDescription")}
         />
         <StrategyOption
           value="remote"
           current={strategy}
           onChange={setStrategy}
-          title="Keep remote"
-          description="Replace local with remote. Local changes will be lost."
+          title={t("conflict.keepRemote")}
+          description={t("conflict.keepRemoteDescription")}
         />
       </fieldset>
 
       <div className="flex gap-3 justify-end">
         <button onClick={onCancel} className="sv-btn-secondary">
-          Cancel
+          {t("conflict.cancel")}
         </button>
         <button onClick={handleApply} className="sv-btn-primary">
-          Apply resolution
+          {t("conflict.apply")}
         </button>
       </div>
     </Modal>
@@ -254,16 +273,17 @@ function StrategyOption({
   );
 }
 
+/** Returns an i18n key; the caller translates it. */
 function statusLabel(s: Diff["status"]): string {
   switch (s) {
     case "conflict":
-      return "Conflict";
+      return "conflict.status.conflict";
     case "local-only":
-      return "Local";
+      return "conflict.status.local";
     case "remote-only":
-      return "Remote";
+      return "conflict.status.remote";
     case "both":
-      return "Same";
+      return "conflict.status.same";
   }
 }
 

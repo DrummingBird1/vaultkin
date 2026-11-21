@@ -14,8 +14,10 @@ import { generatePassphrase } from "../../core/password/generator";
 import { createVault } from "../../core/vault/serializer";
 import { IconClose, IconCopy, IconShield } from "../icons";
 import { Modal } from "../ui/Modal";
+import { useTranslation } from "react-i18next";
 
 export function RecoveryKitModal({ onClose }: { onClose: () => void }) {
+  const { t } = useTranslation();
   const { vault } = useVaultStore();
   const { toastSuccess, toastError } = useUIStore();
   const [recoveryKey, setRecoveryKey] = useState<string | null>(null);
@@ -38,7 +40,7 @@ export function RecoveryKitModal({ onClose }: { onClose: () => void }) {
       setRecoveryKey(key);
       setPayload(encryptedPayload);
     } catch {
-      toastError("Failed to generate Recovery Kit", "Please try again.");
+      toastError(t("recoveryKit.failed"), t("recoveryKit.tryAgain"));
     } finally {
       setGenerating(false);
     }
@@ -62,62 +64,51 @@ export function RecoveryKitModal({ onClose }: { onClose: () => void }) {
     a.click();
     a.remove();
     URL.revokeObjectURL(url);
-    toastSuccess(
-      "Recovery Kit downloaded",
-      "Store the file and the passphrase separately, somewhere durable.",
-    );
+    toastSuccess(t("recoveryKit.downloaded"), t("recoveryKit.downloadedBody"));
   };
 
   return (
-    <Modal onClose={onClose} className="max-w-md" label="Recovery Kit">
+    <Modal onClose={onClose} className="max-w-md" label={t("recoveryKit.title")}>
       <div className="flex items-center justify-between mb-5">
         <h2 className="sv-modal-title flex items-center gap-2">
-          <IconShield className="w-5 h-5" /> Recovery Kit
+          <IconShield className="w-5 h-5" /> {t("recoveryKit.title")}
         </h2>
-        <button onClick={onClose} aria-label="Close" className="sv-icon-btn">
+        <button onClick={onClose} aria-label={t("entry.close")} className="sv-icon-btn">
           <IconClose />
         </button>
       </div>
 
       {!recoveryKey ? (
         <>
-          <p className="text-sm text-(--text-secondary) mb-4">
-            Generates a random recovery passphrase, independent of your master password, and a
-            snapshot of your current vault that opens only with it. Use this if you ever forget your
-            master password — there is no other way to recover a zero-knowledge vault.
-          </p>
-          <p className="sv-hint mb-5">
-            This is a point-in-time snapshot — entries added after today won't be in it. Regenerate
-            periodically to keep it useful.
-          </p>
+          <p className="text-sm text-(--text-secondary) mb-4">{t("recoveryKit.intro")}</p>
+          <p className="sv-hint mb-5">{t("recoveryKit.snapshotHint")}</p>
           <button onClick={handleGenerate} disabled={generating} className="sv-btn-primary w-full">
-            {generating ? "Generating…" : "Generate Recovery Kit"}
+            {generating ? t("recoveryKit.generating") : t("recoveryKit.generate")}
           </button>
         </>
       ) : (
         <>
           <div className="p-3 bg-(--warning-dim) border border-(--warning)/30 rounded-xl text-sm text-(--warning) mb-4">
-            This passphrase is shown once and never saved anywhere. Write it down or store it in a
-            separate password manager — not next to the downloaded file.
+            {t("recoveryKit.shownOnce")}
           </div>
           <div className="mb-4">
-            <label className="sv-label">Recovery passphrase</label>
+            <label className="sv-label">{t("recoveryKit.passphrase")}</label>
             <div className="flex items-center gap-2">
               <code className="sv-input flex-1 font-mono text-sm select-all">{recoveryKey}</code>
               <button
                 onClick={handleCopy}
-                aria-label="Copy recovery passphrase"
+                aria-label={t("recoveryKit.copy")}
                 className="sv-btn-secondary px-3"
               >
-                {copied ? "Copied" : <IconCopy className="w-4 h-4" />}
+                {copied ? t("recoveryKit.copied") : <IconCopy className="w-4 h-4" />}
               </button>
             </div>
           </div>
           <button onClick={handleDownload} className="sv-btn-primary w-full mb-3">
-            Download Recovery File
+            {t("recoveryKit.download")}
           </button>
           <button onClick={onClose} className="sv-btn-secondary w-full">
-            Done
+            {t("recoveryKit.done")}
           </button>
         </>
       )}

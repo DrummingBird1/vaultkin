@@ -13,6 +13,7 @@ import { useVaultStore } from "../store/vault.store";
 import { useUIStore } from "../store/ui.store";
 import { analyzeStrength } from "../core/password/strength";
 import { BreachService, type BreachResult } from "../services/breach.service";
+import { useTranslation } from "react-i18next";
 
 const NINETY_DAYS_MS = 90 * 24 * 60 * 60 * 1000;
 
@@ -26,6 +27,7 @@ interface HealthIssue {
 }
 
 export function HealthPage() {
+  const { t } = useTranslation();
   const { entries, selectEntry } = useVaultStore();
   const { setActivePage, openEditEntry, addToast } = useUIStore();
   const [breaches, setBreaches] = useState<Map<string, BreachResult>>(new Map());
@@ -54,7 +56,7 @@ export function HealthPage() {
           username: entry.username,
           type: "missing-pw",
           severity: "low",
-          detail: "No password set",
+          detail: t("health.detail.noPassword"),
         });
         continue;
       }
@@ -68,7 +70,7 @@ export function HealthPage() {
             username: entry.username,
             type: "weak",
             severity: analysis.score === 0 ? "high" : "medium",
-            detail: `${analysis.label} · ${Math.round(analysis.effectiveEntropy)} bits`,
+            detail: `${t(`entry.strength.${analysis.score}`)} · ${t("entry.strength.bits", { bits: Math.round(analysis.effectiveEntropy) })}`,
           });
         }
 
@@ -80,7 +82,7 @@ export function HealthPage() {
             username: entry.username,
             type: "reused",
             severity: "medium",
-            detail: `Used ${count} times across your vault`,
+            detail: t("health.detail.reused", { count }),
           });
         }
       }
@@ -96,7 +98,7 @@ export function HealthPage() {
             username: entry.username,
             type: "old",
             severity: days > 365 ? "high" : "low",
-            detail: `Last changed ${days} days ago`,
+            detail: t("health.detail.old", { count: days }),
           });
         }
       }
@@ -109,7 +111,7 @@ export function HealthPage() {
           username: entry.username,
           type: "no-totp",
           severity: "low",
-          detail: "Consider enabling 2FA",
+          detail: t("health.detail.noTotp"),
         });
       }
     }
@@ -126,7 +128,10 @@ export function HealthPage() {
           username: entry.username,
           type: "pwned",
           severity: "high",
-          detail: `Found ${result.count.toLocaleString()} times in breach databases`,
+          detail: t("health.detail.pwned", {
+            count: result.count,
+            formatted: result.count.toLocaleString(),
+          }),
         });
       }
     }
@@ -142,7 +147,7 @@ export function HealthPage() {
     const score = Math.max(0, Math.min(100, 100 - Math.round((issuePenalty / totalLogins) * 10)));
 
     return { weak, old, reused, noTotp, missingPw, pwned, score, totalLogins };
-  }, [entries, breaches]);
+  }, [entries, breaches, t]);
 
   async function handleScanBreaches() {
     setScanning(true);
@@ -154,11 +159,15 @@ export function HealthPage() {
       const pwned = [...results.values()].filter((r) => r.isPwned).length;
       addToast({
         type: pwned > 0 ? "warning" : "success",
-        title: pwned > 0 ? `${pwned} compromised passwords found` : "No breaches detected",
-        message: `Scanned ${unique.length} unique passwords against HIBP`,
+        title: pwned > 0 ? t("health.scan.found", { count: pwned }) : t("health.scan.none"),
+        message: t("health.scan.scanned", { count: unique.length }),
       });
     } catch (err: any) {
-      addToast({ type: "error", title: "Scan failed", message: err?.message ?? "Network error" });
+      addToast({
+        type: "error",
+        title: t("health.scan.failed"),
+        message: err?.message ?? t("health.scan.networkError"),
+      });
     } finally {
       setScanning(false);
     }
@@ -179,24 +188,24 @@ export function HealthPage() {
 
   const scoreLabel =
     stats.score >= 80
-      ? "Excellent"
+      ? t("health.score.excellent")
       : stats.score >= 60
-        ? "Good"
+        ? t("health.score.good")
         : stats.score >= 40
-          ? "Fair"
-          : "Poor";
+          ? t("health.score.fair")
+          : t("health.score.poor");
 
   return (
     <div className="p-8 max-w-5xl mx-auto">
       <header className="mb-8">
-        <h1 className="text-2xl font-display font-medium mb-1">Password Health</h1>
-        <p className="text-sm text-(--text-secondary)">Audit of all your stored credentials.</p>
+        <h1 className="text-2xl font-display font-medium mb-1">{t("health.title")}</h1>
+        <p className="text-sm text-(--text-secondary)">{t("health.subtitle")}</p>
       </header>
 
       {/* Score Card */}
       <div className="sv-card mb-6 flex items-center justify-between">
         <div>
-          <div className="text-sm text-(--text-secondary) mb-1">Overall Score</div>
+          <div className="text-sm text-(--text-secondary) mb-1">{t("health.score.title")}</div>
           <div className="flex items-baseline gap-3">
             <span style={{ fontSize: 56, fontWeight: 700, color: scoreColor, lineHeight: 1 }}>
               {stats.score}
@@ -206,7 +215,7 @@ export function HealthPage() {
             </span>
           </div>
           <div className="text-xs text-(--text-tertiary) mt-2">
-            Based on {stats.totalLogins} login {stats.totalLogins === 1 ? "entry" : "entries"}
+            {t("health.score.basedOn", { count: stats.totalLogins })}
           </div>
         </div>
         <div className="flex flex-col gap-2 items-end">
@@ -215,25 +224,27 @@ export function HealthPage() {
             disabled={scanning || entries.length === 0}
             className="sv-btn-primary"
           >
-            {scanning ? "Scanning…" : "🛡️ Scan for breaches"}
+            {scanning ? t("health.scan.scanning") : t("health.scan.button")}
           </button>
-          <span className="text-xs text-(--text-tertiary)">Privacy-preserving (k-anonymity)</span>
+          <span className="text-xs text-(--text-tertiary)">{t("health.scan.privacy")}</span>
         </div>
       </div>
 
       {/* Issue cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <IssueCard
-          title="Compromised passwords"
+          title={t("health.cards.pwned")}
           icon="🚨"
           items={stats.pwned}
           accent="var(--danger)"
           onFix={fixEntry}
           onOpen={openEntry}
-          emptyMessage={breaches.size === 0 ? "Not scanned yet" : "None found"}
+          emptyMessage={
+            breaches.size === 0 ? t("health.cards.notScanned") : t("health.cards.noneFound")
+          }
         />
         <IssueCard
-          title="Weak passwords"
+          title={t("health.cards.weak")}
           icon="⚠️"
           items={stats.weak}
           accent="var(--danger)"
@@ -241,7 +252,7 @@ export function HealthPage() {
           onOpen={openEntry}
         />
         <IssueCard
-          title="Reused passwords"
+          title={t("health.cards.reused")}
           icon="🔁"
           items={stats.reused}
           accent="var(--warning)"
@@ -249,7 +260,7 @@ export function HealthPage() {
           onOpen={openEntry}
         />
         <IssueCard
-          title="Old passwords"
+          title={t("health.cards.old")}
           icon="📅"
           items={stats.old}
           accent="var(--warning)"
@@ -257,7 +268,7 @@ export function HealthPage() {
           onOpen={openEntry}
         />
         <IssueCard
-          title="Missing passwords"
+          title={t("health.cards.missing")}
           icon="❓"
           items={stats.missingPw}
           accent="var(--text-tertiary)"
@@ -265,7 +276,7 @@ export function HealthPage() {
           onOpen={openEntry}
         />
         <IssueCard
-          title="No 2FA enabled"
+          title={t("health.cards.noTotp")}
           icon="🔓"
           items={stats.noTotp}
           accent="var(--text-tertiary)"
@@ -288,6 +299,7 @@ interface IssueCardProps {
 }
 
 function IssueCard({ title, icon, items, accent, onFix, onOpen, emptyMessage }: IssueCardProps) {
+  const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
   const visible = expanded ? items : items.slice(0, 3);
 
@@ -306,7 +318,9 @@ function IssueCard({ title, icon, items, accent, onFix, onOpen, emptyMessage }: 
       </div>
 
       {items.length === 0 ? (
-        <p className="text-xs text-(--text-tertiary) py-3">{emptyMessage ?? "✓ No issues"}</p>
+        <p className="text-xs text-(--text-tertiary) py-3">
+          {emptyMessage ?? t("health.cards.noIssues")}
+        </p>
       ) : (
         <ul className="space-y-2">
           {visible.map((it) => (
@@ -321,13 +335,13 @@ function IssueCard({ title, icon, items, accent, onFix, onOpen, emptyMessage }: 
                 </div>
               </div>
               <button onClick={() => onFix(it.entryId)} className="sv-btn-ghost text-xs">
-                Fix
+                {t("health.cards.fix")}
               </button>
             </li>
           ))}
           {items.length > 3 && !expanded && (
             <button onClick={() => setExpanded(true)} className="sv-btn-ghost text-xs w-full mt-2">
-              Show {items.length - 3} more
+              {t("health.cards.showMore", { count: items.length - 3 })}
             </button>
           )}
         </ul>

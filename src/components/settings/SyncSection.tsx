@@ -84,14 +84,8 @@ export function SyncSection() {
   return (
     <SettingsSection
       id="sync"
-      title="WebDAV backup"
-      description={
-        <>
-          Push or pull the <strong>encrypted</strong> vault to a WebDAV server (Nextcloud, ownCloud,
-          etc.). The server never sees plaintext. Pulling opens a merge view — nothing is
-          overwritten silently.
-        </>
-      }
+      title={t("settings.sync.title")}
+      description={t("settings.sync.description")}
     >
       {pulled && !remote && (
         <RemoteUnlockModal payload={pulled} onOpened={setRemote} onCancel={reset} />

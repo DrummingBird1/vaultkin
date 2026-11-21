@@ -7,6 +7,7 @@
  * and never stored.
  */
 import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { openVault } from "../../core/vault/serializer";
 import { WrongPasswordError } from "../../core/errors";
 import type { VaultData } from "../../core/vault/schema";
@@ -21,6 +22,7 @@ interface Props {
 }
 
 export function RemoteUnlockModal({ payload, onOpened, onCancel }: Props) {
+  const { t } = useTranslation();
   const [pw, setPw] = useState("");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
@@ -36,8 +38,8 @@ export function RemoteUnlockModal({ payload, onOpened, onCancel }: Props) {
     } catch (ex: unknown) {
       setErr(
         ex instanceof WrongPasswordError
-          ? "Wrong password for the remote vault."
-          : "Remote vault could not be opened.",
+          ? t("remoteUnlock.wrongPassword")
+          : t("remoteUnlock.openFailed"),
       );
     } finally {
       setBusy(false);
@@ -52,12 +54,10 @@ export function RemoteUnlockModal({ payload, onOpened, onCancel }: Props) {
       onSubmit={submit}
     >
       <h2 id="remote-unlock-title" className="sv-modal-title mb-1">
-        Unlock remote vault
+        {t("remoteUnlock.title")}
       </h2>
-      <p className="sv-modal-subtitle mb-4">
-        Enter the master password of the WebDAV copy. Usually it is the same as this vault's.
-      </p>
-      <Field label="Remote master password" error={err}>
+      <p className="sv-modal-subtitle mb-4">{t("remoteUnlock.description")}</p>
+      <Field label={t("remoteUnlock.passwordLabel")} error={err}>
         {(p) => (
           <input
             {...p}
@@ -72,10 +72,16 @@ export function RemoteUnlockModal({ payload, onOpened, onCancel }: Props) {
       </Field>
       <div className="flex gap-3 justify-end mt-4">
         <Button onClick={onCancel} disabled={busy}>
-          Cancel
+          {t("remoteUnlock.cancel")}
         </Button>
-        <Button type="submit" variant="primary" busy={busy} busyLabel="Decrypting…" disabled={!pw}>
-          Continue
+        <Button
+          type="submit"
+          variant="primary"
+          busy={busy}
+          busyLabel={t("remoteUnlock.decrypting")}
+          disabled={!pw}
+        >
+          {t("remoteUnlock.continue")}
         </Button>
       </div>
     </Modal>

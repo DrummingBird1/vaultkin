@@ -9,8 +9,10 @@ import React, { useMemo, useState } from "react";
 import { useVaultStore } from "../../store/vault.store";
 import { IconClose, IconEdit, IconTrash, IconTag } from "../icons";
 import { Modal } from "../ui/Modal";
+import { useTranslation } from "react-i18next";
 
 export function TagManagerModal({ onClose }: { onClose: () => void }) {
+  const { t } = useTranslation();
   const { vault, renameTagGlobally, deleteTagGlobally } = useVaultStore();
   const [editingTag, setEditingTag] = useState<string | null>(null);
   const [draftName, setDraftName] = useState("");
@@ -37,18 +39,16 @@ export function TagManagerModal({ onClose }: { onClose: () => void }) {
   };
 
   return (
-    <Modal onClose={onClose} className="max-w-md" label="Manage tags">
+    <Modal onClose={onClose} className="max-w-md" label={t("tagManager.title")}>
       <div className="flex items-center justify-between mb-5">
-        <h2 className="sv-modal-title">Manage tags</h2>
-        <button onClick={onClose} aria-label="Close" className="sv-icon-btn">
+        <h2 className="sv-modal-title">{t("tagManager.title")}</h2>
+        <button onClick={onClose} aria-label={t("entry.close")} className="sv-icon-btn">
           <IconClose />
         </button>
       </div>
 
       {tagCounts.length === 0 ? (
-        <p className="text-sm text-(--text-tertiary) text-center py-8">
-          No tags yet — add some from an entry's edit form.
-        </p>
+        <p className="text-sm text-(--text-tertiary) text-center py-8">{t("tagManager.empty")}</p>
       ) : (
         <div className="flex flex-col gap-1.5">
           {tagCounts.map(([tag, count]) => (
@@ -76,7 +76,7 @@ export function TagManagerModal({ onClose }: { onClose: () => void }) {
               {confirmingDelete === tag ? (
                 <div className="flex items-center gap-1.5 shrink-0">
                   <span className="text-xs text-(--danger)">
-                    Delete "{tag}" from {count} entries?
+                    {t("tagManager.confirmDelete", { tag, count })}
                   </span>
                   <button
                     onClick={() => {
@@ -85,27 +85,27 @@ export function TagManagerModal({ onClose }: { onClose: () => void }) {
                     }}
                     className="text-xs text-(--danger) font-medium hover:underline"
                   >
-                    Yes
+                    {t("tagManager.yes")}
                   </button>
                   <button
                     onClick={() => setConfirmingDelete(null)}
                     className="text-xs text-(--text-tertiary) hover:underline"
                   >
-                    No
+                    {t("tagManager.no")}
                   </button>
                 </div>
               ) : (
                 <div className="flex items-center gap-1 shrink-0">
                   <button
                     onClick={() => startRename(tag)}
-                    aria-label={`Rename ${tag}`}
+                    aria-label={t("tagManager.rename", { tag })}
                     className="sv-icon-btn p-1"
                   >
                     <IconEdit className="w-3.5 h-3.5" />
                   </button>
                   <button
                     onClick={() => setConfirmingDelete(tag)}
-                    aria-label={`Delete ${tag}`}
+                    aria-label={t("tagManager.delete", { tag })}
                     className="sv-icon-btn p-1 hover:text-(--danger)"
                   >
                     <IconTrash className="w-3.5 h-3.5" />

@@ -10,6 +10,10 @@ import { App } from "./App";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { useUIStore } from "./store/ui.store";
 import "./i18n"; // side-effect: initializes i18next before any component renders
+import "@fontsource-variable/outfit";
+import "@fontsource-variable/heebo";
+import "@fontsource/dm-mono/400.css";
+import "@fontsource/dm-mono/500.css";
 import "./styles/globals.css";
 
 const root = document.getElementById("root");

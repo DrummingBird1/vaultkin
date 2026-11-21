@@ -6,8 +6,10 @@ import React, { useEffect } from "react";
 import { useVaultStore } from "../store/vault.store";
 import { useTOTPStore } from "../store/totp.store";
 import { useQuickCopy } from "../hooks/useQuickCopy";
+import { useTranslation } from "react-i18next";
 
 export function AuthenticatorPage() {
+  const { t } = useTranslation();
   const entries = useVaultStore((s) => s.entries);
   const { codes, refresh } = useTOTPStore();
   const quickCopy = useQuickCopy();
@@ -31,14 +33,10 @@ export function AuthenticatorPage() {
   if (totpEntries.length === 0) {
     return (
       <div className="p-8 max-w-3xl mx-auto">
-        <h1 className="text-2xl font-display font-medium mb-2">Authenticator</h1>
-        <p className="text-sm text-(--text-secondary) mb-6">
-          Live TOTP codes appear here for any vault entry with a 2FA secret set.
-        </p>
+        <h1 className="text-2xl font-display font-medium mb-2">{t("authenticator.title")}</h1>
+        <p className="text-sm text-(--text-secondary) mb-6">{t("authenticator.description")}</p>
         <div className="sv-card text-center py-10">
-          <p className="text-(--text-tertiary)">
-            No 2FA entries yet. Add a TOTP secret to any login in the Vault page to see codes here.
-          </p>
+          <p className="text-(--text-tertiary)">{t("authenticator.empty")}</p>
         </div>
       </div>
     );
@@ -46,7 +44,7 @@ export function AuthenticatorPage() {
 
   return (
     <div className="p-8 max-w-3xl mx-auto">
-      <h1 className="text-2xl font-display font-medium mb-6">Authenticator</h1>
+      <h1 className="text-2xl font-display font-medium mb-6">{t("authenticator.title")}</h1>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {totpEntries.map((entry) => {
           const c = codes.get(entry.id);
@@ -59,13 +57,13 @@ export function AuthenticatorPage() {
               </div>
               <div className="flex flex-col items-end gap-2">
                 <span className="text-xs text-(--text-tertiary) tabular-nums">
-                  {c?.remaining ?? 0}s
+                  {t("authenticator.secondsLeft", { count: c?.remaining ?? 0 })}
                 </span>
                 <button
-                  onClick={() => c && quickCopy(c.code, "TOTP code")}
+                  onClick={() => c && quickCopy(c.code, t("authenticator.codeLabel"))}
                   className="sv-btn-secondary text-xs px-3 py-1"
                 >
-                  Copy
+                  {t("authenticator.copy")}
                 </button>
               </div>
             </div>
@@ -73,7 +71,7 @@ export function AuthenticatorPage() {
         })}
       </div>
       <p className="text-xs text-(--text-tertiary) text-center mt-6">
-        Codes refresh automatically every second.
+        {t("authenticator.refreshHint")}
       </p>
     </div>
   );
