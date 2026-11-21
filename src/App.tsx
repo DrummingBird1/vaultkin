@@ -15,6 +15,7 @@ import { UnlockPage } from "./pages/Unlock.page";
 import { VaultPage } from "./pages/Vault.page";
 import { Toaster } from "./components/ui/Toaster";
 import { PairingDialog } from "./components/bridge/PairingDialog";
+import { PasskeyDialog } from "./components/bridge/PasskeyDialog";
 import { BridgeService } from "./services/bridge.service";
 
 import { readableAccent, solidAccent } from "./lib/contrast";
@@ -177,6 +178,7 @@ export function App() {
       )}
 
       {isUnlocked && <PairingDialog />}
+      {isUnlocked && <PasskeyDialog />}
       <Toaster />
     </>
   );

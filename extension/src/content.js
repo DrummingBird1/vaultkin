@@ -219,4 +219,20 @@
       sendResponse({ ok: true });
     }
   });
+
+  // Passkey requests from webauthn-inject (page world) → background → app.
+  // Only this window's own messages; the background derives the origin from
+  // the browser (sender.url), not from anything the page says.
+  window.addEventListener("message", (ev) => {
+    if (ev.source !== window || ev.data?.__sv !== "passkey-req") return;
+    const { id, kind, options } = ev.data;
+    if (kind !== "create" && kind !== "get") return;
+    chrome.runtime.sendMessage({ type: "SV_PASSKEY", kind, options }, (result) => {
+      void chrome.runtime.lastError;
+      window.postMessage(
+        { __sv: "passkey-res", id, result: result ?? null },
+        window.location.origin,
+      );
+    });
+  });
 })();

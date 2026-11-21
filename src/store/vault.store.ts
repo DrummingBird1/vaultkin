@@ -128,6 +128,7 @@ export const useVaultStore = create<VaultState>((set, get) => ({
       cardHolder: partial.cardHolder,
       cardExpiry: partial.cardExpiry,
       cardCVV: partial.cardCVV,
+      passkeys: partial.passkeys,
       createdAt: now,
       updatedAt: now,
     };

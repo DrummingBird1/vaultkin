@@ -25,6 +25,7 @@ import {
 import { generateTOTP } from "../core/totp/totp";
 import { registrableDomain } from "../core/vault/grouping";
 import type { VaultBridge, VaultEntry } from "../core/vault/schema";
+import { handlePasskeyCreate, handlePasskeyGet } from "./passkey.service";
 
 type Transport = NonNullable<NonNullable<Window["electron"]>["bridge"]>;
 
@@ -132,12 +133,19 @@ function updatePaired(mutate: (b: VaultBridge) => VaultBridge) {
   useVaultStore.setState({ vault: { ...vault, bridge: mutate(vault.bridge) }, isDirty: true });
 }
 
-async function handleRequest(connId: number, req: { op?: unknown; url?: unknown; id?: unknown }) {
+async function handleRequest(
+  connId: number,
+  req: { op?: unknown; url?: unknown; id?: unknown; [k: string]: unknown },
+) {
   const { vault } = useVaultStore.getState();
   if (!vault) return sendSealed(connId, { ok: false, error: "locked" });
   switch (req.op) {
     case "status":
       return sendSealed(connId, { ok: true, unlocked: true });
+    case "passkey-create":
+      return sendSealed(connId, await handlePasskeyCreate(req));
+    case "passkey-get":
+      return sendSealed(connId, await handlePasskeyGet(req));
     case "credentials-for-url":
       if (typeof req.url !== "string") break;
       return sendSealed(connId, {
@@ -278,5 +286,9 @@ export const BridgeService = {
     for (const id of conns.keys()) void transport?.close(id);
     conns.clear();
     useUIStore.getState().setPairingPrompt(null);
+    // A passkey prompt open at lock time is answered "cancelled".
+    const pk = useUIStore.getState().passkeyPrompt;
+    if (pk?.kind === "create") pk.resolve(false);
+    else if (pk?.kind === "get") pk.resolve(null);
   },
 };

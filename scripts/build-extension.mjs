@@ -70,6 +70,17 @@ await build({
   sourcemap: true,
 });
 
+// Runs in the page's world (manifest "world": "MAIN"): passkey provider shim.
+await build({
+  entryPoints: [path.join(srcDir, "src", "webauthn-inject.ts")],
+  outfile: path.join(outDir, "src", "webauthn-inject.js"),
+  bundle: true,
+  format: "iife",
+  target: "chrome111",
+  minify: true,
+  sourcemap: true,
+});
+
 await build({
   entryPoints: [path.join(srcDir, "popup", "popup.js")],
   outfile: path.join(outDir, "popup", "popup.js"),

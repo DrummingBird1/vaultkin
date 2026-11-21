@@ -87,7 +87,9 @@ if (manifest.background?.service_worker) {
 
 for (const [i, cs] of (manifest.content_scripts ?? []).entries()) {
   for (const jsPath of cs.js ?? []) {
-    if (!existsSync(path.join(root, "extension", jsPath))) {
+    // TypeScript sources are bundled to the .js the manifest names (build-extension.mjs).
+    const src = path.join(root, "extension", jsPath);
+    if (!existsSync(src) && !existsSync(src.replace(/\.js$/, ".ts"))) {
       fail(`content_scripts[${i}].js references "${jsPath}", which doesn't exist`);
     }
   }

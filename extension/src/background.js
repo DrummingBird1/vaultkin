@@ -112,9 +112,64 @@ async function ensureDesktop() {
   });
 }
 
+// ── Passkeys (page → content script → here → app) ───────────────────────
+function b64u(bytes) {
+  let s = "";
+  for (const b of bytes) s += String.fromCharCode(b);
+  return btoa(s).replaceAll("+", "-").replaceAll("/", "_").replace(/=+$/, "");
+}
+
+/**
+ * Returns the fields webauthn-inject needs, or null to let the browser's own
+ * implementation handle it. The origin comes from the browser (sender.url of
+ * the top frame), never from the page; clientDataJSON is built here from it.
+ */
+async function handlePasskey(msg, sender) {
+  if (sender?.frameId !== 0 || !sender.url) return null;
+  const origin = new URL(sender.url).origin;
+  const o = msg.options ?? {};
+  if (typeof o.challenge !== "string" || typeof o.rpId !== "string") return null;
+  const state = await ensureDesktop();
+  if (state.kind !== "ready") return null;
+  const clientData = JSON.stringify({
+    type: msg.kind === "create" ? "webauthn.create" : "webauthn.get",
+    challenge: o.challenge,
+    origin,
+    crossOrigin: false,
+  });
+  const clientDataJSON = b64u(new TextEncoder().encode(clientData));
+  try {
+    if (msg.kind === "create") {
+      const r = await Desktop.passkeyCreate({
+        origin,
+        rpId: o.rpId,
+        userHandle: String(o.user?.id ?? ""),
+        userName: String(o.user?.name ?? ""),
+        userDisplayName: o.user?.displayName ? String(o.user.displayName) : undefined,
+        exclude: Array.isArray(o.exclude) ? o.exclude.map(String) : [],
+      });
+      if (r.ok) return { ...r, clientDataJSON };
+      return r.error === "excluded" ? { error: "excluded" } : null;
+    }
+    const r = await Desktop.passkeyGet({
+      origin,
+      rpId: o.rpId,
+      clientDataJSON,
+      allow: Array.isArray(o.allow) ? o.allow.map(String) : [],
+    });
+    return r.ok ? { ...r, clientDataJSON } : null;
+  } catch {
+    return null;
+  }
+}
+
 // Desktop-bridge requests are async: these handlers return true to keep the
 // message channel open until sendResponse is called.
 chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
+  if (msg?.type === "SV_PASSKEY" && (msg.kind === "create" || msg.kind === "get")) {
+    handlePasskey(msg, _sender).then(sendResponse, () => sendResponse(null));
+    return true;
+  }
   if (msg?.type === "SV_DESKTOP_STATUS") {
     ensureDesktop().then(
       (s) => sendResponse(s),

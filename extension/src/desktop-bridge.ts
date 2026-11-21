@@ -188,7 +188,7 @@ export async function pair(): Promise<string> {
   return code;
 }
 
-async function request<T>(payload: unknown): Promise<T> {
+async function request<T>(payload: unknown, timeoutMs = REQUEST_TIMEOUT_MS): Promise<T> {
   if (state.kind !== "ready" || !session || !port) throw new Error("not-ready");
   const sealed = await session.seal(payload);
   return new Promise<T>((resolve, reject) => {
@@ -196,7 +196,7 @@ async function request<T>(payload: unknown): Promise<T> {
       const i = pending.findIndex((p) => p.timer === timer);
       if (i >= 0) pending.splice(i, 1);
       reject(new Error("timeout"));
-    }, REQUEST_TIMEOUT_MS);
+    }, timeoutMs);
     pending.push({ resolve: resolve as (v: unknown) => void, reject, timer });
     port!.postMessage({ t: "sealed", m: sealed });
   });
@@ -233,4 +233,27 @@ export function getState(): BridgeState {
 export function onStateChange(fn: (s: BridgeState) => void): () => void {
   listeners.add(fn);
   return () => listeners.delete(fn);
+}
+
+/** Passkey ceremonies wait for the user to confirm in the app. */
+const PASSKEY_TIMEOUT_MS = 120_000;
+
+export async function passkeyCreate(req: {
+  origin: string;
+  rpId: string;
+  userHandle: string;
+  userName: string;
+  userDisplayName?: string;
+  exclude: string[];
+}): Promise<Record<string, string> & { ok: boolean; error?: string }> {
+  return request({ op: "passkey-create", ...req }, PASSKEY_TIMEOUT_MS);
+}
+
+export async function passkeyGet(req: {
+  origin: string;
+  rpId: string;
+  clientDataJSON: string;
+  allow: string[];
+}): Promise<Record<string, string> & { ok: boolean; error?: string }> {
+  return request({ op: "passkey-get", ...req }, PASSKEY_TIMEOUT_MS);
 }

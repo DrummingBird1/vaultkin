@@ -5,6 +5,7 @@
 import { create } from "zustand";
 import { formatHash, type ActivePage } from "../lib/route";
 import type { PairingPrompt } from "../services/bridge.service";
+import type { PasskeyPrompt } from "../services/passkey.service";
 
 export type { ActivePage };
 
@@ -34,6 +35,8 @@ interface UIState {
   onboardingOpen: boolean;
   /** A browser extension asked to pair; shows the code to compare (ADR 0007). */
   pairingPrompt: PairingPrompt | null;
+  /** A site asked (via the extension) to create or use a passkey. */
+  passkeyPrompt: PasskeyPrompt | null;
 
   setTheme: (t: Theme) => void;
   setAccent: (hex: string, name?: string) => void;
@@ -52,6 +55,7 @@ interface UIState {
   setPaletteOpen: (open: boolean) => void;
   setOnboardingOpen: (open: boolean) => void;
   setPairingPrompt: (p: PairingPrompt | null) => void;
+  setPasskeyPrompt: (p: PasskeyPrompt | null) => void;
   consumeEditEntry: () => string | null;
 }
 
@@ -69,6 +73,7 @@ export const useUIStore = create<UIState>((set, get) => ({
   paletteOpen: false,
   onboardingOpen: false,
   pairingPrompt: null,
+  passkeyPrompt: null,
 
   setTheme: (t) => set({ theme: t }),
   setAccent: (hex, name) => set({ accentColor: { hex, name: name ?? hex } }),
@@ -101,6 +106,7 @@ export const useUIStore = create<UIState>((set, get) => ({
   setPaletteOpen: (open) => set({ paletteOpen: open }),
   setOnboardingOpen: (open) => set({ onboardingOpen: open }),
   setPairingPrompt: (p) => set({ pairingPrompt: p }),
+  setPasskeyPrompt: (p) => set({ passkeyPrompt: p }),
   consumeEditEntry: () => {
     const id = get().editEntryId;
     if (id) set({ editEntryId: null });

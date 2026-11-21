@@ -35,17 +35,29 @@ there by design (Settings hides the controls and explains why in that case).
 
 ## Development install
 
-1. Run the main app on `http://localhost:5173` (`pnpm run dev`) — that origin
-   is already allow-listed in `manifest.json`'s `externally_connectable`.
-2. Open `chrome://extensions/`.
-3. Enable **Developer mode** (top right).
-4. Click **Load unpacked** → select the `extension/` folder directly (the
-   plain, unbundled source — no build step needed for local dev, exactly
-   like before the build pipeline below existed).
-5. The SecureVault icon appears in the toolbar. Click it any time to see
-   cached-entry status, search, copy, or fill for the active tab.
-6. In the app: **Settings → Browser extension** → paste the extension ID
-   (shown on the `chrome://extensions` card) → **Send entries to extension**.
+The extension now has TypeScript sources shared with the app (the desktop
+bridge and the passkey shim), so it must be built; `extension/` can no
+longer be loaded unbundled.
+
+1. `pnpm run build:extension` (re-run after changes).
+2. Open `chrome://extensions/`, enable **Developer mode**, click
+   **Load unpacked** → select `dist/extension/`.
+3. **With the desktop app** (recommended, ADR 0007): in the app,
+   **Settings → Browser extension** → paste the extension ID shown on the
+   `chrome://extensions` card → **Set up browser connection**. Then open the
+   extension popup → **Connect**, and approve in the app if the 6-digit codes
+   match. Logins and passkeys for the current site come from the app on demand.
+4. **With the web build** (`pnpm run dev`, `http://localhost:5173`):
+   Settings → Browser extension → **Send entries to extension** (legacy
+   5-minute snapshot).
+
+### Passkeys
+
+`src/webauthn-inject.ts` runs in the page's own JavaScript world and offers
+SecureVault for `navigator.credentials.create/get` passkey requests. The app
+asks you to confirm every save and sign-in. Anything SecureVault can't handle
+(app not connected, no passkey for the site, Cancel, non-ES256, conditional
+mediation) falls through to the browser's own passkey UI.
 
 ## Build
 
@@ -59,8 +71,7 @@ pnpm run build:extension      # bundles + minifies into dist/extension/,
 
 Both run in CI (`.github/workflows/ci.yml`'s `extension` job) on every
 change. `dist/extension/` is what you'd actually zip for a Chrome Web Store
-submission — `extension/` itself stays the unbundled source used by
-"Load unpacked" above, unchanged.
+submission, and also what you load unpacked during development.
 
 ## Production install
 

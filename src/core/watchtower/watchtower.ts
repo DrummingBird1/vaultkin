@@ -130,14 +130,14 @@ export function analyzeVault(
 
   for (const e of entries) {
     if (e.type === "login") {
-      if (!e.password) {
+      if (!e.password && !e.passkeys?.length) {
         add({
           type: "missing-password",
           severity: "low",
           entryId: e.id,
           detailKey: "missingPassword",
         });
-      } else {
+      } else if (e.password) {
         const breach = opts.breaches?.get(e.password);
         if (breach?.isPwned)
           add({

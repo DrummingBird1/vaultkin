@@ -835,5 +835,20 @@
       "disconnect": "Disconnect",
       "disconnected": "Browser disconnected"
     }
+  },
+  "passkey": {
+    "cancel": "Cancel",
+    "create": {
+      "title": "Save a passkey?",
+      "body": "{{site}} wants to create a passkey for {{user}}. It will be stored in this vault and synced with it.",
+      "confirm": "Save passkey"
+    },
+    "get": {
+      "title": "Sign in with a passkey?",
+      "body": "{{site}} is asking you to sign in with a passkey saved in SecureVault.",
+      "account": "Account",
+      "confirm": "Sign in"
+    },
+    "badge": "Passkey"
   }
 }

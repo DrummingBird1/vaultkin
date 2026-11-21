@@ -2,6 +2,7 @@
  * @file src/core/vault/schema.ts
  * Public types describing a decrypted vault's shape.
  */
+import type { StoredPasskey } from "../passkey/authenticator";
 
 export type CategoryType =
   "websites" | "apps" | "finance" | "gaming" | "servers" | "identity" | "email" | "custom";
@@ -39,6 +40,8 @@ export interface VaultEntry {
   cardCVV?: string;
   createdAt?: string;
   updatedAt?: string;
+  /** Passkeys saved for this login (software WebAuthn authenticator). */
+  passkeys?: StoredPasskey[];
 }
 
 export interface VaultFolder {

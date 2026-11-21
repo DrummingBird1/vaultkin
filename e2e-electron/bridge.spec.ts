@@ -200,6 +200,111 @@ test("pair with numeric comparison, then fetch only this site's credentials", as
   const other = (await session.open((await b.next()).m!)) as { credentials: unknown[] };
   expect(other.credentials).toEqual([]);
 
+  // ── Passkeys: create, then sign in; the app asks every time ──────────────
+  const origin = "https://login.example.com";
+  b.send({
+    t: "sealed",
+    m: await session.seal({
+      op: "passkey-create",
+      origin,
+      rpId: "example.com",
+      userHandle: "dXNlci0x",
+      userName: "octo@example.com",
+    }),
+  });
+  const pkDialog = win.getByRole("dialog", { name: /save a passkey/i });
+  await expect(pkDialog).toBeVisible();
+  await pkDialog.getByRole("button", { name: /save passkey/i }).click();
+  const created = (await session.open((await b.next()).m!)) as Record<string, string> & {
+    ok: boolean;
+  };
+  expect(created.ok).toBe(true);
+  expect(created.attestationObject.length).toBeGreaterThan(100);
+
+  const clientData = Buffer.from(
+    JSON.stringify({ type: "webauthn.get", challenge: "c2lnbi1pbg", origin, crossOrigin: false }),
+  ).toString("base64url");
+  b.send({
+    t: "sealed",
+    m: await session.seal({
+      op: "passkey-get",
+      origin,
+      rpId: "example.com",
+      clientDataJSON: clientData,
+      allow: [],
+    }),
+  });
+  const getDialog = win.getByRole("dialog", { name: /sign in with a passkey/i });
+  await expect(getDialog).toBeVisible();
+  await expect(getDialog.getByText("octo@example.com")).toBeVisible();
+  await getDialog.getByRole("button", { name: /^sign in$/i }).click();
+  const assertion = (await session.open((await b.next()).m!)) as Record<string, string> & {
+    ok: boolean;
+  };
+  expect(assertion).toMatchObject({
+    ok: true,
+    credentialId: created.credentialId,
+    userHandle: "dXNlci0x",
+  });
+
+  // Verify like a relying party would: signature over authData || SHA-256(clientData).
+  const { webcrypto } = await import("crypto");
+  const pub = await webcrypto.subtle.importKey(
+    "spki",
+    Buffer.from(created.publicKeySpki, "base64url"),
+    { name: "ECDSA", namedCurve: "P-256" },
+    false,
+    ["verify"],
+  );
+  const authData = Buffer.from(assertion.authenticatorData, "base64url");
+  const cdHash = Buffer.from(
+    await webcrypto.subtle.digest("SHA-256", Buffer.from(clientData, "base64url")),
+  );
+  const der = Buffer.from(assertion.signature, "base64url");
+  const rLen = der[3];
+  const r = der.subarray(4, 4 + rLen);
+  const s = der.subarray(6 + rLen);
+  const raw = Buffer.concat([
+    Buffer.alloc(32 - Math.min(32, r.length)),
+    r.subarray(-32),
+    Buffer.alloc(32 - Math.min(32, s.length)),
+    s.subarray(-32),
+  ]);
+  expect(
+    await webcrypto.subtle.verify(
+      { name: "ECDSA", hash: "SHA-256" },
+      pub,
+      raw,
+      Buffer.concat([authData, cdHash]),
+    ),
+  ).toBe(true);
+
+  // Refusals: RP ID not matching the page, client data naming another origin.
+  b.send({
+    t: "sealed",
+    m: await session.seal({
+      op: "passkey-create",
+      origin,
+      rpId: "evil.example",
+      userHandle: "eA",
+      userName: "x",
+    }),
+  });
+  expect(await session.open((await b.next()).m!)).toEqual({ ok: false, error: "security" });
+  const forged = Buffer.from(
+    JSON.stringify({ type: "webauthn.get", challenge: "eA", origin: "https://evil.example" }),
+  ).toString("base64url");
+  b.send({
+    t: "sealed",
+    m: await session.seal({
+      op: "passkey-get",
+      origin,
+      rpId: "example.com",
+      clientDataJSON: forged,
+    }),
+  });
+  expect(await session.open((await b.next()).m!)).toEqual({ ok: false, error: "security" });
+
   // A replayed frame drops the connection.
   const replay = await session.seal({ op: "status" });
   b.send({ t: "sealed", m: replay });
