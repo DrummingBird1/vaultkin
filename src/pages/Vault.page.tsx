@@ -285,35 +285,35 @@ export function VaultPage() {
         {/* Main content */}
         <div className="flex-1 flex flex-col overflow-hidden">
           {/* Toolbar */}
-          <div className="flex items-center gap-3 px-5 py-3 border-b border-[var(--border-subtle)]">
+          <div className="flex items-center gap-3 px-5 py-3 border-b border-(--border-subtle)">
             <input
               ref={searchInputRef}
-              className="flex-1 bg-[var(--bg-elevated)] border border-[var(--border-default)] rounded-xl px-4 py-2 text-sm text-[var(--text-primary)] placeholder-[var(--text-tertiary)] outline-none focus:border-[var(--accent)] transition-colors"
+              className="flex-1 bg-(--bg-elevated) border border-(--border-default) rounded-xl px-4 py-2 text-sm text-(--text-primary) placeholder-(--text-tertiary) outline-hidden focus:border-(--accent) transition-colors"
               placeholder="Search entries…"
               value={searchQuery.text ?? ""}
               onChange={(e) => setSearchQuery({ text: e.target.value })}
             />
             <button
               onClick={() => setShowTagManager(true)}
-              className="flex items-center gap-1.5 text-xs text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] px-3 py-2 rounded-xl border border-[var(--border-subtle)] hover:border-[var(--border-default)] transition-colors"
+              className="flex items-center gap-1.5 text-xs text-(--text-tertiary) hover:text-(--text-secondary) px-3 py-2 rounded-xl border border-(--border-subtle) hover:border-(--border-default) transition-colors"
             >
               <IconTag className="w-3.5 h-3.5" /> Tags
             </button>
             <button
               onClick={() => setShowImport(true)}
-              className="text-xs text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] px-3 py-2 rounded-xl border border-[var(--border-subtle)] hover:border-[var(--border-default)] transition-colors"
+              className="text-xs text-(--text-tertiary) hover:text-(--text-secondary) px-3 py-2 rounded-xl border border-(--border-subtle) hover:border-(--border-default) transition-colors"
             >
               Import
             </button>
             <button
               onClick={() => setShowExportWarning(true)}
-              className="text-xs text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] px-3 py-2 rounded-xl border border-[var(--border-subtle)] hover:border-[var(--border-default)] transition-colors"
+              className="text-xs text-(--text-tertiary) hover:text-(--text-secondary) px-3 py-2 rounded-xl border border-(--border-subtle) hover:border-(--border-default) transition-colors"
             >
               Export
             </button>
             <button
               onClick={handleAdd}
-              className="flex items-center gap-1.5 text-sm font-medium px-4 py-2 rounded-xl bg-[var(--accent)] text-white hover:opacity-90 transition-opacity"
+              className="flex items-center gap-1.5 text-sm font-medium px-4 py-2 rounded-xl bg-(--accent) text-white hover:opacity-90 transition-opacity"
             >
               + Add Entry
             </button>
@@ -323,12 +323,12 @@ export function VaultPage() {
           <div className="flex-1 overflow-hidden p-5">
             {filteredEntries.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full gap-4 text-center">
-                <IconEmptyVault className="w-14 h-14 text-[var(--text-tertiary)]" />
+                <IconEmptyVault className="w-14 h-14 text-(--text-tertiary)" />
                 <div>
-                  <p className="font-semibold text-[var(--text-primary)]">
+                  <p className="font-semibold text-(--text-primary)">
                     {vault?.entries.length === 0 ? "Your vault is empty" : "No results found"}
                   </p>
-                  <p className="text-sm text-[var(--text-tertiary)] mt-1">
+                  <p className="text-sm text-(--text-tertiary) mt-1">
                     {vault?.entries.length === 0
                       ? "Add your first entry to get started"
                       : "Try a different search term"}
@@ -337,7 +337,7 @@ export function VaultPage() {
                 {vault?.entries.length === 0 && (
                   <button
                     onClick={handleAdd}
-                    className="text-sm font-medium px-5 py-2.5 rounded-xl bg-[var(--accent)] text-white hover:opacity-90 transition-opacity"
+                    className="text-sm font-medium px-5 py-2.5 rounded-xl bg-(--accent) text-white hover:opacity-90 transition-opacity"
                   >
                     + Add Entry
                   </button>
@@ -428,31 +428,31 @@ export function VaultPage() {
                   return (
                     <div
                       key={group.key}
-                      className="rounded-2xl border border-[var(--border-default)] overflow-hidden"
+                      className="rounded-2xl border border-(--border-default) overflow-hidden"
                     >
                       <button
                         onClick={() => toggleServiceGroup(group.key)}
-                        className="w-full flex items-center gap-3 px-4 py-3 bg-[var(--bg-surface)] hover:bg-[var(--bg-elevated)] transition-colors text-left"
+                        className="w-full flex items-center gap-3 px-4 py-3 bg-(--bg-surface) hover:bg-(--bg-elevated) transition-colors text-left"
                       >
                         {expanded ? (
-                          <IconChevronDown className="w-4 h-4 text-[var(--text-tertiary)] flex-shrink-0" />
+                          <IconChevronDown className="w-4 h-4 text-(--text-tertiary) shrink-0" />
                         ) : (
-                          <IconChevronRight className="w-4 h-4 text-[var(--text-tertiary)] flex-shrink-0" />
+                          <IconChevronRight className="w-4 h-4 text-(--text-tertiary) shrink-0" />
                         )}
                         <EntryFavicon
                           title={group.key}
                           url={group.key !== "(no domain)" ? group.key : undefined}
-                          className="w-6 h-6 rounded-lg bg-[var(--bg-elevated)] text-xs flex-shrink-0"
+                          className="w-6 h-6 rounded-lg bg-(--bg-elevated) text-xs shrink-0"
                         />
-                        <span className="text-sm font-medium text-[var(--text-primary)] flex-1">
+                        <span className="text-sm font-medium text-(--text-primary) flex-1">
                           {group.key}
                         </span>
-                        <span className="text-xs text-[var(--text-tertiary)]">
+                        <span className="text-xs text-(--text-tertiary)">
                           {group.entries.length} account{group.entries.length === 1 ? "" : "s"}
                         </span>
                       </button>
                       {expanded && (
-                        <div className="flex flex-col gap-1 p-2 bg-[var(--bg-base)]">
+                        <div className="flex flex-col gap-1 p-2 bg-(--bg-base)">
                           {group.entries.map((entry) => (
                             <div key={entry.id} data-entry-id={entry.id}>
                               <EntryRow

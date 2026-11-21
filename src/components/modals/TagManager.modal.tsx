@@ -54,7 +54,7 @@ export function TagManagerModal({ onClose }: { onClose: () => void }) {
         </div>
 
         {tagCounts.length === 0 ? (
-          <p className="text-sm text-[var(--text-tertiary)] text-center py-8">
+          <p className="text-sm text-(--text-tertiary) text-center py-8">
             No tags yet — add some from an entry's edit form.
           </p>
         ) : (
@@ -62,9 +62,9 @@ export function TagManagerModal({ onClose }: { onClose: () => void }) {
             {tagCounts.map(([tag, count]) => (
               <div
                 key={tag}
-                className="flex items-center gap-2 p-2.5 rounded-xl bg-[var(--bg-elevated)]"
+                className="flex items-center gap-2 p-2.5 rounded-xl bg-(--bg-elevated)"
               >
-                <IconTag className="w-4 h-4 text-[var(--text-tertiary)] flex-shrink-0" />
+                <IconTag className="w-4 h-4 text-(--text-tertiary) shrink-0" />
                 {editingTag === tag ? (
                   <input
                     autoFocus
@@ -78,12 +78,12 @@ export function TagManagerModal({ onClose }: { onClose: () => void }) {
                     onBlur={commitRename}
                   />
                 ) : (
-                  <span className="flex-1 text-sm text-[var(--text-primary)] truncate">{tag}</span>
+                  <span className="flex-1 text-sm text-(--text-primary) truncate">{tag}</span>
                 )}
-                <span className="text-xs text-[var(--text-tertiary)] flex-shrink-0">{count}</span>
+                <span className="text-xs text-(--text-tertiary) shrink-0">{count}</span>
                 {confirmingDelete === tag ? (
-                  <div className="flex items-center gap-1.5 flex-shrink-0">
-                    <span className="text-xs text-[var(--danger)]">
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <span className="text-xs text-(--danger)">
                       Delete "{tag}" from {count} entries?
                     </span>
                     <button
@@ -91,19 +91,19 @@ export function TagManagerModal({ onClose }: { onClose: () => void }) {
                         deleteTagGlobally(tag);
                         setConfirmingDelete(null);
                       }}
-                      className="text-xs text-[var(--danger)] font-medium hover:underline"
+                      className="text-xs text-(--danger) font-medium hover:underline"
                     >
                       Yes
                     </button>
                     <button
                       onClick={() => setConfirmingDelete(null)}
-                      className="text-xs text-[var(--text-tertiary)] hover:underline"
+                      className="text-xs text-(--text-tertiary) hover:underline"
                     >
                       No
                     </button>
                   </div>
                 ) : (
-                  <div className="flex items-center gap-1 flex-shrink-0">
+                  <div className="flex items-center gap-1 shrink-0">
                     <button
                       onClick={() => startRename(tag)}
                       aria-label={`Rename ${tag}`}
@@ -114,7 +114,7 @@ export function TagManagerModal({ onClose }: { onClose: () => void }) {
                     <button
                       onClick={() => setConfirmingDelete(tag)}
                       aria-label={`Delete ${tag}`}
-                      className="sv-icon-btn p-1 hover:text-[var(--danger)]"
+                      className="sv-icon-btn p-1 hover:text-(--danger)"
                     >
                       <IconTrash className="w-3.5 h-3.5" />
                     </button>

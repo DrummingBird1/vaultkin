@@ -30,7 +30,7 @@ const SettingsPage = lazy(() =>
 function PageLoadingFallback() {
   return (
     <div
-      className="flex-1 flex items-center justify-center text-sm text-[var(--text-tertiary)]"
+      className="flex-1 flex items-center justify-center text-sm text-(--text-tertiary)"
       role="status"
       aria-live="polite"
     >
@@ -101,7 +101,7 @@ export function App() {
           deliberately false: only the newly-added toast should be announced,
           not the entire stack re-read every time one more toast appears. */}
       <div
-        className="fixed bottom-4 right-4 z-[300] flex flex-col gap-2 pointer-events-none"
+        className="fixed bottom-4 right-4 z-300 flex flex-col gap-2 pointer-events-none"
         role="status"
         aria-live="polite"
         aria-atomic="false"
@@ -110,7 +110,7 @@ export function App() {
         {toasts.map((toast) => (
           <div
             key={toast.id}
-            className="pointer-events-auto flex items-start gap-3 px-4 py-3 rounded-xl border shadow-xl backdrop-blur-sm"
+            className="pointer-events-auto flex items-start gap-3 px-4 py-3 rounded-xl border shadow-xl backdrop-blur-xs"
             style={{
               background: "var(--bg-elevated)",
               borderColor:
@@ -126,18 +126,14 @@ export function App() {
               {toast.type === "success" ? "✓" : toast.type === "error" ? "⚠" : "ℹ"}
             </span>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-[var(--text-primary)] truncate">
-                {toast.title}
-              </p>
+              <p className="text-sm font-medium text-(--text-primary) truncate">{toast.title}</p>
               {toast.message && (
-                <p className="text-xs text-[var(--text-tertiary)] mt-0.5 truncate">
-                  {toast.message}
-                </p>
+                <p className="text-xs text-(--text-tertiary) mt-0.5 truncate">{toast.message}</p>
               )}
             </div>
             <button
               onClick={() => removeToast(toast.id)}
-              className="text-[var(--text-tertiary)] hover:text-[var(--text-primary)] transition-colors text-sm flex-shrink-0"
+              className="text-(--text-tertiary) hover:text-(--text-primary) transition-colors text-sm shrink-0"
             >
               ✕
             </button>

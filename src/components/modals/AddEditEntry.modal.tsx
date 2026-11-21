@@ -68,7 +68,7 @@ function StrengthBar({ password }: { password: string }) {
         <span className="text-[11px]" style={{ color }}>
           {label}
         </span>
-        <span className="text-[11px] text-[var(--text-tertiary)]">
+        <span className="text-[11px] text-(--text-tertiary)">
           {Math.round(analysis.effectiveEntropy)} bits
         </span>
       </div>
@@ -91,7 +91,7 @@ function CustomFieldRow({
   const isSecret = field.type === "password";
 
   return (
-    <div className="flex gap-2 items-start p-3 bg-[var(--bg-elevated)] rounded-xl border border-[var(--border-subtle)]">
+    <div className="flex gap-2 items-start p-3 bg-(--bg-elevated) rounded-xl border border-(--border-subtle)">
       <div className="flex-1 flex flex-col gap-2">
         <div className="flex gap-2">
           <input
@@ -124,7 +124,7 @@ function CustomFieldRow({
           {isSecret && (
             <button
               type="button"
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]"
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-(--text-tertiary) hover:text-(--text-secondary)"
               onClick={() => setShowVal((v) => !v)}
             >
               {showVal ? "🙈" : "👁️"}
@@ -135,7 +135,7 @@ function CustomFieldRow({
       <button
         type="button"
         onClick={onRemove}
-        className="mt-1 text-[var(--danger)] hover:text-[var(--danger-dim)] p-1 rounded-lg transition-colors"
+        className="mt-1 text-(--danger) hover:text-(--danger-dim) p-1 rounded-lg transition-colors"
       >
         ✕
       </button>
@@ -378,13 +378,13 @@ export function AddEditEntryModal({ entry, folderId, onClose }: Props) {
       >
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-lg font-semibold text-[var(--text-primary)]">
+          <h2 className="text-lg font-semibold text-(--text-primary)">
             {isEdit ? "Edit Entry" : "Add Entry"}
           </h2>
           <div className="flex items-center gap-3">
             <button
               type="button"
-              className={`p-1.5 rounded-lg transition-colors ${favorite ? "text-amber-400" : "text-[var(--text-tertiary)] hover:text-amber-400"}`}
+              className={`p-1.5 rounded-lg transition-colors ${favorite ? "text-amber-400" : "text-(--text-tertiary) hover:text-amber-400"}`}
               onClick={() => setFavorite((v) => !v)}
               aria-label={favorite ? "Remove from favorites" : "Add to favorites"}
             >
@@ -393,7 +393,7 @@ export function AddEditEntryModal({ entry, folderId, onClose }: Props) {
             <button
               type="button"
               onClick={onClose}
-              className="text-[var(--text-tertiary)] hover:text-[var(--text-primary)] p-1 rounded-lg transition-colors"
+              className="text-(--text-tertiary) hover:text-(--text-primary) p-1 rounded-lg transition-colors"
               aria-label="Close"
             >
               ✕
@@ -432,15 +432,15 @@ export function AddEditEntryModal({ entry, folderId, onClose }: Props) {
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-1 mb-5 border-b border-[var(--border-subtle)] pb-0">
+        <div className="flex gap-1 mb-5 border-b border-(--border-subtle) pb-0">
           {(["login", "notes", "card", "fields"] as EntryTab[]).map((t) => (
             <button
               key={t}
               type="button"
               className={`px-3 py-1.5 text-sm font-medium rounded-t-lg -mb-px border-b-2 transition-colors capitalize ${
                 tab === t
-                  ? "text-[var(--accent)] border-[var(--accent)]"
-                  : "text-[var(--text-tertiary)] border-transparent hover:text-[var(--text-secondary)]"
+                  ? "text-(--accent) border-(--accent)"
+                  : "text-(--text-tertiary) border-transparent hover:text-(--text-secondary)"
               }`}
               onClick={() => setTab(t)}
             >
@@ -486,7 +486,7 @@ export function AddEditEntryModal({ entry, folderId, onClose }: Props) {
                   <button
                     type="button"
                     onClick={handleGeneratePassword}
-                    className="text-xs text-[var(--accent)] hover:underline font-medium"
+                    className="text-xs text-(--accent) hover:underline font-medium"
                   >
                     Generate
                   </button>
@@ -502,7 +502,7 @@ export function AddEditEntryModal({ entry, folderId, onClose }: Props) {
                   />
                   <button
                     type="button"
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] transition-colors"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-(--text-tertiary) hover:text-(--text-secondary) transition-colors"
                     onClick={() => setShowPassword((v) => !v)}
                   >
                     {showPassword ? "🙈" : "👁️"}
@@ -517,14 +517,14 @@ export function AddEditEntryModal({ entry, folderId, onClose }: Props) {
                   <label className="sv-label mb-0">TOTP Secret (2FA)</label>
                   <button
                     type="button"
-                    className="text-xs text-[var(--text-tertiary)] hover:text-[var(--accent)] transition-colors"
+                    className="text-xs text-(--text-tertiary) hover:text-(--accent) transition-colors"
                     onClick={() => setShowTOTP((v) => !v)}
                   >
                     {showTOTP ? "Hide" : "Show"}
                   </button>
                 </div>
                 <input
-                  className={`sv-input w-full font-mono text-sm ${totpError ? "border-[var(--danger)]" : ""}`}
+                  className={`sv-input w-full font-mono text-sm ${totpError ? "border-(--danger)" : ""}`}
                   type={showTOTP ? "text" : "password"}
                   value={totpSecret}
                   onChange={(e) => handleTOTPChange(e.target.value)}
@@ -533,7 +533,7 @@ export function AddEditEntryModal({ entry, folderId, onClose }: Props) {
                 />
                 {totpError && <p className="sv-error">{totpError}</p>}
                 {totpSecret && !totpError && (
-                  <p className="text-[11px] text-[var(--success)] mt-1">✓ Valid TOTP secret</p>
+                  <p className="text-[11px] text-(--success) mt-1">✓ Valid TOTP secret</p>
                 )}
               </div>
 
@@ -609,7 +609,7 @@ export function AddEditEntryModal({ entry, folderId, onClose }: Props) {
           {tab === "fields" && (
             <div className="flex flex-col gap-3">
               {customFields.length === 0 && (
-                <p className="text-sm text-[var(--text-tertiary)] text-center py-4">
+                <p className="text-sm text-(--text-tertiary) text-center py-4">
                   No custom fields yet. Add fields for SSH keys, recovery codes, etc.
                 </p>
               )}
@@ -632,7 +632,7 @@ export function AddEditEntryModal({ entry, folderId, onClose }: Props) {
           )}
 
           {/* Footer buttons */}
-          <div className="flex justify-end gap-3 mt-2 pt-4 border-t border-[var(--border-subtle)]">
+          <div className="flex justify-end gap-3 mt-2 pt-4 border-t border-(--border-subtle)">
             <button type="button" onClick={onClose} className="sv-btn-secondary px-5">
               Cancel
             </button>

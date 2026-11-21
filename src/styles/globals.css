@@ -1,247 +1,281 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
-/* ─── Design tokens ──────────────────────────────────────────────────────── */
-:root[data-theme="dark"] {
-  --bg-base: #0d0d12;
-  --bg-surface: #15151b;
-  --bg-elevated: #1c1c24;
-  --bg-overlay: #232330;
-
-  --text-primary: #f4f4f6;
-  --text-secondary: #b5b5be;
-  --text-tertiary: #6e6e78;
-
-  --border-subtle: #1f1f28;
-  --border-default: #2a2a36;
-  --border-strong: #3a3a48;
-
-  --accent: #6366f1;
-  --accent-rgb: 99, 102, 241;
-  --accent-dim: rgba(99, 102, 241, 0.12);
-
-  --success: #10b981;
-  --success-dim: rgba(16, 185, 129, 0.12);
-  --warning: #f59e0b;
-  --warning-dim: rgba(245, 158, 11, 0.12);
-  --danger: #ef4444;
-  --danger-dim: rgba(239, 68, 68, 0.12);
+@theme {
+  --font-display: Outfit, system-ui, sans-serif;
+  --font-mono: DM Mono, ui-monospace, monospace;
 }
 
-:root[data-theme="light"] {
-  --bg-base: #fafafb;
-  --bg-surface: #ffffff;
-  --bg-elevated: #f4f4f6;
-  --bg-overlay: #eaeaf0;
+/*
+  The default border color has changed to `currentcolor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
 
-  --text-primary: #15151b;
-  --text-secondary: #45454e;
-  --text-tertiary: #888892;
-
-  --border-subtle: #ededf1;
-  --border-default: #dddde3;
-  --border-strong: #bfbfc8;
-
-  --accent: #6366f1;
-  --accent-rgb: 99, 102, 241;
-  --accent-dim: rgba(99, 102, 241, 0.1);
-
-  --success: #059669;
-  --success-dim: rgba(5, 150, 105, 0.1);
-  --warning: #d97706;
-  --warning-dim: rgba(217, 119, 6, 0.1);
-  --danger: #dc2626;
-  --danger-dim: rgba(220, 38, 38, 0.1);
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+*/
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--border-default, currentcolor);
+  }
 }
 
-/* High Contrast — maximizes text/background contrast for low-vision users.
- * Pure black/white base plus brightened semantic colors (the dark theme's
- * success/warning/danger hues don't have enough contrast against #000 on
- * their own at normal text sizes). */
-:root[data-theme="high-contrast"] {
-  --bg-base: #000000;
-  --bg-surface: #000000;
-  --bg-elevated: #0a0a0a;
-  --bg-overlay: #1a1a1a;
-
-  --text-primary: #ffffff;
-  --text-secondary: #ffffff;
-  --text-tertiary: #e0e0e0;
-
-  --border-subtle: #4d4d4d;
-  --border-default: #808080;
-  --border-strong: #ffffff;
-
-  --accent: #9498ff;
-  --accent-rgb: 148, 152, 255;
-  --accent-dim: rgba(148, 152, 255, 0.25);
-
-  --success: #4ade80;
-  --success-dim: rgba(74, 222, 128, 0.25);
-  --warning: #fde047;
-  --warning-dim: rgba(253, 224, 71, 0.25);
-  --danger: #ff6b6b;
-  --danger-dim: rgba(255, 107, 107, 0.25);
+@utility sv-modal-backdrop {
+  @apply fixed inset-0 z-200 flex items-center justify-center p-4;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(4px);
+  animation: fadeIn 150ms ease both;
 }
 
-html,
-body,
-#root {
-  height: 100%;
+@utility sv-modal {
+  @apply w-full max-w-2xl rounded-2xl border p-6 max-h-[90vh] overflow-y-auto;
+  background: var(--bg-surface);
+  border-color: var(--border-default);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+  animation: slideUp 200ms ease both;
 }
-body {
-  margin: 0;
-  background: var(--bg-base);
+
+@utility sv-modal-title {
+  @apply text-lg font-semibold;
   color: var(--text-primary);
-  font-family:
-    Outfit,
-    system-ui,
-    -apple-system,
-    "Segoe UI",
-    Roboto,
-    sans-serif;
-  font-feature-settings: "cv11";
-  -webkit-font-smoothing: antialiased;
-}
-* {
-  box-sizing: border-box;
 }
 
-/* ─── Design system: sv-* primitives ─────────────────────────────────────── */
+@utility sv-modal-subtitle {
+  @apply text-sm;
+  color: var(--text-secondary);
+}
 
-@layer components {
-  .sv-modal-backdrop {
-    @apply fixed inset-0 z-[200] flex items-center justify-center p-4;
-    background: rgba(0, 0, 0, 0.55);
-    backdrop-filter: blur(4px);
-    animation: fadeIn 150ms ease both;
-  }
-  .sv-modal {
-    @apply w-full max-w-2xl rounded-2xl border p-6 max-h-[90vh] overflow-y-auto;
-    background: var(--bg-surface);
-    border-color: var(--border-default);
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
-    animation: slideUp 200ms ease both;
-  }
-  .sv-modal-title {
-    @apply text-lg font-semibold;
-    color: var(--text-primary);
-  }
-  .sv-modal-subtitle {
-    @apply text-sm;
-    color: var(--text-secondary);
-  }
-
-  .sv-input {
-    @apply rounded-xl px-3 py-2 text-sm outline-none transition-colors;
-    background: var(--bg-elevated);
-    border: 1px solid var(--border-default);
-    color: var(--text-primary);
-  }
-  .sv-input:focus {
+@utility sv-input {
+  @apply rounded-xl px-3 py-2 text-sm outline-hidden transition-colors;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-default);
+  color: var(--text-primary);
+  &:focus {
     border-color: var(--accent);
   }
-  .sv-input::placeholder {
+  &::placeholder {
     color: var(--text-tertiary);
   }
+}
 
-  .sv-label {
-    @apply text-xs font-medium uppercase tracking-wider mb-1 block;
-    color: var(--text-secondary);
-  }
-  .sv-error {
-    @apply text-xs mt-1;
-    color: var(--danger);
-  }
-  .sv-hint {
-    @apply text-xs mt-1;
-    color: var(--text-tertiary);
-  }
+@utility sv-label {
+  @apply text-xs font-medium uppercase tracking-wider mb-1 block;
+  color: var(--text-secondary);
+}
 
-  .sv-btn-primary {
-    @apply px-4 py-2 rounded-xl text-sm font-medium transition-opacity;
-    background: var(--accent);
-    color: white;
-  }
-  .sv-btn-primary:hover:not(:disabled) {
+@utility sv-error {
+  @apply text-xs mt-1;
+  color: var(--danger);
+}
+
+@utility sv-hint {
+  @apply text-xs mt-1;
+  color: var(--text-tertiary);
+}
+
+@utility sv-btn-primary {
+  @apply px-4 py-2 rounded-xl text-sm font-medium transition-opacity;
+  background: var(--accent);
+  color: white;
+  &:hover:not(:disabled) {
     opacity: 0.9;
   }
-  .sv-btn-primary:disabled {
+  &:disabled {
     opacity: 0.5;
     cursor: not-allowed;
   }
+}
 
-  .sv-btn-secondary {
-    @apply px-4 py-2 rounded-xl text-sm font-medium transition-colors;
-    background: var(--bg-elevated);
-    border: 1px solid var(--border-default);
-    color: var(--text-primary);
-  }
-  .sv-btn-secondary:hover:not(:disabled) {
+@utility sv-btn-secondary {
+  @apply px-4 py-2 rounded-xl text-sm font-medium transition-colors;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-default);
+  color: var(--text-primary);
+  &:hover:not(:disabled) {
     background: var(--bg-overlay);
   }
+}
 
-  .sv-btn-danger {
-    @apply px-4 py-2 rounded-xl text-sm font-medium transition-opacity;
-    background: var(--danger);
-    color: white;
-  }
-  .sv-btn-danger:hover:not(:disabled) {
+@utility sv-btn-danger {
+  @apply px-4 py-2 rounded-xl text-sm font-medium transition-opacity;
+  background: var(--danger);
+  color: white;
+  &:hover:not(:disabled) {
     opacity: 0.9;
   }
+}
 
-  .sv-btn-ghost {
-    @apply px-3 py-1.5 rounded-lg transition-colors;
-    color: var(--text-tertiary);
-  }
-  .sv-btn-ghost:hover {
+@utility sv-btn-ghost {
+  @apply px-3 py-1.5 rounded-lg transition-colors;
+  color: var(--text-tertiary);
+  &:hover {
     color: var(--text-primary);
     background: var(--bg-elevated);
   }
+}
 
-  .sv-card {
-    @apply rounded-2xl p-4 border;
-    background: var(--bg-surface);
-    border-color: var(--border-default);
-  }
+@utility sv-card {
+  @apply rounded-2xl p-4 border;
+  background: var(--bg-surface);
+  border-color: var(--border-default);
+}
 
-  .sv-badge {
-    @apply text-[10px] font-medium px-2 py-0.5 rounded-full uppercase tracking-wide;
-  }
+@utility sv-badge {
+  @apply text-[10px] font-medium px-2 py-0.5 rounded-full uppercase tracking-wide;
+}
 
-  .sv-icon-btn {
-    @apply p-1.5 rounded-lg transition-colors;
-    color: var(--text-tertiary);
-  }
-  .sv-icon-btn:hover {
+@utility sv-icon-btn {
+  @apply p-1.5 rounded-lg transition-colors;
+  color: var(--text-tertiary);
+  &:hover {
     color: var(--text-primary);
     background: var(--bg-elevated);
   }
+}
 
-  .sv-divider {
-    @apply h-px my-3;
-    background: var(--border-subtle);
-  }
+@utility sv-divider {
+  @apply h-px my-3;
+  background: var(--border-subtle);
+}
 
-  .sv-tab {
-    @apply px-3 py-1.5 text-sm font-medium border-b-2 transition-colors;
-    color: var(--text-tertiary);
-    border-color: transparent;
-  }
-  .sv-tab.is-active {
+@utility sv-tab {
+  @apply px-3 py-1.5 text-sm font-medium border-b-2 transition-colors;
+  color: var(--text-tertiary);
+  border-color: transparent;
+  &.is-active {
     color: var(--accent);
     border-color: var(--accent);
   }
+}
 
-  .sv-progress {
-    @apply h-1.5 rounded-full overflow-hidden;
-    background: var(--bg-elevated);
+@utility is-active {
+  &.sv-tab {
+    color: var(--accent);
+    border-color: var(--accent);
   }
-  .sv-progress-bar {
-    @apply h-full rounded-full transition-all duration-300;
-    background: var(--accent);
+}
+
+@utility sv-progress {
+  @apply h-1.5 rounded-full overflow-hidden;
+  background: var(--bg-elevated);
+}
+
+@utility sv-progress-bar {
+  @apply h-full rounded-full transition-all duration-300;
+  background: var(--accent);
+}
+
+@layer utilities {
+  /* ─── Design tokens ──────────────────────────────────────────────────────── */
+  :root[data-theme="dark"] {
+    --bg-base: #0d0d12;
+    --bg-surface: #15151b;
+    --bg-elevated: #1c1c24;
+    --bg-overlay: #232330;
+
+    --text-primary: #f4f4f6;
+    --text-secondary: #b5b5be;
+    --text-tertiary: #6e6e78;
+
+    --border-subtle: #1f1f28;
+    --border-default: #2a2a36;
+    --border-strong: #3a3a48;
+
+    --accent: #6366f1;
+    --accent-rgb: 99, 102, 241;
+    --accent-dim: rgba(99, 102, 241, 0.12);
+
+    --success: #10b981;
+    --success-dim: rgba(16, 185, 129, 0.12);
+    --warning: #f59e0b;
+    --warning-dim: rgba(245, 158, 11, 0.12);
+    --danger: #ef4444;
+    --danger-dim: rgba(239, 68, 68, 0.12);
   }
+
+  :root[data-theme="light"] {
+    --bg-base: #fafafb;
+    --bg-surface: #ffffff;
+    --bg-elevated: #f4f4f6;
+    --bg-overlay: #eaeaf0;
+
+    --text-primary: #15151b;
+    --text-secondary: #45454e;
+    --text-tertiary: #888892;
+
+    --border-subtle: #ededf1;
+    --border-default: #dddde3;
+    --border-strong: #bfbfc8;
+
+    --accent: #6366f1;
+    --accent-rgb: 99, 102, 241;
+    --accent-dim: rgba(99, 102, 241, 0.1);
+
+    --success: #059669;
+    --success-dim: rgba(5, 150, 105, 0.1);
+    --warning: #d97706;
+    --warning-dim: rgba(217, 119, 6, 0.1);
+    --danger: #dc2626;
+    --danger-dim: rgba(220, 38, 38, 0.1);
+  }
+
+  /* High Contrast — maximizes text/background contrast for low-vision users.
+ * Pure black/white base plus brightened semantic colors (the dark theme's
+ * success/warning/danger hues don't have enough contrast against #000 on
+ * their own at normal text sizes). */
+  :root[data-theme="high-contrast"] {
+    --bg-base: #000000;
+    --bg-surface: #000000;
+    --bg-elevated: #0a0a0a;
+    --bg-overlay: #1a1a1a;
+
+    --text-primary: #ffffff;
+    --text-secondary: #ffffff;
+    --text-tertiary: #e0e0e0;
+
+    --border-subtle: #4d4d4d;
+    --border-default: #808080;
+    --border-strong: #ffffff;
+
+    --accent: #9498ff;
+    --accent-rgb: 148, 152, 255;
+    --accent-dim: rgba(148, 152, 255, 0.25);
+
+    --success: #4ade80;
+    --success-dim: rgba(74, 222, 128, 0.25);
+    --warning: #fde047;
+    --warning-dim: rgba(253, 224, 71, 0.25);
+    --danger: #ff6b6b;
+    --danger-dim: rgba(255, 107, 107, 0.25);
+  }
+
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+  body {
+    margin: 0;
+    background: var(--bg-base);
+    color: var(--text-primary);
+    font-family:
+      Outfit,
+      system-ui,
+      -apple-system,
+      "Segoe UI",
+      Roboto,
+      sans-serif;
+    font-feature-settings: "cv11";
+    -webkit-font-smoothing: antialiased;
+  }
+  * {
+    box-sizing: border-box;
+  }
+
+  /* ─── Design system: sv-* primitives ─────────────────────────────────────── */
 }
 
 /* ─── Extension content script styles (used by extension/src/content.js) ── */

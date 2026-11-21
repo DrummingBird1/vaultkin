@@ -35,14 +35,14 @@ export function PlaintextExportWarningModal({
         aria-label="Plaintext export warning"
       >
         <div className="flex items-center gap-4 mb-5">
-          <div className="w-10 h-10 rounded-xl bg-[var(--warning-dim)] flex items-center justify-center text-[var(--warning)] flex-shrink-0">
+          <div className="w-10 h-10 rounded-xl bg-(--warning-dim) flex items-center justify-center text-(--warning) shrink-0">
             <IconWarning className="w-5 h-5" />
           </div>
-          <h2 className="text-base font-semibold text-[var(--text-primary)]">
+          <h2 className="text-base font-semibold text-(--text-primary)">
             Export contains plaintext
           </h2>
         </div>
-        <p className="text-sm text-[var(--text-secondary)] mb-5">
+        <p className="text-sm text-(--text-secondary) mb-5">
           The CSV file will contain every password, TOTP secret, and note{" "}
           <strong>unencrypted</strong>. Anyone with access to the file can read it. Delete it
           securely once you're done, and never upload it anywhere.

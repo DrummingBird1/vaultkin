@@ -1,5 +1,6 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
+import tailwindcss from "@tailwindcss/vite";
 import { VitePWA } from "vite-plugin-pwa";
 import path from "path";
 
@@ -13,6 +14,7 @@ export default defineConfig(async () => ({
   root: path.resolve(__dirname, ".."),
   plugins: [
     react(),
+    tailwindcss(),
     VitePWA({
       // "prompt" (not "autoUpdate"): a new service worker installs in the
       // background but does NOT self-activate and force-reload the page.
@@ -32,8 +34,18 @@ export default defineConfig(async () => ({
         display: "standalone",
         start_url: "/",
         icons: [
-          { src: "/icons/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any maskable" },
-          { src: "/icons/icon-512.png", sizes: "512x512", type: "image/png", purpose: "any maskable" },
+          {
+            src: "/icons/icon-192.png",
+            sizes: "192x192",
+            type: "image/png",
+            purpose: "any maskable",
+          },
+          {
+            src: "/icons/icon-512.png",
+            sizes: "512x512",
+            type: "image/png",
+            purpose: "any maskable",
+          },
         ],
       },
       workbox: {
@@ -58,12 +70,12 @@ export default defineConfig(async () => ({
   ],
   resolve: {
     alias: {
-      "@core":       path.resolve(__dirname, "../src/core"),
-      "@services":   path.resolve(__dirname, "../src/services"),
-      "@store":      path.resolve(__dirname, "../src/store"),
+      "@core": path.resolve(__dirname, "../src/core"),
+      "@services": path.resolve(__dirname, "../src/services"),
+      "@store": path.resolve(__dirname, "../src/store"),
       "@components": path.resolve(__dirname, "../src/components"),
-      "@hooks":      path.resolve(__dirname, "../src/hooks"),
-      "@pages":      path.resolve(__dirname, "../src/pages"),
+      "@hooks": path.resolve(__dirname, "../src/hooks"),
+      "@pages": path.resolve(__dirname, "../src/pages"),
     },
   },
   server: {
@@ -78,8 +90,5 @@ export default defineConfig(async () => ({
     // auto-fetch and display original source structure by default.
     sourcemap: "hidden",
     target: "es2022",
-  },
-  css: {
-    postcss: path.resolve(__dirname, "postcss.config.cjs"),
   },
 }));

@@ -44,24 +44,21 @@ export function TopBar() {
   const sec = Math.floor((remainingMs % 60_000) / 1000);
 
   return (
-    <header className="flex items-center justify-between px-5 py-3 border-b border-[var(--border-subtle)] bg-[var(--bg-surface)]">
+    <header className="flex items-center justify-between px-5 py-3 border-b border-(--border-subtle) bg-(--bg-surface)">
       <h1 className="text-base font-display font-medium">{TITLES[activePage] ?? activePage}</h1>
       <div className="flex items-center gap-2">
         {isUnlocked && (
-          <span
-            className="text-xs text-[var(--text-tertiary)] tabular-nums"
-            title="Auto-lock countdown"
-          >
+          <span className="text-xs text-(--text-tertiary) tabular-nums" title="Auto-lock countdown">
             Locks in {min}:{sec.toString().padStart(2, "0")}
           </span>
         )}
         {activePage === "vault" && (
-          <div className="flex items-center bg-[var(--bg-elevated)] rounded-lg p-0.5">
+          <div className="flex items-center bg-(--bg-elevated) rounded-lg p-0.5">
             <button
               onClick={() => handleSetViewMode("grid")}
               aria-label="Grid view"
               aria-pressed={viewMode === "grid"}
-              className={`px-2 py-1 text-xs rounded ${viewMode === "grid" ? "bg-[var(--bg-surface)] text-[var(--text-primary)]" : "text-[var(--text-tertiary)]"}`}
+              className={`px-2 py-1 text-xs rounded-sm ${viewMode === "grid" ? "bg-(--bg-surface) text-(--text-primary)" : "text-(--text-tertiary)"}`}
             >
               Grid
             </button>
@@ -69,7 +66,7 @@ export function TopBar() {
               onClick={() => handleSetViewMode("list")}
               aria-label="List view"
               aria-pressed={viewMode === "list"}
-              className={`px-2 py-1 text-xs rounded ${viewMode === "list" ? "bg-[var(--bg-surface)] text-[var(--text-primary)]" : "text-[var(--text-tertiary)]"}`}
+              className={`px-2 py-1 text-xs rounded-sm ${viewMode === "list" ? "bg-(--bg-surface) text-(--text-primary)" : "text-(--text-tertiary)"}`}
             >
               List
             </button>
@@ -77,7 +74,7 @@ export function TopBar() {
               onClick={() => handleSetViewMode("service")}
               aria-label="Service view"
               aria-pressed={viewMode === "service"}
-              className={`px-2 py-1 text-xs rounded ${viewMode === "service" ? "bg-[var(--bg-surface)] text-[var(--text-primary)]" : "text-[var(--text-tertiary)]"}`}
+              className={`px-2 py-1 text-xs rounded-sm ${viewMode === "service" ? "bg-(--bg-surface) text-(--text-primary)" : "text-(--text-tertiary)"}`}
             >
               Service
             </button>
@@ -86,7 +83,7 @@ export function TopBar() {
         <button
           onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
           aria-label={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
-          className="p-2 rounded-lg text-[var(--text-tertiary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)] transition-colors"
+          className="p-2 rounded-lg text-(--text-tertiary) hover:text-(--text-primary) hover:bg-(--bg-elevated) transition-colors"
         >
           {theme === "dark" ? <IconSun /> : <IconMoon />}
         </button>

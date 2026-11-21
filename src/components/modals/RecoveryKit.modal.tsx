@@ -88,7 +88,7 @@ export function RecoveryKitModal({ onClose }: { onClose: () => void }) {
 
         {!recoveryKey ? (
           <>
-            <p className="text-sm text-[var(--text-secondary)] mb-4">
+            <p className="text-sm text-(--text-secondary) mb-4">
               Generates a random recovery passphrase, independent of your master password, and a
               snapshot of your current vault that opens only with it. Use this if you ever forget
               your master password — there is no other way to recover a zero-knowledge vault.
@@ -107,7 +107,7 @@ export function RecoveryKitModal({ onClose }: { onClose: () => void }) {
           </>
         ) : (
           <>
-            <div className="p-3 bg-[var(--warning-dim)] border border-[var(--warning)]/30 rounded-xl text-sm text-[var(--warning)] mb-4">
+            <div className="p-3 bg-(--warning-dim) border border-(--warning)/30 rounded-xl text-sm text-(--warning) mb-4">
               This passphrase is shown once and never saved anywhere. Write it down or store it in a
               separate password manager — not next to the downloaded file.
             </div>

@@ -316,8 +316,8 @@ export function SettingsPage() {
                   aria-pressed={theme === value}
                   className={`flex-1 px-3 py-2 rounded-lg text-sm border transition-colors ${
                     theme === value
-                      ? "border-[var(--accent)] bg-[var(--accent-dim)] text-[var(--accent)]"
-                      : "border-[var(--border-default)] hover:bg-[var(--bg-elevated)]"
+                      ? "border-(--accent) bg-(--accent-dim) text-(--accent)"
+                      : "border-(--border-default) hover:bg-(--bg-elevated)"
                   }`}
                 >
                   {label}
@@ -338,8 +338,8 @@ export function SettingsPage() {
                   aria-pressed={i18nInstance.language === lang}
                   className={`flex-1 px-3 py-2 rounded-lg text-sm border transition-colors ${
                     i18nInstance.language === lang
-                      ? "border-[var(--accent)] bg-[var(--accent-dim)] text-[var(--accent)]"
-                      : "border-[var(--border-default)] hover:bg-[var(--bg-elevated)]"
+                      ? "border-(--accent) bg-(--accent-dim) text-(--accent)"
+                      : "border-(--border-default) hover:bg-(--bg-elevated)"
                   }`}
                 >
                   {LANGUAGE_LABELS[lang]}
@@ -364,7 +364,7 @@ export function SettingsPage() {
                       persistSettings({ accentColor: a.hex });
                     }}
                     aria-label={`Accent color ${a.name}`}
-                    className={`w-8 h-8 rounded-full border-2 transition-transform ${active ? "scale-110 border-[var(--text-primary)]" : "border-transparent hover:scale-105"}`}
+                    className={`w-8 h-8 rounded-full border-2 transition-transform ${active ? "scale-110 border-(--text-primary)" : "border-transparent hover:scale-105"}`}
                     style={{ background: a.hex }}
                   />
                 );
@@ -377,8 +377,8 @@ export function SettingsPage() {
         <section className="sv-card">
           <h2 className="font-medium mb-4">Security</h2>
           {isLegacyKdf && (
-            <div className="mb-5 p-3 rounded-xl border border-[var(--accent)]/30 bg-[var(--accent-dim)]">
-              <p className="text-sm text-[var(--text-primary)] mb-2">
+            <div className="mb-5 p-3 rounded-xl border border-(--accent)/30 bg-(--accent-dim)">
+              <p className="text-sm text-(--text-primary) mb-2">
                 This vault still uses the older PBKDF2-SHA256 key derivation. Upgrade to Argon2id
                 for stronger protection against offline brute-force attacks.
               </p>
@@ -407,16 +407,16 @@ export function SettingsPage() {
                 </option>
               ))}
             </select>
-            <p className="text-xs text-[var(--text-tertiary)] mt-1">
+            <p className="text-xs text-(--text-tertiary) mt-1">
               Locks the vault after this much keyboard / mouse inactivity.
             </p>
           </div>
-          <label className="flex items-center gap-2 mb-5 text-sm text-[var(--text-secondary)] cursor-pointer">
+          <label className="flex items-center gap-2 mb-5 text-sm text-(--text-secondary) cursor-pointer">
             <input
               type="checkbox"
               checked={!!vault?.settings.lockOnHide}
               onChange={(e) => persistSettings({ lockOnHide: e.target.checked })}
-              className="rounded border-[var(--border-default)]"
+              className="rounded-sm border-(--border-default)"
             />
             Lock immediately when switching to another tab or window
           </label>
@@ -434,13 +434,13 @@ export function SettingsPage() {
         {/* Duress password */}
         <section className="sv-card">
           <h2 className="font-medium mb-1">Duress password</h2>
-          <p className="text-sm text-[var(--text-tertiary)] mb-4">
+          <p className="text-sm text-(--text-tertiary) mb-4">
             A second password that, when entered at unlock, silently wipes the local vault and opens
             an empty decoy. For coercion scenarios.
           </p>
           {duressEnrolled ? (
             <div className="flex items-center justify-between gap-3">
-              <span className="text-sm text-[var(--success)]">✓ A duress password is set.</span>
+              <span className="text-sm text-(--success)">✓ A duress password is set.</span>
               <button onClick={handleDisableDuress} className="sv-btn-secondary text-sm px-4">
                 Remove
               </button>
@@ -482,7 +482,7 @@ export function SettingsPage() {
         {/* Browser extension */}
         <section className="sv-card">
           <h2 className="font-medium mb-1">Browser extension</h2>
-          <p className="text-sm text-[var(--text-tertiary)] mb-4">
+          <p className="text-sm text-(--text-tertiary) mb-4">
             Push a minimal snapshot (title, URL, username, password, TOTP) to the companion Chrome
             extension for autofill. The extension holds it in memory only and auto-clears after 5
             minutes idle.
@@ -525,7 +525,7 @@ export function SettingsPage() {
         {/* WebDAV backup */}
         <section className="sv-card">
           <h2 className="font-medium mb-1">WebDAV backup</h2>
-          <p className="text-sm text-[var(--text-tertiary)] mb-4">
+          <p className="text-sm text-(--text-tertiary) mb-4">
             Push or pull the <strong>encrypted</strong> vault to a WebDAV server (Nextcloud,
             ownCloud, etc.). The server never sees plaintext. Manual push/pull only — no silent
             overwrite.
@@ -588,7 +588,7 @@ export function SettingsPage() {
         {hasDesktopUpdateSupport && (
           <section className="sv-card">
             <h2 className="font-medium mb-1">App updates</h2>
-            <p className="text-sm text-[var(--text-tertiary)] mb-4">
+            <p className="text-sm text-(--text-tertiary) mb-4">
               Checks GitHub Releases for a newer version. Nothing happens automatically — this only
               runs when you click the button, and nothing downloads or installs without another
               explicit click after that.
@@ -608,7 +608,7 @@ export function SettingsPage() {
                 <span className="sv-hint">You're on the latest version.</span>
               )}
               {updateStatus?.status === "error" && (
-                <span className="sv-hint text-[var(--danger)]">{updateStatus.message}</span>
+                <span className="sv-hint text-(--danger)">{updateStatus.message}</span>
               )}
               {updateStatus?.status === "available" && (
                 <button onClick={handleDownloadUpdate} className="sv-btn-primary">
@@ -628,9 +628,9 @@ export function SettingsPage() {
         )}
 
         {/* Danger zone */}
-        <section className="sv-card border-[var(--danger)]/30">
-          <h2 className="font-medium mb-2 text-[var(--danger)]">Danger zone</h2>
-          <p className="text-sm text-[var(--text-tertiary)] mb-3">
+        <section className="sv-card border-(--danger)/30">
+          <h2 className="font-medium mb-2 text-(--danger)">Danger zone</h2>
+          <p className="text-sm text-(--text-tertiary) mb-3">
             Permanently delete the local vault. Cloud backups are not touched.
           </p>
           <input

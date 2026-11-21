@@ -92,35 +92,33 @@ export function EntryDetail({
 
   return (
     <div
-      className="w-80 flex-shrink-0 border-l border-[var(--border-subtle)] bg-[var(--bg-surface)] flex flex-col"
+      className="w-80 shrink-0 border-l border-(--border-subtle) bg-(--bg-surface) flex flex-col"
       style={{ animation: "slideUp 200ms ease both" }}
     >
-      <div className="flex items-center justify-between p-4 border-b border-[var(--border-subtle)]">
+      <div className="flex items-center justify-between p-4 border-b border-(--border-subtle)">
         <div className="flex items-center gap-3 min-w-0">
           <EntryFavicon
             title={entry.title}
             url={entry.url}
-            className="w-9 h-9 rounded-xl bg-[var(--accent-dim)] text-sm flex-shrink-0"
+            className="w-9 h-9 rounded-xl bg-(--accent-dim) text-sm shrink-0"
           />
           <div className="min-w-0">
-            <p className="text-sm font-semibold text-[var(--text-primary)] truncate">
-              {entry.title}
-            </p>
-            <p className="text-xs text-[var(--text-tertiary)] truncate">{entry.username}</p>
+            <p className="text-sm font-semibold text-(--text-primary) truncate">{entry.title}</p>
+            <p className="text-xs text-(--text-tertiary) truncate">{entry.username}</p>
           </div>
         </div>
-        <div className="flex items-center gap-1 flex-shrink-0">
+        <div className="flex items-center gap-1 shrink-0">
           <button
             onClick={onEdit}
             aria-label="Edit entry"
-            className="p-1.5 rounded-lg text-[var(--text-tertiary)] hover:text-[var(--accent)] hover:bg-[var(--accent-dim)] transition-colors text-xs"
+            className="p-1.5 rounded-lg text-(--text-tertiary) hover:text-(--accent) hover:bg-(--accent-dim) transition-colors text-xs"
           >
             Edit
           </button>
           <button
             onClick={onClose}
             aria-label="Close entry details"
-            className="p-1.5 rounded-lg text-[var(--text-tertiary)] hover:text-[var(--text-primary)] transition-colors"
+            className="p-1.5 rounded-lg text-(--text-tertiary) hover:text-(--text-primary) transition-colors"
           >
             <IconClose />
           </button>
@@ -131,7 +129,7 @@ export function EntryDetail({
         {/* URL */}
         {entry.url && (
           <div>
-            <label className="text-xs font-medium text-[var(--text-tertiary)] uppercase tracking-wider">
+            <label className="text-xs font-medium text-(--text-tertiary) uppercase tracking-wider">
               URL
             </label>
             <div className="flex items-center gap-2 mt-1">
@@ -139,14 +137,14 @@ export function EntryDetail({
                 href={entry.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-sm text-[var(--accent)] hover:underline truncate flex-1"
+                className="text-sm text-(--accent) hover:underline truncate flex-1"
               >
                 {entry.url}
               </a>
               <button
                 onClick={() => copyField(entry.url!, "URL")}
                 aria-label="Copy URL"
-                className="text-[var(--text-tertiary)] hover:text-[var(--accent)] transition-colors text-xs flex-shrink-0"
+                className="text-(--text-tertiary) hover:text-(--accent) transition-colors text-xs shrink-0"
               >
                 Copy
               </button>
@@ -157,17 +155,17 @@ export function EntryDetail({
         {/* Username */}
         {entry.username && (
           <div>
-            <label className="text-xs font-medium text-[var(--text-tertiary)] uppercase tracking-wider">
+            <label className="text-xs font-medium text-(--text-tertiary) uppercase tracking-wider">
               Username
             </label>
             <div className="flex items-center gap-2 mt-1">
-              <span className="text-sm text-[var(--text-primary)] flex-1 truncate">
+              <span className="text-sm text-(--text-primary) flex-1 truncate">
                 {entry.username}
               </span>
               <button
                 onClick={() => copyField(entry.username!, "Username")}
                 aria-label="Copy username"
-                className="text-[var(--text-tertiary)] hover:text-[var(--accent)] transition-colors text-xs"
+                className="text-(--text-tertiary) hover:text-(--accent) transition-colors text-xs"
               >
                 Copy
               </button>
@@ -178,24 +176,24 @@ export function EntryDetail({
         {/* Password */}
         {entry.password && (
           <div>
-            <label className="text-xs font-medium text-[var(--text-tertiary)] uppercase tracking-wider">
+            <label className="text-xs font-medium text-(--text-tertiary) uppercase tracking-wider">
               Password
             </label>
             <div className="flex items-center gap-2 mt-1">
-              <span className="text-sm font-mono text-[var(--text-primary)] flex-1">
+              <span className="text-sm font-mono text-(--text-primary) flex-1">
                 {showPw ? entry.password : "•".repeat(Math.min(entry.password.length, 20))}
               </span>
               <button
                 onClick={togglePw}
                 aria-label={showPw ? "Hide password" : "Show password"}
-                className="text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] transition-colors text-xs"
+                className="text-(--text-tertiary) hover:text-(--text-secondary) transition-colors text-xs"
               >
                 {showPw ? `Hide (${secondsLeft}s)` : "Show"}
               </button>
               <button
                 onClick={() => copyField(entry.password!, "Password")}
                 aria-label="Copy password"
-                className="text-[var(--text-tertiary)] hover:text-[var(--accent)] transition-colors text-xs"
+                className="text-(--text-tertiary) hover:text-(--accent) transition-colors text-xs"
               >
                 Copy
               </button>
@@ -206,10 +204,10 @@ export function EntryDetail({
         {/* Notes */}
         {entry.notes && (
           <div>
-            <label className="text-xs font-medium text-[var(--text-tertiary)] uppercase tracking-wider">
+            <label className="text-xs font-medium text-(--text-tertiary) uppercase tracking-wider">
               Notes
             </label>
-            <p className="text-sm text-[var(--text-secondary)] mt-1 whitespace-pre-wrap leading-relaxed">
+            <p className="text-sm text-(--text-secondary) mt-1 whitespace-pre-wrap leading-relaxed">
               {entry.notes}
             </p>
           </div>
@@ -217,9 +215,9 @@ export function EntryDetail({
 
         {/* TOTP badge */}
         {entry.totpSecret && (
-          <div className="p-3 bg-[var(--accent-dim)] border border-[var(--accent)]/20 rounded-xl">
-            <p className="text-xs font-medium text-[var(--accent)] mb-1">2FA Enabled</p>
-            <p className="text-xs text-[var(--text-tertiary)]">
+          <div className="p-3 bg-(--accent-dim) border border-(--accent)/20 rounded-xl">
+            <p className="text-xs font-medium text-(--accent) mb-1">2FA Enabled</p>
+            <p className="text-xs text-(--text-tertiary)">
               TOTP code available in Authenticator tab
             </p>
           </div>
@@ -228,14 +226,14 @@ export function EntryDetail({
         {/* Tags */}
         {entry.tags.length > 0 && (
           <div>
-            <label className="text-xs font-medium text-[var(--text-tertiary)] uppercase tracking-wider">
+            <label className="text-xs font-medium text-(--text-tertiary) uppercase tracking-wider">
               Tags
             </label>
             <div className="flex flex-wrap gap-1.5 mt-1.5">
               {entry.tags.map((tag) => (
                 <span
                   key={tag}
-                  className="text-xs px-2 py-0.5 rounded-full bg-[var(--bg-elevated)] border border-[var(--border-subtle)] text-[var(--text-secondary)]"
+                  className="text-xs px-2 py-0.5 rounded-full bg-(--bg-elevated) border border-(--border-subtle) text-(--text-secondary)"
                 >
                   {tag}
                 </span>
@@ -247,24 +245,24 @@ export function EntryDetail({
         {/* Custom fields */}
         {entry.customFields?.length > 0 && (
           <div>
-            <label className="text-xs font-medium text-[var(--text-tertiary)] uppercase tracking-wider">
+            <label className="text-xs font-medium text-(--text-tertiary) uppercase tracking-wider">
               Custom Fields
             </label>
             <div className="mt-1.5 flex flex-col gap-2">
               {entry.customFields.map((f) => (
                 <div
                   key={f.id}
-                  className="flex items-center gap-2 p-2 bg-[var(--bg-elevated)] rounded-lg"
+                  className="flex items-center gap-2 p-2 bg-(--bg-elevated) rounded-lg"
                 >
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs text-[var(--text-tertiary)]">{f.label}</p>
-                    <p className="text-sm font-mono text-[var(--text-primary)] truncate">
+                    <p className="text-xs text-(--text-tertiary)">{f.label}</p>
+                    <p className="text-sm font-mono text-(--text-primary) truncate">
                       {f.type === "password" ? "•••••••" : f.value}
                     </p>
                   </div>
                   <button
                     onClick={() => copyField(f.value, f.label)}
-                    className="text-[var(--text-tertiary)] hover:text-[var(--accent)] text-xs"
+                    className="text-(--text-tertiary) hover:text-(--accent) text-xs"
                   >
                     Copy
                   </button>
@@ -279,7 +277,7 @@ export function EntryDetail({
           <div>
             <button
               onClick={() => setShowHistory((v) => !v)}
-              className="text-xs font-medium text-[var(--text-tertiary)] uppercase tracking-wider hover:text-[var(--accent)] transition-colors"
+              className="text-xs font-medium text-(--text-tertiary) uppercase tracking-wider hover:text-(--accent) transition-colors"
             >
               {showHistory ? "▾" : "▸"} Previous versions ({versions.length})
             </button>
@@ -288,17 +286,17 @@ export function EntryDetail({
                 {versions.map((v, i) => (
                   <div
                     key={i}
-                    className="flex items-center gap-2 p-2 bg-[var(--bg-elevated)] rounded-lg"
+                    className="flex items-center gap-2 p-2 bg-(--bg-elevated) rounded-lg"
                   >
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs text-[var(--text-secondary)] truncate">{v.title}</p>
-                      <p className="text-[11px] text-[var(--text-tertiary)]">
+                      <p className="text-xs text-(--text-secondary) truncate">{v.title}</p>
+                      <p className="text-[11px] text-(--text-tertiary)">
                         {v.updatedAt ? new Date(v.updatedAt).toLocaleString() : "earlier version"}
                       </p>
                     </div>
                     <button
                       onClick={() => restoreVersion(v)}
-                      className="text-[var(--accent)] hover:underline text-xs flex-shrink-0"
+                      className="text-(--accent) hover:underline text-xs shrink-0"
                     >
                       Restore
                     </button>
@@ -311,10 +309,10 @@ export function EntryDetail({
       </div>
 
       {/* Delete button */}
-      <div className="p-4 border-t border-[var(--border-subtle)]">
+      <div className="p-4 border-t border-(--border-subtle)">
         <button
           onClick={onDelete}
-          className="w-full text-sm text-[var(--danger)] hover:bg-[var(--danger-dim)] py-2 rounded-xl transition-colors"
+          className="w-full text-sm text-(--danger) hover:bg-(--danger-dim) py-2 rounded-xl transition-colors"
         >
           Delete Entry
         </button>

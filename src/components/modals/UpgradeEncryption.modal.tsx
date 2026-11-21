@@ -80,7 +80,7 @@ export function UpgradeEncryptionModal({ onClose }: { onClose: () => void }) {
 
         {done ? (
           <div className="flex flex-col items-center text-center py-6 gap-4">
-            <p className="text-sm text-[var(--text-secondary)]">
+            <p className="text-sm text-(--text-secondary)">
               Your vault now uses Argon2id — the modern, memory-hard key derivation function.
             </p>
             <button onClick={onClose} className="sv-btn-primary px-8">
@@ -89,7 +89,7 @@ export function UpgradeEncryptionModal({ onClose }: { onClose: () => void }) {
           </div>
         ) : (
           <>
-            <p className="text-sm text-[var(--text-secondary)] mb-4">
+            <p className="text-sm text-(--text-secondary) mb-4">
               This vault was created with an older key derivation function (PBKDF2-SHA256).
               Re-encrypt it with Argon2id — stronger against offline brute-force — using the same
               master password.

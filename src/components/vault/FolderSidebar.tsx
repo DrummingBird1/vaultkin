@@ -58,8 +58,8 @@ function FolderNode({
       <div
         className={`group flex items-center gap-1 rounded-lg px-2 py-1.5 text-sm cursor-pointer transition-colors ${
           active
-            ? "bg-[var(--accent-dim)] text-[var(--accent)]"
-            : "text-[var(--text-secondary)] hover:bg-[var(--bg-elevated)]"
+            ? "bg-(--accent-dim) text-(--accent)"
+            : "text-(--text-secondary) hover:bg-(--bg-elevated)"
         }`}
         style={{ paddingLeft: depth * INDENT_PX + 8 }}
         onClick={() => onSelect(node.folder.id)}
@@ -71,7 +71,7 @@ function FolderNode({
             e.stopPropagation();
             setExpanded((v) => !v);
           }}
-          className={`flex-shrink-0 text-[var(--text-tertiary)] ${hasChildren ? "" : "invisible"}`}
+          className={`shrink-0 text-(--text-tertiary) ${hasChildren ? "" : "invisible"}`}
         >
           {expanded ? (
             <IconChevronDown className="w-3.5 h-3.5" />
@@ -79,7 +79,7 @@ function FolderNode({
             <IconChevronRight className="w-3.5 h-3.5" />
           )}
         </button>
-        <IconFolder className="w-4 h-4 flex-shrink-0" />
+        <IconFolder className="w-4 h-4 shrink-0" />
         <span className="flex-1 truncate">{node.folder.name}</span>
         <button
           type="button"
@@ -88,7 +88,7 @@ function FolderNode({
             e.stopPropagation();
             onAddSubfolder(node.folder.id);
           }}
-          className="opacity-0 group-hover:opacity-100 text-[var(--text-tertiary)] hover:text-[var(--accent)] flex-shrink-0"
+          className="opacity-0 group-hover:opacity-100 text-(--text-tertiary) hover:text-(--accent) shrink-0"
         >
           <IconFolderPlus className="w-3.5 h-3.5" />
         </button>
@@ -99,7 +99,7 @@ function FolderNode({
             e.stopPropagation();
             onDelete(node.folder.id, node.folder.name);
           }}
-          className="opacity-0 group-hover:opacity-100 text-[var(--text-tertiary)] hover:text-[var(--danger)] flex-shrink-0"
+          className="opacity-0 group-hover:opacity-100 text-(--text-tertiary) hover:text-(--danger) shrink-0"
         >
           <IconTrash className="w-3.5 h-3.5" />
         </button>
@@ -146,16 +146,16 @@ export function FolderSidebar() {
   };
 
   return (
-    <aside className="w-52 flex-shrink-0 border-r border-[var(--border-subtle)] p-3 flex flex-col gap-1 overflow-y-auto">
+    <aside className="w-52 shrink-0 border-r border-(--border-subtle) p-3 flex flex-col gap-1 overflow-y-auto">
       <div className="flex items-center justify-between px-1 mb-1">
-        <span className="text-xs font-medium uppercase tracking-wider text-[var(--text-tertiary)]">
+        <span className="text-xs font-medium uppercase tracking-wider text-(--text-tertiary)">
           Folders
         </span>
         <button
           type="button"
           aria-label="New folder"
           onClick={() => handleAddSubfolder(undefined)}
-          className="text-[var(--text-tertiary)] hover:text-[var(--accent)]"
+          className="text-(--text-tertiary) hover:text-(--accent)"
         >
           <IconFolderPlus className="w-4 h-4" />
         </button>
@@ -163,8 +163,8 @@ export function FolderSidebar() {
       <button
         className={`flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm text-left transition-colors ${
           !activeFolderId
-            ? "bg-[var(--accent-dim)] text-[var(--accent)]"
-            : "text-[var(--text-secondary)] hover:bg-[var(--bg-elevated)]"
+            ? "bg-(--accent-dim) text-(--accent)"
+            : "text-(--text-secondary) hover:bg-(--bg-elevated)"
         }`}
         onClick={() => setSearchQuery({ folderId: undefined })}
       >

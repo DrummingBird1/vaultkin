@@ -55,7 +55,7 @@ export function TagInput({
         {value.map((tag) => (
           <span
             key={tag}
-            className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-[var(--accent-dim)] text-[var(--accent)]"
+            className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-(--accent-dim) text-(--accent)"
           >
             {tag}
             <button
@@ -77,11 +77,11 @@ export function TagInput({
           onFocus={() => setShowSuggestions(true)}
           onBlur={() => setShowSuggestions(false)}
           placeholder={value.length === 0 ? "Add tags…" : ""}
-          className="flex-1 min-w-[80px] bg-transparent outline-none text-sm text-[var(--text-primary)] placeholder-[var(--text-tertiary)]"
+          className="flex-1 min-w-[80px] bg-transparent outline-hidden text-sm text-(--text-primary) placeholder-(--text-tertiary)"
         />
       </div>
       {showSuggestions && filteredSuggestions.length > 0 && (
-        <div className="absolute z-10 mt-1 w-full rounded-xl border border-[var(--border-default)] bg-[var(--bg-elevated)] shadow-lg overflow-hidden">
+        <div className="absolute z-10 mt-1 w-full rounded-xl border border-(--border-default) bg-(--bg-elevated) shadow-lg overflow-hidden">
           {filteredSuggestions.map((s) => (
             <button
               key={s}
@@ -89,7 +89,7 @@ export function TagInput({
               // onMouseDown (not onClick) fires before the input's onBlur, so
               // the suggestion click registers before blur closes the list.
               onMouseDown={() => commit(s)}
-              className="block w-full text-left px-3 py-2 text-sm text-[var(--text-primary)] hover:bg-[var(--accent-dim)] hover:text-[var(--accent)]"
+              className="block w-full text-left px-3 py-2 text-sm text-(--text-primary) hover:bg-(--accent-dim) hover:text-(--accent)"
             >
               {s}
             </button>

@@ -40,7 +40,7 @@ export function EntryFavicon({
   if (!domain || failed) {
     return (
       <div
-        className={`flex items-center justify-center font-bold text-[var(--accent)] ${className ?? ""}`}
+        className={`flex items-center justify-center font-bold text-(--accent) ${className ?? ""}`}
       >
         {title[0]?.toUpperCase() ?? "?"}
       </div>

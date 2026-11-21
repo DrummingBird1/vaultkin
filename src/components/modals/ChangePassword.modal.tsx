@@ -95,12 +95,10 @@ export function ChangePasswordModal({ onClose }: Props) {
     <div className="sv-modal-backdrop" onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="sv-modal max-w-sm" role="dialog" aria-modal="true">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-lg font-semibold text-[var(--text-primary)]">
-            Change Master Password
-          </h2>
+          <h2 className="text-lg font-semibold text-(--text-primary)">Change Master Password</h2>
           <button
             onClick={onClose}
-            className="text-[var(--text-tertiary)] hover:text-[var(--text-primary)] p-1 rounded-lg"
+            className="text-(--text-tertiary) hover:text-(--text-primary) p-1 rounded-lg"
           >
             ✕
           </button>
@@ -109,7 +107,7 @@ export function ChangePasswordModal({ onClose }: Props) {
         {step === "form" && (
           <div className="flex flex-col gap-4">
             {errors.global && (
-              <div className="p-3 bg-[var(--danger-dim)] border border-[var(--danger)]/20 rounded-xl text-sm text-[var(--danger)]">
+              <div className="p-3 bg-(--danger-dim) border border-(--danger)/20 rounded-xl text-sm text-(--danger)">
                 {errors.global}
               </div>
             )}
@@ -117,7 +115,7 @@ export function ChangePasswordModal({ onClose }: Props) {
               <label className="sv-label">Current Password</label>
               <div className="relative">
                 <input
-                  className={`sv-input w-full pr-10 font-mono ${errors.current ? "border-[var(--danger)]" : ""}`}
+                  className={`sv-input w-full pr-10 font-mono ${errors.current ? "border-(--danger)" : ""}`}
                   type={showCur ? "text" : "password"}
                   value={current}
                   onChange={(e) => setCurrent(e.target.value)}
@@ -125,7 +123,7 @@ export function ChangePasswordModal({ onClose }: Props) {
                 />
                 <button
                   type="button"
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)]"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-(--text-tertiary)"
                   onClick={() => setShowCur((v) => !v)}
                 >
                   {showCur ? "🙈" : "👁️"}
@@ -137,7 +135,7 @@ export function ChangePasswordModal({ onClose }: Props) {
               <label className="sv-label">New Password</label>
               <div className="relative">
                 <input
-                  className={`sv-input w-full pr-10 font-mono ${errors.newPw ? "border-[var(--danger)]" : ""}`}
+                  className={`sv-input w-full pr-10 font-mono ${errors.newPw ? "border-(--danger)" : ""}`}
                   type={showNew ? "text" : "password"}
                   value={newPw}
                   onChange={(e) => setNewPw(e.target.value)}
@@ -145,7 +143,7 @@ export function ChangePasswordModal({ onClose }: Props) {
                 />
                 <button
                   type="button"
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)]"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-(--text-tertiary)"
                   onClick={() => setShowNew((v) => !v)}
                 >
                   {showNew ? "🙈" : "👁️"}
@@ -170,7 +168,7 @@ export function ChangePasswordModal({ onClose }: Props) {
             <div>
               <label className="sv-label">Confirm New Password</label>
               <input
-                className={`sv-input w-full font-mono ${errors.confirm ? "border-[var(--danger)]" : ""}`}
+                className={`sv-input w-full font-mono ${errors.confirm ? "border-(--danger)" : ""}`}
                 type="password"
                 value={confirmPw}
                 onChange={(e) => setConfirmPw(e.target.value)}
@@ -191,17 +189,17 @@ export function ChangePasswordModal({ onClose }: Props) {
 
         {step === "working" && (
           <div className="flex flex-col items-center py-10 gap-5">
-            <div className="w-14 h-14 rounded-2xl bg-[var(--accent-dim)] flex items-center justify-center text-2xl animate-pulse">
+            <div className="w-14 h-14 rounded-2xl bg-(--accent-dim) flex items-center justify-center text-2xl animate-pulse">
               🔐
             </div>
             <div className="w-full max-w-xs">
-              <div className="h-2 bg-[var(--bg-elevated)] rounded-full overflow-hidden">
+              <div className="h-2 bg-(--bg-elevated) rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-[var(--accent)] rounded-full transition-all duration-500"
+                  className="h-full bg-(--accent) rounded-full transition-all duration-500"
                   style={{ width: `${progress}%` }}
                 />
               </div>
-              <p className="text-xs text-[var(--text-tertiary)] text-center mt-2">
+              <p className="text-xs text-(--text-tertiary) text-center mt-2">
                 Re-encrypting vault…
               </p>
             </div>
@@ -210,10 +208,10 @@ export function ChangePasswordModal({ onClose }: Props) {
 
         {step === "done" && (
           <div className="flex flex-col items-center text-center py-8 gap-4">
-            <div className="w-14 h-14 rounded-full bg-[var(--success-dim)] flex items-center justify-center text-3xl">
+            <div className="w-14 h-14 rounded-full bg-(--success-dim) flex items-center justify-center text-3xl">
               ✅
             </div>
-            <h3 className="font-semibold text-[var(--text-primary)]">Password Changed</h3>
+            <h3 className="font-semibold text-(--text-primary)">Password Changed</h3>
             <button onClick={onClose} className="sv-btn-primary px-8">
               Done
             </button>
