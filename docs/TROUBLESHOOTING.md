@@ -1,64 +1,66 @@
-# פתרון תקלות — Vaultkin
+# Vaultkin troubleshooting
 
-## תוכן עניינים
-- [המסך שחור / לבן ריק](#המסך-שחור--לבן-ריק)
-- [שגיאות בהתקנה](#שגיאות-בהתקנה)
-- [`npm install` נכשל](#npm-install-נכשל)
-- [סיסמה שגויה / "Incorrect master password"](#סיסמה-שגויה)
-- [ה-vault לא נטען](#ה-vault-לא-נטען)
-- [Sync לא עובד](#sync-לא-עובד)
-- [Browser Extension לא רואה entries](#browser-extension-לא-רואה-entries)
-- [Biometric Unlock לא עובד](#biometric-unlock-לא-עובד)
-- [TOTP code שגוי](#totp-code-שגוי)
-- [Tests נכשלים](#tests-נכשלים)
-- [Electron לא עולה](#electron-לא-עולה)
+> Hebrew version: [TROUBLESHOOTING.he.md](TROUBLESHOOTING.he.md)
+
+## Contents
+- [Black / blank white screen](#black--blank-white-screen)
+- [Installation errors](#installation-errors)
+- [`npm install` fails](#npm-install-fails)
+- [Wrong password / "Incorrect master password"](#wrong-password)
+- [The vault does not load](#the-vault-does-not-load)
+- [Sync does not work](#sync-does-not-work)
+- [The browser extension does not see entries](#the-browser-extension-does-not-see-entries)
+- [Biometric unlock does not work](#biometric-unlock-does-not-work)
+- [Wrong TOTP code](#wrong-totp-code)
+- [Tests fail](#tests-fail)
+- [Electron does not start](#electron-does-not-start)
 
 ---
 
-## המסך שחור / לבן ריק
+## Black / blank white screen
 
-**תוקן בגרסה זו**. השרשרת של imports שבורים בין `engine.ts`, `serializer.ts`, ו-`session.store.ts` נסגרה, וה-`ErrorBoundary` עוטף עכשיו את כל האפליקציה.
+**Fixed in this version.** The chain of broken imports between `engine.ts`, `serializer.ts` and `session.store.ts` was closed, and the `ErrorBoundary` now wraps the whole app.
 
-אם בכל זאת המסך שחור:
-1. **רענון חזק**: `Ctrl+Shift+R` (`⌘+Shift+R` ב-Mac).
-2. **DevTools** (F12) → Console: האם יש שגיאות אדומות? צלם וצרף ל-issue.
-3. **localStorage corrupt**?
+If the screen is still black:
+1. **Hard refresh**: `Ctrl+Shift+R` (`⌘+Shift+R` on Mac).
+2. **DevTools** (F12) → Console: are there red errors? Take a screenshot and attach it to an issue.
+3. **Corrupt localStorage?**
    ```js
-   // ב-DevTools console:
+   // In the DevTools console:
    localStorage.clear();
    indexedDB.deleteDatabase("securevault");
    location.reload();
    ```
-   ⚠️ זה ימחק את ה-vault המקומי. אם יש לך גיבוי בענן (WebDAV) — תיטען משם בלוגין הבא.
-4. **Cache של service worker מקולקל**:
+   ⚠️ This deletes the local vault. If you have a cloud backup (WebDAV), it will load from there on the next login.
+4. **Broken service worker cache**:
    - `chrome://serviceworker-internals/` → unregister
-   - או DevTools → Application → Service Workers → Unregister.
+   - or DevTools → Application → Service Workers → Unregister.
 
 ---
 
-## שגיאות בהתקנה
+## Installation errors
 
-### `npm install` נכשל
+### `npm install` fails
 
-**סימפטומים נפוצים:**
-- שגיאה ב-`argon2-browser` או `keytar`.
-- שגיאת native compile (`gyp ERR!`).
+**Common symptoms:**
+- An error in `argon2-browser` or `keytar`.
+- A native compile error (`gyp ERR!`).
 
-**פתרונות:**
+**Fixes:**
 ```bash
-# 1. ודא Node 20+
+# 1. Make sure you have Node 20+
 node -v
 
-# 2. נקה cache + node_modules
+# 2. Clear the cache and node_modules
 rm -rf node_modules package-lock.json
 npm cache clean --force
 npm install
 
-# 3. אם keytar נכשל (בעיה נפוצה ב-Linux):
+# 3. If keytar fails (common on Linux):
 sudo apt install libsecret-1-dev  # Debian/Ubuntu
 sudo dnf install libsecret-devel  # Fedora
 
-# 4. אם argon2-browser נכשל — ודא שיש python3 + make + g++:
+# 4. If argon2-browser fails, make sure python3 + make + g++ are installed:
 sudo apt install build-essential python3
 ```
 
@@ -69,151 +71,151 @@ npm install --legacy-peer-deps
 
 ---
 
-## סיסמה שגויה
+## Wrong password
 
 ### "Incorrect master password"
 
-**אפשרויות:**
-1. **באמת הקלדת לא נכון** — בדוק Caps Lock, פריסת מקלדת, רווחים.
-2. **יש לך duress password מוגדר** — אם הקלדת *אותו* בטעות, ה-vault שלך **כבר נמחק מהמכשיר הזה**. בדוק ב-Settings → Security אם יש banner אדום של duress trigger.
-3. **ה-payload פגום** — אם פתחת את ה-DB ב-IndexedDB inspector ושינית בייטים, ה-HMAC ייכשל ונקבל שגיאה זו (גם אם הסיסמה נכונה).
+**Possibilities:**
+1. **You really mistyped it**: check Caps Lock, keyboard layout, spaces.
+2. **You have a duress password set**: if you typed *that* by mistake, your vault **has already been deleted from this device**. Check Settings → Security for a red duress-trigger banner.
+3. **The payload is damaged**: if you opened the DB in an IndexedDB inspector and changed bytes, the HMAC fails and you get this error (even with the right password).
 
-**שחזור:**
-- אם יש לך WebDAV backup: מחק את ה-vault המקומי (`localStorage.clear()` + `indexedDB.deleteDatabase("securevault")`), היכנס מחדש, וה-app ימשוך מהענן.
-- אם אין: **אין שחזור**. צור vault חדש מאפס.
+**Recovery:**
+- If you have a WebDAV backup: delete the local vault (`localStorage.clear()` + `indexedDB.deleteDatabase("securevault")`), sign in again, and the app pulls it from the cloud.
+- If not: **there is no recovery**. Create a new vault from scratch.
 
-### שכחתי לחלוטין את הסיסמה
-אין שחזור. זה הרי מה שעושה את האפליקציה zero-knowledge — אם היה backdoor, היא לא הייתה zero-knowledge.
+### I completely forgot the password
+There is no recovery. That is what makes the app zero-knowledge: if there were a backdoor, it would not be zero-knowledge.
 
-האפשרויות:
-1. בדוק ב-password managers אחרים שאולי שמרת שם את הסיסמה.
-2. בדוק ב-Settings אם הגדרת **hint** (מוצג מעל שדה הסיסמה).
-3. ייבא את הנתונים מהמקור המקורי (Bitwarden/1Password וכו') והתחל vault חדש.
-
----
-
-## ה-vault לא נטען
-
-### סימפטום: לוחצים Unlock וכלום לא קורה
-- DevTools → Network: האם יש קריאה ל-`indexedDB`?
-- DevTools → Application → IndexedDB: האם יש DB בשם `securevault`?
-  - אם כן: בדוק אם ב-`vault` store יש עצם.
-  - אם לא: צור vault חדש.
-
-### סימפטום: "Failed to unlock vault. The file may be corrupted."
-- ה-`headerMac` נכשל. או שהvault שונה ידנית, או ש-Argon2 מחזיר ערך שונה (קרה בעבר עם בעיות ב-WASM).
-- נסה את הvault המגובה בענן.
+Your options:
+1. Check other password managers where you may have saved it.
+2. Check whether you set a **hint** (shown above the password field).
+3. Import your data from its original source (Bitwarden, 1Password, etc.) and start a new vault.
 
 ---
 
-## Sync לא עובד
+## The vault does not load
+
+### Symptom: clicking Unlock does nothing
+- DevTools → Network: is there a call to `indexedDB`?
+- DevTools → Application → IndexedDB: is there a DB named `securevault`?
+  - If yes: check whether the `vault` store contains an object.
+  - If not: create a new vault.
+
+### Symptom: "Failed to unlock vault. The file may be corrupted."
+- The `headerMac` check failed. Either the vault was changed by hand, or Argon2 returned a different value (this happened in the past with WASM issues).
+- Try the vault backed up in the cloud.
+
+---
+
+## Sync does not work
 
 ### "Sync failed"
-- שמירה לוקאלית **הצליחה** — ה-vault שלך מאובטח. ה-sync יעיף ניסיון נוסף בשמירה הבאה.
-- בדוק:
-  1. **WebDAV URL** נכון ומסתיים ב-`/`.
-  2. **Credentials** נכונים. עם 2FA בנקסטקלאוד — חייבים **App Password**, לא הסיסמה הראשית.
-  3. CORS — אם השרת לא שולח `Access-Control-Allow-Origin` נכון, יש בעיה. לרוב זה Nextcloud/ownCloud ובהם מספיק להיכנס דרך Electron במקום דרך הדפדפן.
+- The local save **succeeded**; your vault is safe. Sync will try again on the next save.
+- Check:
+  1. The **WebDAV URL** is correct and ends with `/`.
+  2. The **credentials** are correct. With 2FA on Nextcloud you need an **app password**, not your main password.
+  3. CORS: if the server does not send the right `Access-Control-Allow-Origin`, it will fail. This is usually Nextcloud/ownCloud, and using the Electron app instead of the browser is enough.
 
 ### "Sync conflict"
-- שניכם (אתה והמכשיר השני) שיניתם את ה-vault מאז ה-sync האחרון.
-- פתח את ה-Conflict Resolution modal (Settings → Sync → Resolve) ובחר אסטרטגיה.
+- Both you and the other device changed the vault since the last sync.
+- Open the Conflict Resolution modal (Settings → Sync → Resolve) and choose a strategy.
 
 ---
 
-## Browser Extension לא רואה entries
+## The browser extension does not see entries
 
 ### Checklist
-1. ✅ ה-extension מותקן (`chrome://extensions/`)?
-2. ✅ ה-Extension ID מוזן ב-Settings → Security → Browser Extension?
-3. ✅ ב-`manifest.json` של ה-extension, `externally_connectable.matches` כולל את ה-origin שלך (`http://localhost:5173/*`)?
-4. ✅ לחצת **"Send entries to extension"**?
-5. ✅ ה-cache לא פג (5 דקות מאז שליחה)?
+1. ✅ Is the extension installed (`chrome://extensions/`)?
+2. ✅ Is the Extension ID entered in Settings → Security → Browser Extension?
+3. ✅ Does `externally_connectable.matches` in the extension's `manifest.json` include your origin (`http://localhost:5173/*`)?
+4. ✅ Did you click **"Send entries to extension"**?
+5. ✅ Has the cache not expired (5 minutes since sending)?
 
 ### Debug
-1. פתח את ה-extension service worker:
+1. Open the extension's service worker:
    - `chrome://extensions/` → Vaultkin → "Service worker" link → DevTools.
-2. ב-Console חפש logs: `[SV-Ext] Received N entries from main app`.
-3. אם אין הודעה — ה-message לא הגיע. בדוק `externally_connectable`.
+2. In the Console look for logs: `[SV-Ext] Received N entries from main app`.
+3. If there is no message, the message did not arrive. Check `externally_connectable`.
 
-### האייקון 🔐 לא מופיע על שדות password
-- ה-content script לא רץ. בדוק:
-  - `chrome://extensions/` → "Errors" → אם יש שגיאות.
-  - דף עם CSP מאוד נוקשה (Banking sites, GitHub) יחסום inline script — זה ידוע.
-
----
-
-## Biometric Unlock לא עובד
-
-**ידוע**: בגרסה הנוכחית, biometrics דורש שתפתח עם הסיסמה הראשית בפעם הראשונה אחרי התקנה. הזרימה המלאה (decrypt-with-keys-only) עדיין בפיתוח.
-
-לעקיפה: בכל startup, פתח עם סיסמה. בכניסה הזאת biometrics יוצע — אבל לא יעבוד.
+### The 🔐 icon does not appear on password fields
+- The content script is not running. Check:
+  - `chrome://extensions/` → "Errors" for any errors.
+  - Pages with a very strict CSP (banking sites, GitHub) block inline scripts. This is known.
 
 ---
 
-## TOTP code שגוי
+## Biometric unlock does not work
 
-### ה-code שלי לא מתקבל באתר
-- **שעון**: TOTP מסתמך על שעון מסונכרן. אם המכשיר שלך לא מסונכרן — הקודים יהיו שגויים.
+**Known**: in the current version, biometrics requires you to unlock with the master password the first time after installation. The full flow (decrypt-with-keys-only) is still in development.
+
+Workaround: unlock with the password on each startup. Biometrics will be offered on that login, but it will not work.
+
+---
+
+## Wrong TOTP code
+
+### My code is not accepted by the site
+- **Clock**: TOTP depends on a synchronized clock. If your device's clock is off, the codes will be wrong.
   - macOS: `sudo sntp -sS time.apple.com`
   - Windows: Settings → Time & Language → Sync now
   - Linux: `timedatectl set-ntp true`
-- **Drift**: אם הזמן בסדר אבל עדיין שגוי, בדוק שה-Base32 secret תואם בדיוק (אותיות גדולות, בלי רווחים).
-- **חלון זמן**: ברירת המחדל 30 שניות. רוב האתרים מקבלים ±1 חלון (60 שניות סהכ). אם האתר רגיש מאוד, נסה להגיש מהר יותר.
+- **Drift**: if the time is right and it is still wrong, check that the Base32 secret matches exactly (capital letters, no spaces).
+- **Time window**: the default is 30 seconds. Most sites accept ±1 window (60 seconds total). If the site is very strict, try to submit faster.
 
 ### "Invalid Base32"
-- Base32 RFC 4648 בלבד: A-Z, 2-7, ולפעמים `=` ל-padding.
-- חלק מהאתרים נותנים secret עם רווחים (`ABCD EFGH IJKL`) — האפליקציה תסיר אותם.
-- חלק נותנים lowercase — מומר אוטומטית.
+- RFC 4648 Base32 only: A-Z, 2-7, and sometimes `=` for padding.
+- Some sites give the secret with spaces (`ABCD EFGH IJKL`); the app removes them.
+- Some give it in lowercase; it is converted automatically.
 
 ---
 
-## Tests נכשלים
+## Tests fail
 
-### `npm test` — vitest fails on crypto
-- Node 20+ צריך להכיל `globalThis.crypto.subtle`. אם לא:
+### `npm test`: vitest fails on crypto
+- Node 20+ must provide `globalThis.crypto.subtle`. If it does not:
   ```bash
-  node -v   # ודא 20+
+  node -v   # make sure it is 20+
   ```
-- רץ ב-jsdom. אם יש בעיה ב-IndexedDB mock — בדוק ב-`tests/setup.ts`.
+- Tests run in jsdom. If there is a problem with the IndexedDB mock, check `tests/setup.ts`.
 
-### `npm run test:e2e` — Playwright timeouts
-- Vite dev server לא רץ:
+### `npm run test:e2e`: Playwright timeouts
+- The Vite dev server is not running:
   ```bash
-  # רץ בטרמינל נפרד
+  # in a separate terminal
   npm run dev
-  # ואז
+  # then
   npx playwright test
   ```
-- הסביבה איטית — הגדל timeouts ב-`playwright.config.ts` (נמצא כעת על 60s).
+- The environment is slow: raise the timeouts in `playwright.config.ts` (currently 60s).
 
-### Coverage נמוך מהסף
-- `vitest.config.ts` דורש 80% lines + 80% functions + 75% branches + 80% statements.
-- שגיאת CI? הוסף בדיקות, אל תוריד את הסף.
+### Coverage below the threshold
+- `vitest.config.ts` requires 80% lines + 80% functions + 75% branches + 80% statements.
+- CI error? Add tests; do not lower the threshold.
 
 ---
 
-## Electron לא עולה
+## Electron does not start
 
-### `npm run electron:dev` נכשל
-- האם Vite רץ קודם? ב-`electron:dev` רצים שניהם דרך concurrently. בדוק שאין port conflict על 5173.
-- macOS Catalina+: צריך `Codesign` או disable Gatekeeper (`spctl --master-disable`) **רק לפיתוח**.
+### `npm run electron:dev` fails
+- Is Vite running first? `electron:dev` runs both through concurrently. Check there is no port conflict on 5173.
+- macOS Catalina+: you need codesigning, or disable Gatekeeper (`spctl --master-disable`) **for development only**.
 
 ### "Cannot find module 'keytar'"
 ```bash
 cd node_modules/keytar && npm run rebuild
-# או:
+# or:
 npm rebuild keytar
 ```
 
-### חלון פותח אבל ריק
-- בדוק את ה-Electron DevTools: `View → Toggle Developer Tools`.
-- וודא שה-CSP לא חוסם משהו (`Content Security Policy directive: "default-src 'self'"...`).
+### The window opens but is empty
+- Check the Electron DevTools: `View → Toggle Developer Tools`.
+- Make sure the CSP is not blocking something (`Content Security Policy directive: "default-src 'self'"...`).
 
 ---
 
-## עוד תקלות?
+## More problems?
 
-- 🐛 פתח issue ב-GitHub
-- 📋 תכלול: גרסה (`Vaultkin Settings → About`), OS, browser, וצילום מסך של ה-Console.
-- 🔒 **אל תכלול**: את ה-vault שלך, סיסמאות, או כל credential.
+- 🐛 Open an issue on GitHub
+- 📋 Include: version (`Vaultkin Settings → About`), OS, browser, and a screenshot of the Console.
+- 🔒 **Do not include**: your vault, passwords, or any credential.

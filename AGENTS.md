@@ -60,7 +60,7 @@ securevault/
 ├── extension/                                # MV3 browser extension (background/content/popup)
 ├── tests/{setup.ts,integration/}             # Vitest polyfills + integration suite
 ├── e2e/                                      # Playwright
-├── docs/{USER_GUIDE,TROUBLESHOOTING,README.security}.md   # Hebrew user docs + security doc
+├── docs/{USER_GUIDE,TROUBLESHOOTING,README.security}.md   # user docs (+ .he.md Hebrew copies) + security doc
 ├── docs/adr/                                 # architecture decision records
 └── .github/workflows/{ci,scheduled-audit}.yml
 ```
@@ -103,8 +103,8 @@ Load-bearing for the zero-knowledge model. Breaking them is a security regressio
 ## Docs
 
 - [LAUNCH.md](LAUNCH.md) — launcher usage and how to make a Start-menu / dock shortcut.
-- [docs/USER_GUIDE.md](docs/USER_GUIDE.md) — comprehensive end-user guide (Hebrew).
-- [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) — known issues + recovery paths (Hebrew).
+- [docs/USER_GUIDE.md](docs/USER_GUIDE.md) — comprehensive end-user guide (Hebrew: `USER_GUIDE.he.md`).
+- [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) — known issues + recovery paths (Hebrew: `TROUBLESHOOTING.he.md`).
 - [docs/CLI.md](docs/CLI.md) — the `sv` command line tool.
 - [docs/adr/](docs/adr/) — architecture decision records (KDF choice, Recovery Kit snapshot design, no-PSL-dependency).
 - [extension/README.md](extension/README.md) — extension dev install.

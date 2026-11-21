@@ -23,8 +23,8 @@ pnpm dev              # web at http://localhost:5173
 pnpm electron:dev     # native desktop app
 ```
 
-For the full user guide (Hebrew) see [USER_GUIDE.md](./USER_GUIDE.md).
-For troubleshooting (Hebrew) see [TROUBLESHOOTING.md](./TROUBLESHOOTING.md).
+For the full user guide see [docs/USER_GUIDE.md](./docs/USER_GUIDE.md) ([Hebrew](./docs/USER_GUIDE.he.md)).
+For troubleshooting see [docs/TROUBLESHOOTING.md](./docs/TROUBLESHOOTING.md) ([Hebrew](./docs/TROUBLESHOOTING.he.md)).
 For the change history see [CHANGELOG.md](./CHANGELOG.md).
 
 ## Project structure
