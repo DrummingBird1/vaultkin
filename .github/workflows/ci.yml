@@ -171,7 +171,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: web-dist
           path: dist/renderer
@@ -337,7 +337,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Download all artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           pattern: electron-*
           merge-multiple: true
@@ -347,7 +347,7 @@ jobs:
       # this step is what actually makes that true. Previously nothing
       # computed them, so the promise in the body was empty.
       - name: Download SBOM
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: sbom
           path: release-artifacts/
