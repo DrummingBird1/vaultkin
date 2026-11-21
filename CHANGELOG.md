@@ -1,5 +1,39 @@
 # Changelog
 
+## [Unreleased] — M0/M1 foundation (2026-11-21)
+
+### Added
+- Vault schema v2 with a forward-only migrations framework (ADR 0004):
+  tombstones and guaranteed entry timestamps; v1 vaults upgrade on unlock.
+- WebDAV pull opens a merge view (remote unlock → merge / keep local / keep
+  remote) instead of overwriting the local vault.
+- Hash routing with Back/Forward and Settings section deep links (ADR 0005).
+- UI primitives in `src/components/ui/`: `Modal` (all 12 dialogs), `Button`,
+  `Field`, `Toaster`. `prefers-reduced-motion` support.
+
+### Changed
+- TypeScript 6, Tailwind CSS 4 (Vite plugin, PostCSS removed), Playwright
+  1.65, refreshed dev tooling.
+- Settings, Add/Edit Entry and Vault pages split into focused components
+  (`components/settings/`, `components/vault/entry-form/`, `components/vault/views/`).
+
+### Fixed
+- Editing a card or note saved it as a login.
+- Editing an entry moved it to the folder being viewed and reset imported
+  TOTP digits/period/algorithm.
+- New entries ignored the folder being viewed.
+- Arrow keys changed the selection behind an open dialog.
+- Keyboard shortcuts (Ctrl/⌘+L, K, N) could silently do nothing.
+- Nested dialogs could leave the page unable to scroll.
+- Extension background re-checks the sender origin and strips cached
+  entries to the allowed fields.
+
+### Tests
+- 255 unit/integration tests (was 191): services, migrations, merge, entry
+  form, primitives, shortcuts. E2E lifecycle passes on Chromium for the
+  first time. Global coverage is ~31% against an 80% gate (UI largely
+  untested) — the gate fails and is not lowered.
+
 ## [Unreleased] — Disaster recovery + reconstruction (2026-08-28, session 7)
 
 The working tree was wiped by something outside this project (not caused by

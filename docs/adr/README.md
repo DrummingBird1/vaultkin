@@ -21,6 +21,8 @@ existing ADR.
 | [0001](0001-argon2id-kdf.md) | Argon2id as the default KDF, PBKDF2 kept for backward compatibility | Accepted |
 | [0002](0002-recovery-kit-snapshot.md) | Recovery Kit as a point-in-time snapshot, not a live-synced second vault | Accepted |
 | [0003](0003-no-psl-dependency.md) | Hand-curated multi-part-TLD list instead of the `psl` package | Accepted |
+| [0004](0004-vault-schema-migrations.md) | Versioned vault schema with forward-only migrations | Accepted |
+| [0005](0005-hash-routing.md) | Typed hash routing on the UI store instead of a router library | Accepted |
 
 ## Numbering
 
