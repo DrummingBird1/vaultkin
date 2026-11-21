@@ -191,7 +191,7 @@ export function VaultPage() {
                 {isEmptyVault && (
                   <button
                     onClick={add}
-                    className="flex items-center gap-1.5 text-sm font-medium px-5 py-2.5 rounded-xl bg-(--accent) text-white hover:opacity-90 transition-opacity"
+                    className="flex items-center gap-1.5 text-sm font-medium px-5 py-2.5 rounded-xl bg-(--accent-solid) text-white hover:opacity-90 transition-opacity"
                   >
                     <IconPlus className="w-4 h-4" /> Add Entry
                   </button>

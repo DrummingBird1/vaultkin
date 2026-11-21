@@ -41,8 +41,9 @@ test.describe.serial("Vault lifecycle", () => {
     await pw.fill(MASTER);
     await pw2.fill(MASTER);
     // Strength bar should show "Strong" or better
-    await expect(page.getByText(/^(Strong|Very Strong)$/)).toBeVisible();
-    await page.getByRole("button", { name: /^create vault$/i }).click();
+    // Anchored: "strong" also appears in the heading and the "Suggest strong password" button.
+    await expect(page.getByText(/^(very )?strong$/i)).toBeVisible();
+    await page.getByRole("button", { name: /create vault/i }).click();
 
     // Step 3: vault opens → we should be on the Vault page
     await expect(page.getByText(/your vault is empty/i)).toBeVisible({ timeout: 30_000 });
@@ -55,9 +56,10 @@ test.describe.serial("Vault lifecycle", () => {
     await page.getByLabel(/title/i).fill("Example Site");
     await page.getByLabel(/username/i).fill("alice@example.com");
     await page.getByLabel(/^password/i).fill("super-secret-123!");
+    // The dialog's submit button is labeled "Add Entry" (same as the toolbar button outside it).
     await page
-      .getByRole("dialog")
-      .getByRole("button", { name: /^(save|add entry)$/i })
+      .getByRole("dialog", { name: /add entry/i })
+      .getByRole("button", { name: /^add entry$/i })
       .click();
 
     await expect(page.getByText("Example Site").first()).toBeVisible();
@@ -81,8 +83,11 @@ test.describe.serial("Vault lifecycle", () => {
       await page.getByRole("button", { name: /create.*vault/i }).click();
       await page.getByLabel(/^master password/i).fill(MASTER);
       await page.getByLabel(/confirm/i).fill(MASTER);
-      await page.getByRole("button", { name: /^create vault$/i }).click();
-      await page.keyboard.press(process.platform === "darwin" ? "Meta+L" : "Control+L");
+      await page.getByRole("button", { name: /create vault/i }).click();
+      // Wait for the vault to open before locking; a shortcut pressed earlier is lost
+      // (Firefox and WebKit got there before the vault page existed).
+      await expect(page.getByText(/your vault is empty/i)).toBeVisible({ timeout: 30_000 });
+      await page.getByRole("button", { name: /lock vault/i }).click();
     }
 
     await page.getByLabel(/master password/i).fill(WRONG);

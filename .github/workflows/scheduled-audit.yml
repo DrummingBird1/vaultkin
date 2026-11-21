@@ -24,8 +24,7 @@ permissions:
   contents: read
 
 env:
-  NODE_VERSION: '20'
-  PNPM_VERSION: '9'
+  NODE_VERSION: '22'
 
 jobs:
   dependency-check:
@@ -36,8 +35,14 @@ jobs:
       - uses: ./.github/actions/setup
       - name: Lint lockfile (registry / integrity policy)
         run: pnpm run lockfile:lint
-      - name: pnpm audit (high severity)
+      # Blocks on what ships: production dependencies. Dev tooling (test
+      # runners, bundlers, wait-on) is reported by the next step without failing
+      # the run, since none of it reaches the vault's users.
+      - name: pnpm audit, production dependencies (high severity)
+        run: pnpm audit --prod --audit-level=high
+      - name: pnpm audit, all dependencies (report only)
         run: pnpm audit --audit-level=high
+        continue-on-error: true
       - name: Generate SBOM (CycloneDX)
         run: pnpm run sbom
       - uses: actions/upload-artifact@v4

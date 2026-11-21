@@ -49,7 +49,7 @@ export function VaultToolbar({
       </button>
       <button
         onClick={onAdd}
-        className="flex items-center gap-1.5 text-sm font-medium px-4 py-2 rounded-xl bg-(--accent) text-white hover:opacity-90 transition-opacity"
+        className="flex items-center gap-1.5 text-sm font-medium px-4 py-2 rounded-xl bg-(--accent-solid) text-white hover:opacity-90 transition-opacity"
       >
         <IconPlus className="w-4 h-4" /> Add Entry
       </button>
