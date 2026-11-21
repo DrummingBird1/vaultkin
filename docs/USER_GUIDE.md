@@ -1,60 +1,62 @@
-# מדריך משתמש מלא — Vaultkin
+# Vaultkin user guide
 
-## מה זה Vaultkin?
+> Hebrew version: [USER_GUIDE.he.md](USER_GUIDE.he.md)
 
-מנהל סיסמאות ומאמת 2FA עם **הצפנה מקומית בלבד** (zero-knowledge):
-הסיסמה המאסטר שלך אף פעם לא יוצאת מהמכשיר, וגם המידע מוצפן לפני שהוא נכתב לדיסק. אם תשכח את סיסמת המאסטר — אין שחזור. זו הצורה היחידה לוודא שאף אחד מלבדך יכול לראות את המידע.
+## What is Vaultkin?
+
+A password manager and 2FA authenticator with **local-only encryption** (zero-knowledge):
+your master password never leaves your device, and your data is encrypted before it is written to disk. If you forget your master password, there is no recovery. That is the only way to make sure nobody but you can see your data.
 
 ---
 
-## תוכן עניינים
+## Contents
 
-1. [התקנה והרצה](#התקנה-והרצה)
-2. [יצירת ה-Vault הראשון](#יצירת-ה-vault-הראשון)
-3. [שימוש יומיומי](#שימוש-יומיומי)
-4. [קיצורי מקלדת](#קיצורי-מקלדת)
+1. [Install and run](#install-and-run)
+2. [Creating your first vault](#creating-your-first-vault)
+3. [Daily use](#daily-use)
+4. [Keyboard shortcuts](#keyboard-shortcuts)
 5. [Password Health Dashboard](#password-health-dashboard)
-6. [Duress Password — סיסמת מצוקה](#duress-password--סיסמת-מצוקה)
-7. [Browser Extension](#browser-extension)
-8. [QR Backup](#qr-backup)
-9. [Conflict Resolution](#conflict-resolution)
-10. [סנכרון WebDAV](#סנכרון-webdav)
-11. [ייצוא וייבוא](#ייצוא-וייבוא)
-12. [אבטחה תחת המכסה](#אבטחה-תחת-המכסה)
-13. [פתרון בעיות](#פתרון-בעיות)
-14. [פיתוח ובדיקות](#פיתוח-ובדיקות)
-15. [רישוי](#רישוי)
+6. [Duress password](#duress-password)
+7. [Browser extension](#browser-extension)
+8. [QR backup](#qr-backup)
+9. [Conflict resolution](#conflict-resolution)
+10. [WebDAV sync](#webdav-sync)
+11. [Export and import](#export-and-import)
+12. [Security under the hood](#security-under-the-hood)
+13. [Troubleshooting](#troubleshooting)
+14. [Development and testing](#development-and-testing)
+15. [License](#license)
 
 ---
 
-## התקנה והרצה
+## Install and run
 
-### דרישות
+### Requirements
 - **Node.js 20+** (`node -v`)
 - **npm 10+**
 - macOS / Windows / Linux
 
-### התקנת תלויות
+### Install dependencies
 ```bash
 cd securevault
 npm install
 ```
 
-### הרצה במצב פיתוח (דפדפן)
+### Run in development mode (browser)
 ```bash
 npm run dev
 ```
-פתח `http://localhost:5173`.
+Open `http://localhost:5173`.
 
-### הרצה כאפליקציית דסקטופ
+### Run as a desktop app
 ```bash
 npm run electron:dev
 ```
-חלון עצמאי + תמיכה ב-TouchID/FaceID + טריי + גישה ל-keychain של המערכת.
+A standalone window, with TouchID/FaceID support, a tray icon and access to the system keychain.
 
-### בנייה לפרודקשן
+### Production build
 ```bash
-npm run build                  # PWA (לדפדפן)
+npm run build                  # PWA (browser)
 npm run electron:dist:mac      # macOS DMG (Universal)
 npm run electron:dist:win      # Windows NSIS installer
 npm run electron:dist:linux    # AppImage / deb / rpm
@@ -62,45 +64,45 @@ npm run electron:dist:linux    # AppImage / deb / rpm
 
 ---
 
-## יצירת ה-Vault הראשון
+## Creating your first vault
 
-1. בהפעלה ראשונה תראה **"No vault found"**.
-2. לחץ **"Create New Vault"**.
-3. בחר **Master Password**:
-   - מד החוזק חייב להראות "Strong" ומעלה (3 מתוך 4).
-   - לא בטוח? לחץ **"Suggest strong password"** — נוצרת סיסמה אקראית של 24 תווים.
-4. *(אופציונלי)* **Hint** — רמז שיוצג לך אם תשכח. **אל תכתוב את הסיסמה עצמה!** הרמז נשמר ב-localStorage לא מוצפן.
-5. **Create Vault** — Argon2id יקח 1-2 שניות.
+1. On first launch you will see **"No vault found"**.
+2. Click **"Create New Vault"**.
+3. Choose a **Master Password**:
+   - The strength meter must show "Strong" or better (3 out of 4).
+   - Not sure? Click **"Suggest strong password"** to generate a random 24-character password.
+4. *(Optional)* **Hint**: a reminder shown to you if you forget. **Do not write the password itself!** The hint is stored unencrypted in localStorage.
+5. **Create Vault**: Argon2id takes 1-2 seconds.
 
-> ⚠️ **אזהרה**: שמור את הסיסמה במקום בטוח (kdf בשירותי ענן, פתק בכספת, וכו'). אין שחזור.
+> ⚠️ **Warning**: keep the password somewhere safe (a note in a safe, and so on). There is no recovery.
 
 ---
 
-## שימוש יומיומי
+## Daily use
 
-### ניווט
-| 🎨 | מסך | מה הוא נותן לך |
-|----|-----|---------------|
-| 🔑 | **Vault** | רשימת כל ה-entries — סיסמאות, נוטים, כרטיסי אשראי |
-| 🛡️ | **Authenticator** | קודי 2FA חיים (TOTP) עם רענון אוטומטי |
-| 🔄 | **Generator** | יצירת סיסמאות חזקות מותאמות אישית |
-| 🛡️ | **Password Health** | בדיקת בריאות + סריקת פריצות |
-| ☁️ | **Sync** | הגדרת WebDAV |
-| ⚙️ | **Settings** | ערכת נושא, צבע, ביטחון, שינוי סיסמה |
+### Navigation
+| 🎨 | Screen | What it gives you |
+|----|--------|-------------------|
+| 🔑 | **Vault** | All your entries: passwords, notes, credit cards |
+| 🛡️ | **Authenticator** | Live 2FA codes (TOTP) with automatic refresh |
+| 🔄 | **Generator** | Strong, customizable passwords |
+| 🛡️ | **Password Health** | Health check and breach scan |
+| ☁️ | **Sync** | WebDAV setup |
+| ⚙️ | **Settings** | Theme, accent color, security, change password |
 
-### הוספת entry חדש
-- לחץ **+ Add Entry** או `Ctrl/⌘+N`.
-- מלא את הטופס:
-  - **Title** (חובה)
+### Adding a new entry
+- Click **+ Add Entry** or press `Ctrl/⌘+N`.
+- Fill in the form:
+  - **Title** (required)
   - **Username / Email**
-  - **Password** — אייקון לייצור אוטומטי, מד חוזק חי
-  - **URL** — חסר https? יוסיף לבד
-  - **TOTP Secret** — Base32 שמתאמת בזמן אמת
-  - **Notes** — Markdown נתמך! ([ראה דוגמה](#markdown-בנוטס))
-  - **Custom Fields** — לחץ **"Use template"** לבחירה מ-8 תבניות מוכנות
+  - **Password**: an icon to generate one, and a live strength meter
+  - **URL**: adds https if it is missing
+  - **TOTP Secret**: Base32, validated as you type
+  - **Notes**: Markdown is supported! ([see example](#markdown-in-notes))
+  - **Custom Fields**: click **"Use template"** to pick from 8 ready-made templates
 
-### תבניות Custom Fields
-לחץ "Use template" כדי להזין שדות מותאמים בלחיצה אחת:
+### Custom field templates
+Click "Use template" to add a set of fields in one click:
 - 💳 Credit Card
 - 🔑 SSH Key
 - 🌐 API Credentials
@@ -110,21 +112,21 @@ npm run electron:dist:linux    # AppImage / deb / rpm
 - 📜 Software License
 - ₿ Crypto Wallet
 
-### חיפוש
-- `Ctrl/⌘+K` או `/` — מקפיץ את שדה החיפוש.
-- מחפש בכותרת, שם משתמש, URL, וקטגוריה (לא רגיש לאותיות גדולות).
-- `Esc` מנקה.
+### Search
+- `Ctrl/⌘+K` or `/` focuses the search field.
+- Searches title, username, URL and category (case-insensitive).
+- `Esc` clears it.
 
-### העתקה מהירה (Quick Copy)
-- לחץ על שדה כלשהו ב-detail panel → מועתק ל-clipboard.
-- ה-clipboard מתנקה אוטומטית אחרי **30 שניות** (קונפיגורבילי ב-Settings).
+### Quick copy
+- Click any field in the detail panel to copy it to the clipboard.
+- The clipboard is cleared automatically after **30 seconds** (configurable in Settings).
 
-### Drag & Drop
-- בתצוגת רשימה (לא חיפוש): גרור entries כדי לסדר אותם מחדש.
-- הסדר נשמר ב-vault והוא הסדר שיוצג בכל פתיחה.
+### Drag and drop
+- In list view (not while searching): drag entries to reorder them.
+- The order is saved in the vault and shown every time you open it.
 
-### Markdown בנוטס
-שדה ה-Notes תומך ב:
+### Markdown in notes
+The Notes field supports:
 ```markdown
 ## Recovery Codes
 - **123456** (used)
@@ -140,171 +142,171 @@ npm run electron:dist:linux    # AppImage / deb / rpm
 `code snippet`
 ```
 
-### Version History
-כל פעם שאתה עורך entry, הגרסה הקודמת נשמרת **בזיכרון** (לא בדיסק). כשאתה פותח entry קיים, תראה כפתור **"History (3)"** שמראה את 10 הגרסאות האחרונות. לחץ על גרסה כדי לשחזר אותה.
-> **חשוב**: ה-history נמחק ב-lock. הוא לא חוצה sessions.
+### Version history
+Each time you edit an entry, the previous version is kept **in memory** (not on disk). When you open an existing entry you will see a **"History (3)"** button that shows the last 10 versions. Click a version to restore it.
+> **Important**: history is erased on lock. It does not carry across sessions.
 
-### Bulk Actions
-לחץ **"Select"** ב-toolbar → סמן כמה entries → תוכל למחוק את כולם, להעביר ל-folder, וכו'.
+### Bulk actions
+Click **"Select"** in the toolbar, then select several entries to act on them together.
 
 ---
 
-## קיצורי מקלדת
+## Keyboard shortcuts
 
-| קיצור | פעולה |
-|-------|-------|
-| `Ctrl/⌘+K` | פוקוס לחיפוש |
-| `Ctrl/⌘+N` | Entry חדש |
-| `Ctrl/⌘+L` | נעילה מיידית |
+| Shortcut | Action |
+|----------|--------|
+| `Ctrl/⌘+K` | Focus search |
+| `Ctrl/⌘+N` | New entry |
+| `Ctrl/⌘+L` | Lock now |
 | `Ctrl/⌘+G` | Generator |
 | `Ctrl/⌘+,` | Settings |
-| `/` | חיפוש (כשלא בשדה טקסט) |
-| `?` | רשימת קיצורים |
-| `Esc` | סגירת modal / ניקוי חיפוש |
+| `/` | Search (when not in a text field) |
+| `?` | List of shortcuts |
+| `Esc` | Close modal / clear search |
 
 ---
 
 ## Password Health Dashboard
 
-מסך חדש: **🛡️ Password Health**.
+Screen: **🛡️ Password Health**.
 
-### מה זה מראה?
-- **Compromised passwords** — סיסמאות שנמצאו במאגרי פריצות.
-- **Weak passwords** — אנטרופיה < 60 ביט.
-- **Reused passwords** — אותה סיסמה בכמה entries.
-- **Old passwords** — לא עודכנו 90+ ימים.
-- **Missing passwords** — login entries בלי סיסמה.
-- **No 2FA enabled** — login עם URL בלי TOTP.
+### What does it show?
+- **Compromised passwords**: passwords found in breach databases.
+- **Weak passwords**: entropy below 60 bits.
+- **Reused passwords**: the same password in several entries.
+- **Old passwords**: not changed for 90+ days.
+- **Missing passwords**: login entries without a password.
+- **No 2FA enabled**: logins with a URL but no TOTP.
 
-### ציון כולל
-חישוב 0-100 על בסיס יחס בעיות / סך login entries:
-- **80-100** — Excellent (ירוק)
-- **60-79** — Good (צהוב)
-- **40-59** — Fair (כתום)
-- **0-39** — Poor (אדום)
+### Overall score
+A 0-100 score based on the ratio of issues to total login entries:
+- **80-100**: Excellent (green)
+- **60-79**: Good (yellow)
+- **40-59**: Fair (orange)
+- **0-39**: Poor (red)
 
 ### Scan for breaches
-לחץ הכפתור → בדיקה מול **Have I Been Pwned**.
+Click the button to check against **Have I Been Pwned**.
 
-> 🔒 **פרטיות**: רק 5 התווים הראשונים של ה-SHA-1 hash נשלחים. שאר ה-hash מושווה לוקאלית מול 500+ candidates שמוחזרים. הסיסמה עצמה אף פעם לא יוצאת. זה המודל שבו משתמשים Bitwarden, 1Password, ו-Firefox Lockwise.
+> 🔒 **Privacy**: only the first 5 characters of the SHA-1 hash are sent. The rest of the hash is compared locally against the 500+ candidates that come back. The password itself never leaves your device. This is the same model used by Bitwarden, 1Password and Firefox Lockwise.
 
 ---
 
-## Duress Password — סיסמת מצוקה
+## Duress password
 
-### מה זה?
-סיסמה שניה שאתה מגדיר. אם מישהו מאלץ אותך לפתוח את ה-vault, אתה מקליד את ה-duress password במקום הסיסמה האמיתית.
+### What is it?
+A second password you set up. If someone forces you to open the vault, you type the duress password instead of the real one.
 
-### מה קורה?
-1. ה-vault האמיתי **נמחק לחלוטין** מהמכשיר.
-2. נוצר vault ריק חדש עם ה-duress password כמסטר.
-3. נראה ל-attacker שהsuccessfully unlocked — אבל אין שם כלום.
-4. בפעם הבאה שתפתח את האפליקציה לבד, תראה אזהרה אדומה: **"Duress unlock was triggered on [תאריך]"**.
+### What happens?
+1. The real vault is **completely deleted** from the device.
+2. A new, empty vault is created with the duress password as its master password.
+3. To the attacker it looks like a successful unlock, but there is nothing there.
+4. The next time you open the app on your own, you will see a red warning: **"Duress unlock was triggered on [date]"**.
 
-### הגדרה
+### Setup
 1. **Settings → Security → Duress password**.
-2. בחר סיסמה (6+ תווים, חייבת להיות שונה מהמסטר).
-3. אשר את הסיסמה הנוכחית.
+2. Choose a password (6+ characters, must differ from the master password).
+3. Confirm your current password.
 4. **Enroll**.
 
-### חשוב לדעת
-- ה-duress רק מוחק את ה-**העותק המקומי**. אם יש לך גיבוי בענן (WebDAV) — הוא לא נוגע.
-- ה-attacker יכול בטרוריה לזהות את התופעה — אבל זה plausible deniability, לא הסתרה מושלמת.
+### Good to know
+- Duress only deletes the **local copy**. A cloud backup (WebDAV) is not touched.
+- An attacker can in theory notice what happened. This is plausible deniability, not perfect concealment.
 
 ---
 
-## Browser Extension
+## Browser extension
 
-### התקנה (פיתוח)
-1. הרץ את האפליקציה הראשית: `npm run dev` ב-`http://localhost:5173`.
-2. פתח `chrome://extensions/`.
-3. הפעל **Developer mode** (ימין למעלה).
-4. **Load unpacked** → בחר את התיקייה `securevault/extension/`.
-5. אייקון 🔐 יופיע ב-toolbar.
-6. העתק את **Extension ID** מהדף.
+### Install (development)
+1. Run the main app: `npm run dev` at `http://localhost:5173`.
+2. Open `chrome://extensions/`.
+3. Turn on **Developer mode** (top right).
+4. **Load unpacked** → choose the `securevault/extension/` folder.
+5. A 🔐 icon appears in the toolbar.
+6. Copy the **Extension ID** from the page.
 
-### חיבור לאפליקציה
-1. ב-Vaultkin: **Settings → Security → Browser extension**.
-2. הדבק את ה-Extension ID.
+### Connecting to the app
+1. In Vaultkin: **Settings → Security → Browser extension**.
+2. Paste the Extension ID.
 3. **Send entries to extension**.
-4. ה-extension מאחסן את ה-entries ב-זיכרון בלבד למשך 5 דקות (ואז מתנקה).
+4. The extension keeps the entries in memory only, for 5 minutes (then clears them).
 
-### שימוש
-- **בכל דף עם שדה password**: יופיע אייקון 🔐 קטן.
-- לחיצה עליו: אם יש credentials מתאימים ל-domain → אוטופיל.
-- אם יש כמה — picker למבחר.
-- אם locked: הודעה "Click toolbar icon to unlock".
+### Usage
+- **On any page with a password field**: a small 🔐 icon appears.
+- Clicking it autofills if there are matching credentials for the domain.
+- If there are several, a picker lets you choose.
+- If locked: the message "Click toolbar icon to unlock".
 
-### אבטחה
-- ה-extension לא יודע לפענח את ה-vault לבד.
-- הוא מקבל snapshot שכבר פוענח — רק שדות נחוצים (id/title/url/username/password/totpSecret).
-- 5 דקות idle → cache נמחק אוטומטית.
-- סגירת דפדפן / reload of extension → cache נמחק.
+### Security
+- The extension cannot decrypt the vault on its own.
+- It receives an already-decrypted snapshot with only the fields it needs (id/title/url/username/password/totpSecret).
+- 5 minutes idle → the cache is erased automatically.
+- Closing the browser or reloading the extension → the cache is erased.
 
 ---
 
-## QR Backup
+## QR backup
 
-ייצוא ה-vault **המוצפן** כסדרת QR codes לסריקה במכשיר אחר.
+Export the **encrypted** vault as a series of QR codes to scan on another device.
 
-### מתי להשתמש?
-- העברה לטלפון בלי לעבור דרך שירות ענן.
-- גיבוי פיזי מודפס (הקפד על מקום מאובטח!).
+### When to use it?
+- Moving to a phone without going through a cloud service.
+- A printed physical backup (keep it somewhere secure!).
 
-### איך?
+### How?
 1. **Settings → Export → "Show as QR codes"**.
-2. כל QR מכיל ~240 בייט. ל-vault ממוצע יוצאים 5-15 QR codes.
-3. גלול / חצים שמאלה-ימינה כדי לראות את כולם.
-4. במכשיר היעד: **Import → "Scan QR codes"** וסרוק לפי הסדר.
+2. Each QR holds about 240 bytes. An average vault needs 5-15 QR codes.
+3. Scroll or use the left/right arrows to see them all.
+4. On the target device: **Import → "Scan QR codes"** and scan them in order.
 
-### חשוב
-- ה-QR מכיל את ה-vault **מוצפן**. דרושה הסיסמה הראשית גם אחרי הסריקה.
-- כל QR מסומן `SVQR:N/M:` כדי שה-importer יידע שהוא חלק מסדרה.
+### Important
+- The QR codes contain the vault **encrypted**. You still need the master password after scanning.
+- Each QR is marked `SVQR:N/M:` so the importer knows it is part of a series.
 
 ---
 
-## Conflict Resolution
+## Conflict resolution
 
-כשמסנכרון WebDAV מזהה ש-vault מקומי וגם מרוחק שונו עצמאית:
-1. תופיע modal **"Sync Conflict"**.
-2. תראה רשימה:
-   - 🔴 **Conflicts** — אותו entry עם שינויים בשני הצדדים
-   - 🟡 **Local only** — קיים אצלך, לא במרוחק
-   - 🔵 **Remote only** — קיים במרוחק, לא אצלך
-   - ⚪ **Identical** — תואם בשני הצדדים
-3. בחר אסטרטגיה:
-   - **Merge (recommended)** — מאחד הכל, ולקונפליקטים בוחר את ה-`updatedAt` המאוחר יותר.
-   - **Keep local** — דורסים את המרוחק.
-   - **Keep remote** — דורסים את המקומי.
+When WebDAV sync finds that the local and remote vaults were both changed independently:
+1. A **"Sync Conflict"** modal appears.
+2. You will see a list:
+   - 🔴 **Conflicts**: the same entry changed on both sides
+   - 🟡 **Local only**: exists on your side, not remotely
+   - 🔵 **Remote only**: exists remotely, not on your side
+   - ⚪ **Identical**: the same on both sides
+3. Choose a strategy:
+   - **Merge (recommended)**: combines everything, and for conflicts picks the later `updatedAt`.
+   - **Keep local**: overwrites the remote copy.
+   - **Keep remote**: overwrites the local copy.
 4. **Apply resolution**.
 
 ---
 
-## סנכרון WebDAV
+## WebDAV sync
 
-### הגדרה
+### Setup
 1. **Settings → Sync**.
-2. הזן:
-   - **WebDAV URL** (למשל `https://nextcloud.example.com/remote.php/webdav/securevault/`)
+2. Enter:
+   - **WebDAV URL** (for example `https://nextcloud.example.com/remote.php/webdav/securevault/`)
    - **Username**
-   - **Password** (App password אם יש 2FA)
+   - **Password** (an app password if you use 2FA)
 3. **Test connection** → **Save**.
 
-### איך זה עובד?
-- בכל autosave, ה-vault המוצפן מועלה ל-WebDAV.
-- בפתיחה, נטען המאוחר יותר (לוקאלי vs ענן) לפי `updatedAt`.
-- אם שניהם השתנו → conflict resolution UI.
+### How does it work?
+- On every autosave, the encrypted vault is uploaded to WebDAV.
+- On open, the newer copy (local vs cloud) is loaded, by `updatedAt`.
+- If both changed → the conflict resolution UI.
 
 ### Credentials
-- נשמרים **בתוך הכספת המוצפנת** (בהגדרות שלה), ולכן זמינים רק כשהכספת פתוחה ונמחקים מהזיכרון בנעילה.
-- לא נשמרים ב-localStorage או ב-sessionStorage. גרסאות ישנות שמרו אותם ב-sessionStorage; הם מועברים לכספת ונמחקים משם אוטומטית.
-- רק כתובות `https://`. סנכרון ב-http רגיל נחסם, כדי שסיסמת ה-WebDAV לא תישלח בגלוי.
+- Stored **inside the encrypted vault** (in its settings), so they are only available while the vault is unlocked and are cleared from memory on lock.
+- Not stored in localStorage or sessionStorage. Older versions kept them in sessionStorage; they are moved into the vault and removed from there automatically.
+- `https://` URLs only. Sync over plain http is blocked so the WebDAV password is never sent in the clear.
 
 ---
 
-## ייצוא וייבוא
+## Export and import
 
-### ייבוא
+### Import
 **Vault → Import**:
 - **Bitwarden JSON**
 - **1Password 1PUX / CSV**
@@ -313,16 +315,16 @@ npm run electron:dist:linux    # AppImage / deb / rpm
 - **Generic CSV**
 - **Vaultkin QR codes**
 
-זיהוי פורמט אוטומטי. בקונפליקטים: **Skip / Overwrite / Keep both**.
+The format is detected automatically. For conflicts: **Skip / Overwrite / Keep both**.
 
-### ייצוא
-- **Encrypted backup** (JSON) — אי אפשר לפתוח בלי הסיסמה. שמור בענן בלי דאגה.
-- **CSV (לא מוצפן!)** — **רק לשימוש זמני להעברה**. מחק אחרי השימוש!
-- **QR codes** — ראה למעלה.
+### Export
+- **Encrypted backup** (JSON): cannot be opened without the password. Safe to store in the cloud.
+- **CSV (not encrypted!)**: **only for a one-off move**. Delete it afterwards!
+- **QR codes**: see above.
 
 ---
 
-## אבטחה תחת המכסה
+## Security under the hood
 
 ```
 Master Password
@@ -348,61 +350,63 @@ Verification on unlock:
     Then AES decrypt → JSON parse → return VaultData
 ```
 
-### תכונות מרכזיות
-- **TOTP**: RFC 6238 (תואם Google Authenticator, Authy).
-- **CSP** ב-Electron: `default-src 'self'`, אין eval, אין iframes.
-- **Sandbox + contextIsolation + nodeIntegration: false** ב-Electron.
-- **Service Worker** לא מאחסן vault data — רק app shell.
-- **Auto-lock** ב-5 דקות חוסר פעילות (קונפיגורבילי).
-- **Memory wipe** של מפתחות סשן ב-lock (`Uint8Array.fill(0)`).
+### Key properties
+- **TOTP**: RFC 6238 (compatible with Google Authenticator, Authy).
+- **CSP** in Electron: `default-src 'self'`, no eval, no iframes.
+- **Sandbox + contextIsolation + nodeIntegration: false** in Electron.
+- The **Service Worker** does not cache vault data, only the app shell.
+- **Auto-lock** after 5 minutes of inactivity (configurable).
+- **Memory wipe** of session keys on lock (`Uint8Array.fill(0)`).
 
 ---
 
-## פתרון בעיות
+## Troubleshooting
 
-### "מסך שחור" כשפותחים את האפליקציה
-**תוקן בגרסה הזו!** האפליקציה כעת עוטפת הכל ב-`ErrorBoundary` שיציג הודעה ידידותית במקום מסך ריק.
-אם בכל זאת קורה:
-1. `Ctrl+Shift+R` — refresh חזק.
-2. F12 → Console — מה השגיאה?
-3. בדוק ש-`npm install` רץ בהצלחה (יש לפעמים בעיות עם native modules).
+### Black screen when opening the app
+**Fixed in this version!** The app now wraps everything in an `ErrorBoundary` that shows a friendly message instead of a blank screen.
+If it still happens:
+1. `Ctrl+Shift+R` for a hard refresh.
+2. F12 → Console: what is the error?
+3. Check that `npm install` completed (native modules sometimes cause problems).
 
 ### "Incorrect master password"
-- וודא שאתה משתמש בסיסמה הנכונה.
-- אם יש hint — הוא מוצג מעל השדה.
-- אם הקלדת את ה-**duress password** בטעות — ה-vault שלך נמחק. בדוק את ה-trigger banner ב-Settings → Security.
+- Make sure you are using the right password.
+- If you set a hint, it is shown above the field.
+- If you typed the **duress password** by mistake, your vault was deleted. Check the trigger banner in Settings → Security.
 
 ### "Sync failed"
-- שמירה לוקאלית הצליחה — ה-vault שלך מאובטח.
-- בדוק WebDAV URL וcredentials.
-- ינסה שוב בשמירה הבאה.
+- The local save succeeded; your vault is safe.
+- Check the WebDAV URL and credentials.
+- It will retry on the next save.
 
-### Biometrics לא עובד
-- בגרסה הנוכחית, biometrics דורש סיסמה ראשית בפעם הראשונה אחרי התקנה.
-- יטופל בעתיד.
+### Biometrics does not work
+- In the current version, biometrics needs the master password the first time after installation.
+- This will be addressed in the future.
 
-### Browser extension לא רואה entries
-- וודא שה-extension ID נכון (`Settings → Security → Browser extension`).
-- וודא ש-`externally_connectable.matches` ב-`manifest.json` כולל את ה-origin שלך.
-- 5 דקות בלי פעילות → ה-cache התנקה. שלח שוב.
+### The browser extension does not see entries
+- Check that the extension ID is correct (`Settings → Security → Browser extension`).
+- Check that `externally_connectable.matches` in `manifest.json` includes your origin.
+- After 5 minutes without activity the cache is cleared. Send again.
+
+More in [TROUBLESHOOTING.md](TROUBLESHOOTING.md).
 
 ---
 
-## פיתוח ובדיקות
+## Development and testing
 
 ### Tests
 ```bash
 npm test                       # unit tests (vitest)
-npm run test:coverage          # עם coverage report
+npm run test:coverage          # with a coverage report
 ```
 
 ### E2E
 ```bash
 npm install -D @playwright/test
 npx playwright install chromium
-npx playwright test            # כל הטסטים
-npx playwright test --headed   # עם דפדפן גלוי
-npx playwright show-report     # HTML report אחרי הרצה
+npx playwright test            # all tests
+npx playwright test --headed   # with a visible browser
+npx playwright show-report     # HTML report after a run
 ```
 
 ### Storybook
@@ -419,15 +423,15 @@ npx tsc --noEmit
 ```
 
 ### CI
-- כל push ל-`main` → typecheck + lint + tests + build (Linux/macOS/Windows).
-- כל tag `v*.*.*` → builds Electron לכל הפלטפורמות + GitHub Release (draft).
+- Every push to `main` → typecheck + lint + tests + build (Linux/macOS/Windows).
+- Every `v*.*.*` tag → Electron builds for all platforms + a GitHub Release (draft).
 
 ---
 
-## רישוי
+## License
 
-**MIT License** — הקוד פתוח. השתמש, שנה, הפץ. שמור על הקרדיט.
+**MIT License**: the code is open. Use it, change it, share it. Keep the credit.
 
-באגים / הצעות → פתח issue ב-GitHub.
+Bugs and suggestions → open an issue on GitHub.
 
 🔐 **Stay safe.**
