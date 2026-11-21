@@ -297,6 +297,18 @@ jobs:
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: false # Code signing: set CSC_LINK + CSC_KEY_PASSWORD in secrets
 
+      # The extension host must be universal (x64 + arm64) and must run.
+      # Exit code 2 = "missing extension origin": the host started correctly.
+      - name: Check universal bridge host (macOS)
+        if: matrix.platform == 'macOS'
+        run: |
+          host="$(find release -path '*Vaultkin.app/Contents/Resources/bridge-host/vaultkin-bridge-host' | head -1)"
+          test -n "$host"
+          lipo -info "$host" | grep -q 'x86_64 arm64'
+          codesign --verify "$host"
+          set +e; "$host"; code=$?; set -e
+          test "$code" = 2
+
       - name: Build Electron (Windows)
         if: matrix.platform == 'Windows'
         run: pnpm run electron:dist:win --publish never

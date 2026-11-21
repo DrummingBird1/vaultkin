@@ -39,10 +39,13 @@ then run `release/win-unpacked/Vaultkin.exe` and check:
 
 ## Release blockers (open)
 
-- **macOS bridge host is single-arch.** `build:bridge-host` wraps the
-  runner's own Node binary, so the universal DMG carries one architecture's
-  host. Before a macOS release, build the host for x64 and arm64 and `lipo`
-  them into one binary (or ship per-arch DMGs).
+- **macOS universal host is untested on a Mac.** `build:bridge-host` on
+  macOS downloads the official Node x64 and arm64 builds (SHA-256 checked
+  against nodejs.org), injects the host into each and merges them with
+  `lipo`. Off a Mac everything up to `lipo` has been run (both Mach-O files
+  carry the host); `lipo`, `codesign` and running it are checked by the
+  macOS CI job, which has not run yet. Signed with hardened runtime, the host
+  needs the JIT entitlements Electron's default entitlements already grant.
 - **Code signing.** There are no certificates yet, so Windows SmartScreen and
   macOS Gatekeeper will warn:
   - Windows: Authenticode or Azure Trusted Signing (`CSC_LINK` /
