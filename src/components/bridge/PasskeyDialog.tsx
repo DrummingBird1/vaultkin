@@ -19,8 +19,14 @@ export function PasskeyDialog() {
 
   const cancel = () => (prompt.kind === "create" ? prompt.resolve(false) : prompt.resolve(null));
   const site = prompt.rpId;
+  // The component stays mounted between prompts: ignore a choice from an
+  // earlier prompt that isn't one of this prompt's accounts.
   const selected =
-    prompt.kind === "get" ? (choice ?? prompt.candidates[0]?.credentialId ?? null) : null;
+    prompt.kind === "get"
+      ? prompt.candidates.some((c) => c.credentialId === choice)
+        ? choice
+        : (prompt.candidates[0]?.credentialId ?? null)
+      : null;
 
   return (
     <Modal
