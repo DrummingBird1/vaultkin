@@ -33,6 +33,12 @@ contextBridge.exposeInMainWorld("electron", {
     installHost: (extensionIds: string[]): Promise<{ manifest: string; registered: number }> =>
       ipcRenderer.invoke("sv-bridge-install", extensionIds),
   },
+  /** Copy a secret (kept out of Windows Clipboard History) / clear it again. */
+  clipboard: {
+    writeSecret: (text: string): Promise<{ ok: boolean; excluded: boolean }> =>
+      ipcRenderer.invoke("sv-clipboard-write-secret", text),
+    clearSecret: (): Promise<boolean> => ipcRenderer.invoke("sv-clipboard-clear-secret"),
+  },
   /** Remember this device: vault key kept in the OS keystore (main process). */
   deviceUnlock: {
     status: () => ipcRenderer.invoke("sv-device-unlock-status"),

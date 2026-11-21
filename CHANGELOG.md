@@ -23,6 +23,10 @@
 - WebDAV sync credentials are stored inside the encrypted vault instead of
   plaintext browser session storage (moved automatically), are unavailable
   while locked, and only https:// servers are accepted.
+- Copied passwords and codes are kept out of Windows Clipboard History
+  (Win+V) and cloud clipboard sync, and are wiped when the vault locks. The
+  30-second auto-clear no longer erases something you copied yourself
+  afterwards.
 
 ## [Unreleased] — M3 integrations (2026-11-21)
 

@@ -26,6 +26,11 @@ export interface ElectronBridge {
     close: (connId: number) => Promise<void>;
     installHost: (extensionIds: string[]) => Promise<{ manifest: string; registered: number }>;
   };
+  /** Present from M4: secret copies kept out of clipboard history. */
+  clipboard?: {
+    writeSecret: (text: string) => Promise<{ ok: boolean; excluded: boolean }>;
+    clearSecret: () => Promise<boolean>;
+  };
   /** Present from M4: remember this device (OS keystore). */
   deviceUnlock?: {
     status: () => Promise<

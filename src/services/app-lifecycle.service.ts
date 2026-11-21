@@ -28,7 +28,8 @@ export const AppLifecycle = {
       /* best effort */
     }
     AutosaveService.stop();
-    ClipboardService.cancelClear();
+    // Don't leave a copied secret behind after locking.
+    void ClipboardService.clearNow();
     BreachService.clearCache();
     HistoryService.clear();
     // Native-messaging bridge: close every extension session (ADR 0007).

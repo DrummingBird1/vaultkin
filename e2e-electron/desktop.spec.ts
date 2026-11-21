@@ -55,6 +55,7 @@ test("window is hardened (sandbox, isolation, no node in the page)", async () =>
   );
   expect(await win.evaluate(() => Object.keys(window.electron ?? {}).sort())).toEqual([
     "bridge",
+    "clipboard",
     "deviceUnlock",
     "platform",
     "updates",
@@ -171,6 +172,27 @@ test("remember this device: unlock without the master password", async () => {
   await win.evaluate(() => (location.hash = "#/settings/security"));
   await win.getByLabel(/remember this device/i).uncheck();
   await expect.poll(() => fs.existsSync(path.join(profile, "device-unlock.json"))).toBe(false);
+});
+
+test("secret copies are kept out of Windows clipboard history, and cleared only if ours", async () => {
+  test.skip(process.platform !== "win32", "Windows clipboard history only");
+  const r = await win.evaluate(() => window.electron!.clipboard!.writeSecret("copied-Secret-é1"));
+  expect(r).toEqual({ ok: true, excluded: true });
+  const formats = await app.evaluate(({ clipboard }) => ({
+    text: clipboard.readText(),
+    exclude: clipboard.has("ExcludeClipboardContentFromMonitorProcessing"),
+    history: clipboard.has("CanIncludeInClipboardHistory"),
+  }));
+  expect(formats).toEqual({ text: "copied-Secret-é1", exclude: true, history: true });
+  // Clear wipes our secret...
+  expect(await win.evaluate(() => window.electron!.clipboard!.clearSecret())).toBe(true);
+  expect(await app.evaluate(({ clipboard }) => clipboard.readText())).toBe("");
+  // ...but not something the user copied afterwards.
+  await win.evaluate(() => window.electron!.clipboard!.writeSecret("another"));
+  await app.evaluate(({ clipboard }) => clipboard.writeText("user text"));
+  expect(await win.evaluate(() => window.electron!.clipboard!.clearSecret())).toBe(false);
+  expect(await app.evaluate(({ clipboard }) => clipboard.readText())).toBe("user text");
+  await app.evaluate(({ clipboard }) => clipboard.clear());
 });
 
 // Last: Playwright keeps waiting on the cancelled navigation afterwards.

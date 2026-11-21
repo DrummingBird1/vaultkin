@@ -13,6 +13,7 @@ import {
   globalShortcut,
   powerMonitor,
   session,
+  clipboard,
 } from "electron";
 import * as path from "path";
 import { mainLog } from "./logger";
@@ -20,6 +21,8 @@ import { wireUpdater, checkForUpdates, downloadUpdate, quitAndInstall } from "./
 import { bridgeSocketPath, startBridgeServer } from "./bridge-transport";
 import { installNativeHost } from "./bridge-install";
 import * as deviceUnlock from "./device-unlock";
+import { writeSecretExcludedFromHistory } from "./secure-clipboard";
+import { createHash } from "crypto";
 
 const isDev = !!process.env.VITE_DEV_SERVER_URL || !app.isPackaged;
 
@@ -232,6 +235,27 @@ function startApp(): void {
     if (!Array.isArray(ids) || !ids.every((x) => typeof x === "string"))
       throw new Error("Bad input");
     return installNativeHost(ids as string[]);
+  });
+
+  // ── Secret clipboard ───────────────────────────────────────────────────
+  // Copies of secrets skip Windows Clipboard History / cloud clipboard, and the
+  // auto-clear only wipes the clipboard if it still holds what we put there.
+  let lastSecretHash: string | null = null;
+  const sha = (s: string) => createHash("sha256").update(s, "utf8").digest("hex");
+  ipcMain.handle("sv-clipboard-write-secret", async (event, text: unknown) => {
+    if (!fromMainWindow(event) || typeof text !== "string" || text.length > 100_000)
+      return { ok: false, excluded: false };
+    const excluded = await writeSecretExcludedFromHistory(text);
+    if (!excluded) clipboard.writeText(text);
+    lastSecretHash = sha(text);
+    return { ok: true, excluded };
+  });
+  ipcMain.handle("sv-clipboard-clear-secret", (event) => {
+    if (!fromMainWindow(event) || !lastSecretHash) return false;
+    const mine = sha(clipboard.readText()) === lastSecretHash;
+    lastSecretHash = null;
+    if (mine) clipboard.clear();
+    return mine;
   });
 
   // ── Remember this device (OS keystore) ────────────────────────────────

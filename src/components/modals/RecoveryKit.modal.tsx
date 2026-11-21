@@ -7,6 +7,7 @@
  * docs/adr/0002-recovery-kit-snapshot.md for why. Regenerate periodically
  * to keep it current; this modal doesn't track "last generated."
  */
+import { ClipboardService } from "../../services/clipboard.service";
 import React, { useState } from "react";
 import { useVaultStore } from "../../store/vault.store";
 import { useUIStore } from "../../store/ui.store";
@@ -48,7 +49,7 @@ export function RecoveryKitModal({ onClose }: { onClose: () => void }) {
 
   const handleCopy = async () => {
     if (!recoveryKey) return;
-    await navigator.clipboard.writeText(recoveryKey);
+    if (!(await ClipboardService.copy(recoveryKey))) return;
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
