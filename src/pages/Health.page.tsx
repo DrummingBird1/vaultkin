@@ -1,159 +1,93 @@
 /**
  * @file Health.page.tsx
- * @description Password Health dashboard — surfaces weak, old, reused, and
- * pwned passwords across the vault.
- *
- * Computes everything client-side from the in-memory vault.
- * The HIBP breach check is opt-in (lazy-loaded on user click) because it
- * requires a network call.
+ * Watchtower: the vault's security report. All analysis is local and pure
+ * (core/watchtower); the only network use is the opt-in HIBP breach scan,
+ * which sends 5 hex chars of each password's SHA-1 (k-anonymity).
  */
-
 import React, { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
+import {
+  CalendarClock,
+  ChevronDown,
+  CreditCard,
+  KeyRound,
+  Link2Off,
+  Repeat,
+  ShieldAlert,
+  ShieldCheck,
+  ShieldQuestion,
+  Siren,
+  type LucideIcon,
+} from "lucide-react";
 import { useVaultStore } from "../store/vault.store";
 import { useUIStore } from "../store/ui.store";
-import { analyzeStrength } from "../core/password/strength";
 import { BreachService, type BreachResult } from "../services/breach.service";
-import { useTranslation } from "react-i18next";
+import { analyzeVault, type IssueType, type WatchtowerIssue } from "../core/watchtower/watchtower";
+import { Button } from "../components/ui/Button";
 
-const NINETY_DAYS_MS = 90 * 24 * 60 * 60 * 1000;
+const CATEGORIES: Array<{ type: IssueType; icon: LucideIcon; tone: string }> = [
+  { type: "pwned", icon: Siren, tone: "var(--danger)" },
+  { type: "weak", icon: ShieldAlert, tone: "var(--danger)" },
+  { type: "reused", icon: Repeat, tone: "var(--warning)" },
+  { type: "insecure-url", icon: Link2Off, tone: "var(--warning)" },
+  { type: "expired-card", icon: CreditCard, tone: "var(--warning)" },
+  { type: "expiring-card", icon: CreditCard, tone: "var(--text-tertiary)" },
+  { type: "old", icon: CalendarClock, tone: "var(--text-tertiary)" },
+  { type: "missing-password", icon: KeyRound, tone: "var(--text-tertiary)" },
+  { type: "no-2fa", icon: ShieldQuestion, tone: "var(--text-tertiary)" },
+];
 
-interface HealthIssue {
-  entryId: string;
-  title: string;
-  username?: string;
-  type: "weak" | "old" | "reused" | "pwned" | "no-totp" | "missing-pw";
-  severity: "low" | "medium" | "high";
-  detail: string;
+function ScoreRing({ score }: { score: number }) {
+  const r = 52;
+  const c = 2 * Math.PI * r;
+  const color = score >= 80 ? "var(--success)" : score >= 60 ? "var(--warning)" : "var(--danger)";
+  return (
+    <svg viewBox="0 0 120 120" className="w-32 h-32 shrink-0 -rotate-90" aria-hidden="true">
+      <circle cx="60" cy="60" r={r} fill="none" stroke="var(--border-default)" strokeWidth="10" />
+      <circle
+        cx="60"
+        cy="60"
+        r={r}
+        fill="none"
+        stroke={color}
+        strokeWidth="10"
+        strokeLinecap="round"
+        strokeDasharray={c}
+        strokeDashoffset={c * (1 - score / 100)}
+        className="transition-[stroke-dashoffset] duration-700"
+      />
+    </svg>
+  );
 }
 
 export function HealthPage() {
   const { t } = useTranslation();
-  const { entries, selectEntry } = useVaultStore();
+  const entries = useVaultStore((s) => s.entries);
+  const selectEntry = useVaultStore((s) => s.selectEntry);
   const { setActivePage, openEditEntry, addToast } = useUIStore();
-  const [breaches, setBreaches] = useState<Map<string, BreachResult>>(new Map());
+  const [breaches, setBreaches] = useState<Map<string, BreachResult> | null>(null);
   const [scanning, setScanning] = useState(false);
+  const [open, setOpen] = useState<IssueType | null>(null);
 
-  const stats = useMemo(() => {
-    const weak: HealthIssue[] = [];
-    const old: HealthIssue[] = [];
-    const reused: HealthIssue[] = [];
-    const noTotp: HealthIssue[] = [];
-    const missingPw: HealthIssue[] = [];
+  const report = useMemo(
+    () => analyzeVault(entries, { breaches: breaches ?? undefined }),
+    [entries, breaches],
+  );
+  const titleOf = useMemo(() => new Map(entries.map((e) => [e.id, e])), [entries]);
 
-    const passwordCounts = new Map<string, number>();
-    for (const e of entries) {
-      if (e.password) passwordCounts.set(e.password, (passwordCounts.get(e.password) ?? 0) + 1);
-    }
+  const scoreLabel =
+    report.score >= 80
+      ? t("health.score.excellent")
+      : report.score >= 60
+        ? t("health.score.good")
+        : report.score >= 40
+          ? t("health.score.fair")
+          : t("health.score.poor");
 
-    for (const entry of entries) {
-      if (entry.type !== "login" && entry.type !== "totp") continue;
-
-      // Missing password (login without password is a config issue)
-      if (entry.type === "login" && !entry.password) {
-        missingPw.push({
-          entryId: entry.id,
-          title: entry.title,
-          username: entry.username,
-          type: "missing-pw",
-          severity: "low",
-          detail: t("health.detail.noPassword"),
-        });
-        continue;
-      }
-
-      if (entry.password) {
-        const analysis = analyzeStrength(entry.password);
-        if (analysis.score <= 1) {
-          weak.push({
-            entryId: entry.id,
-            title: entry.title,
-            username: entry.username,
-            type: "weak",
-            severity: analysis.score === 0 ? "high" : "medium",
-            detail: `${t(`entry.strength.${analysis.score}`)} · ${t("entry.strength.bits", { bits: Math.round(analysis.effectiveEntropy) })}`,
-          });
-        }
-
-        const count = passwordCounts.get(entry.password) ?? 0;
-        if (count > 1) {
-          reused.push({
-            entryId: entry.id,
-            title: entry.title,
-            username: entry.username,
-            type: "reused",
-            severity: "medium",
-            detail: t("health.detail.reused", { count }),
-          });
-        }
-      }
-
-      // Old: passwords not updated in 90+ days (uses updatedAt as proxy)
-      if (entry.updatedAt) {
-        const age = Date.now() - new Date(entry.updatedAt).getTime();
-        if (age > NINETY_DAYS_MS) {
-          const days = Math.floor(age / (24 * 60 * 60 * 1000));
-          old.push({
-            entryId: entry.id,
-            title: entry.title,
-            username: entry.username,
-            type: "old",
-            severity: days > 365 ? "high" : "low",
-            detail: t("health.detail.old", { count: days }),
-          });
-        }
-      }
-
-      // Login without 2FA (a soft warning)
-      if (entry.type === "login" && !entry.totpSecret && entry.url) {
-        noTotp.push({
-          entryId: entry.id,
-          title: entry.title,
-          username: entry.username,
-          type: "no-totp",
-          severity: "low",
-          detail: t("health.detail.noTotp"),
-        });
-      }
-    }
-
-    // Pwned issues (only after scan)
-    const pwned: HealthIssue[] = [];
-    for (const entry of entries) {
-      if (!entry.password) continue;
-      const result = breaches.get(entry.password);
-      if (result?.isPwned) {
-        pwned.push({
-          entryId: entry.id,
-          title: entry.title,
-          username: entry.username,
-          type: "pwned",
-          severity: "high",
-          detail: t("health.detail.pwned", {
-            count: result.count,
-            formatted: result.count.toLocaleString(),
-          }),
-        });
-      }
-    }
-
-    // Compute overall score (0-100)
-    const totalLogins = entries.filter((e) => e.type === "login").length || 1;
-    const issuePenalty =
-      weak.length * 8 +
-      reused.length * 5 +
-      old.length * 3 +
-      pwned.length * 12 +
-      missingPw.length * 4;
-    const score = Math.max(0, Math.min(100, 100 - Math.round((issuePenalty / totalLogins) * 10)));
-
-    return { weak, old, reused, noTotp, missingPw, pwned, score, totalLogins };
-  }, [entries, breaches, t]);
-
-  async function handleScanBreaches() {
+  async function scan() {
     setScanning(true);
     try {
-      const passwords = entries.map((e) => e.password).filter((p): p is string => !!p);
-      const unique = [...new Set(passwords)];
+      const unique = [...new Set(entries.map((e) => e.password).filter((p): p is string => !!p))];
       const results = await BreachService.checkBatch(unique);
       setBreaches(results);
       const pwned = [...results.values()].filter((r) => r.isPwned).length;
@@ -162,190 +96,226 @@ export function HealthPage() {
         title: pwned > 0 ? t("health.scan.found", { count: pwned }) : t("health.scan.none"),
         message: t("health.scan.scanned", { count: unique.length }),
       });
-    } catch (err: any) {
+      if (pwned > 0) setOpen("pwned");
+    } catch (err: unknown) {
       addToast({
         type: "error",
         title: t("health.scan.failed"),
-        message: err?.message ?? t("health.scan.networkError"),
+        message: err instanceof Error ? err.message : t("health.scan.networkError"),
       });
     } finally {
       setScanning(false);
     }
   }
 
-  function openEntry(id: string) {
-    selectEntry(id);
-    setActivePage("vault");
-  }
-
-  function fixEntry(id: string) {
+  const fix = (id: string) => {
     setActivePage("vault");
     openEditEntry(id);
-  }
+  };
+  const view = (id: string) => {
+    selectEntry(id);
+    setActivePage("vault");
+  };
 
-  const scoreColor =
-    stats.score >= 80 ? "var(--success)" : stats.score >= 60 ? "var(--warning)" : "var(--danger)";
-
-  const scoreLabel =
-    stats.score >= 80
-      ? t("health.score.excellent")
-      : stats.score >= 60
-        ? t("health.score.good")
-        : stats.score >= 40
-          ? t("health.score.fair")
-          : t("health.score.poor");
+  // Distinct entries with something to fix (one entry can have several issues).
+  const actionable = new Set(
+    report.issues.filter((i) => i.severity !== "info").map((i) => i.entryId),
+  ).size;
 
   return (
-    <div className="p-8 max-w-5xl mx-auto">
-      <header className="mb-8">
-        <h1 className="text-2xl font-display font-medium mb-1">{t("health.title")}</h1>
-        <p className="text-sm text-(--text-secondary)">{t("health.subtitle")}</p>
-      </header>
+    <div className="h-full overflow-y-auto">
+      <div className="p-8 max-w-5xl mx-auto">
+        <header className="mb-6">
+          <h1 className="text-2xl font-display font-medium mb-1">{t("watchtower.title")}</h1>
+          <p className="text-sm text-(--text-secondary)">{t("watchtower.subtitle")}</p>
+        </header>
 
-      {/* Score Card */}
-      <div className="sv-card mb-6 flex items-center justify-between">
-        <div>
-          <div className="text-sm text-(--text-secondary) mb-1">{t("health.score.title")}</div>
-          <div className="flex items-baseline gap-3">
-            <span style={{ fontSize: 56, fontWeight: 700, color: scoreColor, lineHeight: 1 }}>
-              {stats.score}
-            </span>
-            <span className="text-lg" style={{ color: scoreColor }}>
+        <section
+          className="sv-card mb-6 flex flex-wrap items-center gap-6"
+          aria-labelledby="wt-score"
+        >
+          <div className="relative">
+            <ScoreRing score={report.score} />
+            <div className="absolute inset-0 flex flex-col items-center justify-center">
+              <span className="text-3xl font-bold tabular-nums">{report.score}</span>
+              <span className="text-xs text-(--text-tertiary)" dir="ltr">
+                / 100
+              </span>
+            </div>
+          </div>
+          <div className="flex-1 min-w-56">
+            <h2 id="wt-score" className="text-lg font-medium">
               {scoreLabel}
+            </h2>
+            <p className="text-sm text-(--text-secondary) mt-1">
+              {actionable === 0
+                ? t("watchtower.allClear")
+                : t("watchtower.toFix", { count: actionable })}
+            </p>
+            <p className="text-xs text-(--text-tertiary) mt-1">
+              {t("health.score.basedOn", { count: report.considered })}
+            </p>
+          </div>
+          <div className="flex flex-col items-stretch gap-1.5">
+            <Button
+              variant="primary"
+              onClick={scan}
+              busy={scanning}
+              busyLabel={t("health.scan.scanning")}
+              disabled={entries.length === 0}
+            >
+              {breaches ? t("watchtower.rescan") : t("health.scan.button")}
+            </Button>
+            <span className="text-xs text-(--text-tertiary) max-w-60">
+              {t("health.scan.privacy")}
             </span>
           </div>
-          <div className="text-xs text-(--text-tertiary) mt-2">
-            {t("health.score.basedOn", { count: stats.totalLogins })}
-          </div>
-        </div>
-        <div className="flex flex-col gap-2 items-end">
-          <button
-            onClick={handleScanBreaches}
-            disabled={scanning || entries.length === 0}
-            className="sv-btn-primary"
-          >
-            {scanning ? t("health.scan.scanning") : t("health.scan.button")}
-          </button>
-          <span className="text-xs text-(--text-tertiary)">{t("health.scan.privacy")}</span>
-        </div>
-      </div>
+        </section>
 
-      {/* Issue cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <IssueCard
-          title={t("health.cards.pwned")}
-          icon="🚨"
-          items={stats.pwned}
-          accent="var(--danger)"
-          onFix={fixEntry}
-          onOpen={openEntry}
-          emptyMessage={
-            breaches.size === 0 ? t("health.cards.notScanned") : t("health.cards.noneFound")
-          }
-        />
-        <IssueCard
-          title={t("health.cards.weak")}
-          icon="⚠️"
-          items={stats.weak}
-          accent="var(--danger)"
-          onFix={fixEntry}
-          onOpen={openEntry}
-        />
-        <IssueCard
-          title={t("health.cards.reused")}
-          icon="🔁"
-          items={stats.reused}
-          accent="var(--warning)"
-          onFix={fixEntry}
-          onOpen={openEntry}
-        />
-        <IssueCard
-          title={t("health.cards.old")}
-          icon="📅"
-          items={stats.old}
-          accent="var(--warning)"
-          onFix={fixEntry}
-          onOpen={openEntry}
-        />
-        <IssueCard
-          title={t("health.cards.missing")}
-          icon="❓"
-          items={stats.missingPw}
-          accent="var(--text-tertiary)"
-          onFix={fixEntry}
-          onOpen={openEntry}
-        />
-        <IssueCard
-          title={t("health.cards.noTotp")}
-          icon="🔓"
-          items={stats.noTotp}
-          accent="var(--text-tertiary)"
-          onFix={fixEntry}
-          onOpen={openEntry}
-        />
+        <div
+          className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-6"
+          role="list"
+          aria-label={t("watchtower.categories")}
+        >
+          {CATEGORIES.map(({ type, icon: Icon, tone }) => {
+            const count = report.byType[type].length;
+            const pending = type === "pwned" && !breaches;
+            return (
+              <button
+                key={type}
+                role="listitem"
+                type="button"
+                onClick={() => setOpen(open === type ? null : type)}
+                aria-expanded={open === type}
+                aria-controls="wt-details"
+                disabled={count === 0}
+                className={`sv-card text-start flex items-center gap-3 transition-colors disabled:opacity-60 enabled:hover:border-(--border-strong) ${open === type ? "border-(--accent)!" : ""}`}
+              >
+                <span
+                  className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
+                  style={{
+                    color: count ? tone : "var(--success)",
+                    background: "var(--bg-elevated)",
+                  }}
+                >
+                  {count ? (
+                    <Icon aria-hidden="true" className="w-4.5 h-4.5" />
+                  ) : (
+                    <ShieldCheck aria-hidden="true" className="w-4.5 h-4.5" />
+                  )}
+                </span>
+                <span className="min-w-0">
+                  <span className="block text-sm font-medium truncate">
+                    {t(`watchtower.types.${type}`)}
+                  </span>
+                  <span className="block text-xs text-(--text-tertiary)">
+                    {pending ? t("health.cards.notScanned") : t("watchtower.count", { count })}
+                  </span>
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
+        {open && (
+          <section id="wt-details" className="sv-card" aria-labelledby="wt-details-title">
+            <div className="flex items-center justify-between mb-3">
+              <h2 id="wt-details-title" className="font-medium">
+                {t(`watchtower.types.${open}`)}
+              </h2>
+              <button
+                type="button"
+                onClick={() => setOpen(null)}
+                className="sv-icon-btn"
+                aria-label={t("watchtower.collapse")}
+              >
+                <ChevronDown aria-hidden="true" className="w-4 h-4 rotate-180" />
+              </button>
+            </div>
+            <p className="text-sm text-(--text-secondary) mb-4">{t(`watchtower.advice.${open}`)}</p>
+            <IssueList
+              issues={report.byType[open]}
+              titleOf={titleOf}
+              grouped={open === "reused"}
+              onFix={fix}
+              onView={view}
+            />
+          </section>
+        )}
       </div>
     </div>
   );
 }
 
-interface IssueCardProps {
-  title: string;
-  icon: string;
-  items: HealthIssue[];
-  accent: string;
+function IssueList({
+  issues,
+  titleOf,
+  grouped,
+  onFix,
+  onView,
+}: {
+  issues: WatchtowerIssue[];
+  titleOf: Map<string, { title: string; username?: string }>;
+  grouped: boolean;
   onFix: (id: string) => void;
-  onOpen: (id: string) => void;
-  emptyMessage?: string;
-}
-
-function IssueCard({ title, icon, items, accent, onFix, onOpen, emptyMessage }: IssueCardProps) {
+  onView: (id: string) => void;
+}) {
   const { t } = useTranslation();
-  const [expanded, setExpanded] = useState(false);
-  const visible = expanded ? items : items.slice(0, 3);
+  const groups = grouped
+    ? [
+        ...issues
+          .reduce(
+            (m, i) => m.set(i.group!, [...(m.get(i.group!) ?? []), i]),
+            new Map<string, WatchtowerIssue[]>(),
+          )
+          .values(),
+      ]
+    : [issues];
 
   return (
-    <div className="sv-card">
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="font-medium flex items-center gap-2">
-          <span>{icon}</span> {title}
-        </h3>
-        <span
-          className="sv-badge"
-          style={{ color: accent, background: `color-mix(in srgb, ${accent} 12%, transparent)` }}
+    <div className="flex flex-col gap-4">
+      {groups.map((list, gi) => (
+        <ul
+          key={gi}
+          className={grouped ? "rounded-xl border border-(--border-subtle) p-2" : ""}
+          aria-label={grouped ? t("watchtower.sharedBy", { count: list.length }) : undefined}
         >
-          {items.length}
-        </span>
-      </div>
-
-      {items.length === 0 ? (
-        <p className="text-xs text-(--text-tertiary) py-3">
-          {emptyMessage ?? t("health.cards.noIssues")}
-        </p>
-      ) : (
-        <ul className="space-y-2">
-          {visible.map((it) => (
-            <li
-              key={`${it.type}-${it.entryId}`}
-              className="flex items-center justify-between gap-2 py-2 border-b border-(--border-subtle) last:border-b-0"
-            >
-              <div className="min-w-0 flex-1">
-                <div className="text-sm font-medium truncate">{it.title}</div>
-                <div className="text-xs text-(--text-tertiary) truncate">
-                  {it.username ?? it.detail}
-                </div>
-              </div>
-              <button onClick={() => onFix(it.entryId)} className="sv-btn-ghost text-xs">
-                {t("health.cards.fix")}
-              </button>
+          {grouped && (
+            <li className="text-xs text-(--text-tertiary) px-2 pb-1">
+              {t("watchtower.sharedBy", { count: list.length })}
             </li>
-          ))}
-          {items.length > 3 && !expanded && (
-            <button onClick={() => setExpanded(true)} className="sv-btn-ghost text-xs w-full mt-2">
-              {t("health.cards.showMore", { count: items.length - 3 })}
-            </button>
           )}
+          {list.map((i) => {
+            const e = titleOf.get(i.entryId);
+            return (
+              <li
+                key={`${i.type}-${i.entryId}`}
+                className="flex items-center gap-3 px-2 py-2 border-b border-(--border-subtle) last:border-b-0"
+              >
+                <button
+                  type="button"
+                  onClick={() => onView(i.entryId)}
+                  className="min-w-0 flex-1 text-start"
+                >
+                  <span className="block text-sm font-medium truncate">{e?.title ?? "—"}</span>
+                  <span className="block text-xs text-(--text-tertiary) truncate">
+                    {[e?.username, t(`watchtower.detail.${i.detailKey}`, i.params)]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  </span>
+                </button>
+                <Button
+                  variant="ghost"
+                  className="text-xs shrink-0"
+                  onClick={() => onFix(i.entryId)}
+                >
+                  {t("health.cards.fix")}
+                </Button>
+              </li>
+            );
+          })}
         </ul>
-      )}
+      ))}
     </div>
   );
 }
