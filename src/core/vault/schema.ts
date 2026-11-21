@@ -73,7 +73,27 @@ export interface VaultTombstone {
   deletedAt: string;
 }
 
+/** A browser extension the user paired with this vault (ADR 0007). */
+export interface PairedExtension {
+  /** chrome-extension://<id>/ as reported by the browser, not by the extension. */
+  origin: string;
+  /** The extension's ECDH P-256 public key (raw, base64), pinned at pairing. */
+  publicKey: string;
+  pairedAt: string;
+  lastSeenAt?: string;
+}
+
+/** Bridge identity + pairings. Lives inside the encrypted vault. */
+export interface VaultBridge {
+  appPublicKey: string;
+  /** ECDH private key as JWK; only ever in memory while unlocked or encrypted at rest. */
+  appPrivateJwk: JsonWebKey;
+  paired: PairedExtension[];
+}
+
 export interface VaultData {
+  /** Optional, added on first use of the browser bridge. */
+  bridge?: VaultBridge;
   /** See CURRENT_SCHEMA_VERSION in migrations.ts. */
   schemaVersion: number;
   entries: VaultEntry[];

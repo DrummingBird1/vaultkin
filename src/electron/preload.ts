@@ -12,6 +12,27 @@ import type { UpdateStatus } from "./update.service";
 contextBridge.exposeInMainWorld("electron", {
   platform: process.platform,
   version: process.versions.electron,
+  bridge: {
+    /** Frames from browser-extension connections (relayed, see ADR 0007). */
+    onFrame: (cb: (f: { connId: number; origin: string; msg: unknown }) => void): (() => void) => {
+      const l = (
+        _e: Electron.IpcRendererEvent,
+        f: { connId: number; origin: string; msg: unknown },
+      ) => cb(f);
+      ipcRenderer.on("sv-bridge-frame", l);
+      return () => ipcRenderer.removeListener("sv-bridge-frame", l);
+    },
+    onClosed: (cb: (connId: number) => void): (() => void) => {
+      const l = (_e: Electron.IpcRendererEvent, f: { connId: number }) => cb(f.connId);
+      ipcRenderer.on("sv-bridge-closed", l);
+      return () => ipcRenderer.removeListener("sv-bridge-closed", l);
+    },
+    send: (connId: number, msg: object): Promise<boolean> =>
+      ipcRenderer.invoke("sv-bridge-send", connId, msg),
+    close: (connId: number): Promise<void> => ipcRenderer.invoke("sv-bridge-close", connId),
+    installHost: (extensionIds: string[]): Promise<{ manifest: string; registered: number }> =>
+      ipcRenderer.invoke("sv-bridge-install", extensionIds),
+  },
   window: {
     /** Recolor the native window controls (Windows/Linux) to match the theme. */
     setTitleBarTheme: (colors: { color: string; symbolColor: string }): Promise<void> =>

@@ -54,6 +54,7 @@ test("window is hardened (sandbox, isolation, no node in the page)", async () =>
     "undefined",
   );
   expect(await win.evaluate(() => Object.keys(window.electron ?? {}).sort())).toEqual([
+    "bridge",
     "platform",
     "updates",
     "version",

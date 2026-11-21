@@ -18,6 +18,14 @@ export type UpdateStatus =
 export interface ElectronBridge {
   platform: string;
   version: string;
+  /** Browser-extension bridge transport (ADR 0007). */
+  bridge?: {
+    onFrame: (cb: (f: { connId: number; origin: string; msg: unknown }) => void) => () => void;
+    onClosed: (cb: (connId: number) => void) => () => void;
+    send: (connId: number, msg: object) => Promise<boolean>;
+    close: (connId: number) => Promise<void>;
+    installHost: (extensionIds: string[]) => Promise<{ manifest: string; registered: number }>;
+  };
   /** Present in builds with the custom title bar / Quick Access (M2+). */
   window?: {
     setTitleBarTheme: (colors: { color: string; symbolColor: string }) => Promise<void>;

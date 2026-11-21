@@ -810,5 +810,30 @@
       "missingPassword": "No password saved",
       "no2fa": "No one-time code saved"
     }
+  },
+  "bridge": {
+    "pair": {
+      "title": "Connect browser extension?",
+      "body": "The SecureVault extension wants to use this vault. Check that the extension popup shows exactly this code. If it doesn't, or you didn't just click Connect in the browser, reject.",
+      "codeLabel": "Pairing code {{code}}",
+      "extension": "Extension",
+      "accept": "Codes match — connect",
+      "reject": "Reject"
+    },
+    "settings": {
+      "title": "Connected browsers",
+      "none": "No browser is connected yet.",
+      "connect": "Set up browser connection",
+      "connectHint": "Registers SecureVault with Chrome, Edge and Brave on this computer so the extension can talk to the app. Then click Connect in the extension popup.",
+      "installed_one": "Registered with {{count}} browser.",
+      "installed_two": "Registered with {{count}} browsers.",
+      "installed_many": "Registered with {{count}} browsers.",
+      "installed_other": "Registered with {{count}} browsers.",
+      "installFailed": "Couldn't register the browser connection",
+      "lastSeen": "Last used {{when}}",
+      "pairedOn": "Connected {{when}}",
+      "disconnect": "Disconnect",
+      "disconnected": "Browser disconnected"
+    }
   }
 }

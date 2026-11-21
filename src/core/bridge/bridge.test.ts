@@ -3,6 +3,7 @@ import fc from "fast-check";
 import { encodeFrame, FrameDecoder, MAX_FRAME_BYTES } from "./framing";
 import {
   BridgeSession,
+  connectionNonce,
   exportPublicKey,
   generateIdentity,
   importPublicKey,
@@ -98,6 +99,28 @@ describe("BridgeSession", () => {
     await expect(app.open(tampered)).rejects.toThrow();
     const relabeled = { ...(await ext.seal({ a: 4 })), n: 99 }; // counter not covered → GCM fails
     await expect(app.open(relabeled)).rejects.toThrow();
+  });
+
+  it("a message recorded on one connection cannot be replayed into the next", async () => {
+    const appId = await generateIdentity();
+    const extId = await generateIdentity();
+    const appPub = await exportPublicKey(appId.publicKey);
+    const extPub = await exportPublicKey(extId.publicKey);
+    const connect = async () => {
+      const nonces = { extension: connectionNonce(), app: connectionNonce() };
+      return {
+        app: await BridgeSession.establish(appId, appPub, extPub, "app", nonces),
+        ext: await BridgeSession.establish(extId, extPub, appPub, "extension", nonces),
+      };
+    };
+    const first = await connect();
+    const recorded = await first.ext.seal({
+      op: "credentials-for-url",
+      url: "https://bank.example",
+    });
+    expect(await first.app.open(recorded)).toBeTruthy();
+    const second = await connect();
+    await expect(second.app.open(recorded)).rejects.toThrow(); // counter 1 is fresh here, key is not
   });
 
   it("a third party with its own keys cannot read or forge messages", async () => {

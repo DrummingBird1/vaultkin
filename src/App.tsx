@@ -14,6 +14,8 @@ import { AppShell } from "./components/layout/AppShell";
 import { UnlockPage } from "./pages/Unlock.page";
 import { VaultPage } from "./pages/Vault.page";
 import { Toaster } from "./components/ui/Toaster";
+import { PairingDialog } from "./components/bridge/PairingDialog";
+import { BridgeService } from "./services/bridge.service";
 
 import { readableAccent, solidAccent } from "./lib/contrast";
 // Route-based code splitting: Vault/Unlock stay eager (the pages basically
@@ -142,6 +144,10 @@ export function App() {
     };
   }, []);
 
+  // Browser-extension bridge (desktop only). Runs while locked too, so a
+  // connecting extension is told "locked" instead of getting no answer.
+  useEffect(() => BridgeService.start(), []);
+
   // Auto-lock on inactivity
   useAutoLock();
 
@@ -170,6 +176,7 @@ export function App() {
         </AppShell>
       )}
 
+      {isUnlocked && <PairingDialog />}
       <Toaster />
     </>
   );

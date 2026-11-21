@@ -11,6 +11,7 @@ import { ClipboardService } from "./clipboard.service";
 import { BreachService } from "./breach.service";
 import { HistoryService } from "./history.service";
 import { ExtensionBridge } from "./extension-bridge.service";
+import { BridgeService } from "./bridge.service";
 import { useSessionStore } from "../store/session.store";
 import { EXTENSION_ID_STORAGE_KEY } from "../constants";
 
@@ -30,6 +31,8 @@ export const AppLifecycle = {
     ClipboardService.cancelClear();
     BreachService.clearCache();
     HistoryService.clear();
+    // Native-messaging bridge: close every extension session (ADR 0007).
+    BridgeService.onLock();
     // Tell the paired browser extension to drop its cached entries too —
     // otherwise a locked main vault would leave plaintext credentials
     // reachable in the extension for up to its own 5-minute idle timeout.

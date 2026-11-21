@@ -53,6 +53,18 @@ function sortedConcat(a: string, b: string): Uint8Array<ArrayBuffer> {
   return out;
 }
 
+function concat(a: Uint8Array, b: Uint8Array): Uint8Array<ArrayBuffer> {
+  const out = new Uint8Array(a.length + b.length);
+  out.set(a);
+  out.set(b, a.length);
+  return out;
+}
+
+/** Fresh per-connection nonce for `BridgeSession.establish`. */
+export function connectionNonce(): string {
+  return bytesToBase64(crypto.getRandomValues(new Uint8Array(16)));
+}
+
 /** Same 6 digits on both sides iff both saw the same two public keys and origin. */
 export async function pairingCode(pubA: string, pubB: string, origin: string): Promise<string> {
   const keys = sortedConcat(pubA, pubB);
@@ -74,12 +86,19 @@ export class BridgeSession {
     private readonly sendDir: Direction,
   ) {}
 
-  /** `role` is which endpoint this is; it fixes the send/receive directions. */
+  /**
+   * `role` is which endpoint this is; it fixes the send/receive directions.
+   * `connectionNonces` are the random values both sides sent in this
+   * connection's hello: they make every connection's key unique, so counters
+   * can restart at 1 without a message from an earlier connection being
+   * replayable into a later one.
+   */
   static async establish(
     own: CryptoKeyPair,
     ownPublicB64: string,
     peerPublicB64: string,
     role: "app" | "extension",
+    connectionNonces: { extension: string; app: string } = { extension: "", app: "" },
   ): Promise<BridgeSession> {
     const peer = await importPublicKey(peerPublicB64);
     const bits = await crypto.subtle.deriveBits(
@@ -92,7 +111,10 @@ export class BridgeSession {
       {
         name: "HKDF",
         hash: "SHA-256",
-        salt: sortedConcat(ownPublicB64, peerPublicB64),
+        salt: concat(
+          sortedConcat(ownPublicB64, peerPublicB64),
+          new TextEncoder().encode(`|${connectionNonces.extension}|${connectionNonces.app}`),
+        ),
         info: INFO,
       },
       hkdfKey,

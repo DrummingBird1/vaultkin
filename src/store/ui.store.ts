@@ -4,6 +4,7 @@
  */
 import { create } from "zustand";
 import { formatHash, type ActivePage } from "../lib/route";
+import type { PairingPrompt } from "../services/bridge.service";
 
 export type { ActivePage };
 
@@ -31,6 +32,8 @@ interface UIState {
   paletteOpen: boolean;
   /** First-run guide, opened once after a vault is created. */
   onboardingOpen: boolean;
+  /** A browser extension asked to pair; shows the code to compare (ADR 0007). */
+  pairingPrompt: PairingPrompt | null;
 
   setTheme: (t: Theme) => void;
   setAccent: (hex: string, name?: string) => void;
@@ -48,6 +51,7 @@ interface UIState {
   requestNewEntry: () => void;
   setPaletteOpen: (open: boolean) => void;
   setOnboardingOpen: (open: boolean) => void;
+  setPairingPrompt: (p: PairingPrompt | null) => void;
   consumeEditEntry: () => string | null;
 }
 
@@ -64,6 +68,7 @@ export const useUIStore = create<UIState>((set, get) => ({
   newEntryRequest: 0,
   paletteOpen: false,
   onboardingOpen: false,
+  pairingPrompt: null,
 
   setTheme: (t) => set({ theme: t }),
   setAccent: (hex, name) => set({ accentColor: { hex, name: name ?? hex } }),
@@ -95,6 +100,7 @@ export const useUIStore = create<UIState>((set, get) => ({
   },
   setPaletteOpen: (open) => set({ paletteOpen: open }),
   setOnboardingOpen: (open) => set({ onboardingOpen: open }),
+  setPairingPrompt: (p) => set({ pairingPrompt: p }),
   consumeEditEntry: () => {
     const id = get().editEntryId;
     if (id) set({ editEntryId: null });
