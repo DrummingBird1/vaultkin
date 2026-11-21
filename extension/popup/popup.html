@@ -9,18 +9,26 @@
 <body>
   <header class="sv-header">
     <span class="sv-title">SecureVault</span>
-    <button id="lockBtn" class="sv-icon-btn" title="Lock" type="button">🔒</button>
+    <button id="lockBtn" class="sv-icon-btn" title="Clear the extension's cached entries" aria-label="Clear cached entries" type="button">🔒</button>
   </header>
+
+  <!-- Desktop app connection (native messaging, ADR 0007) -->
+  <section id="desktopView" class="sv-desktop" aria-live="polite" hidden>
+    <p id="desktopMessage" class="sv-desktop-msg"></p>
+    <p id="pairCode" class="sv-pair-code" dir="ltr" hidden></p>
+    <button id="desktopAction" class="sv-btn" type="button" hidden></button>
+  </section>
 
   <div id="lockedView" class="sv-locked" hidden>
     <p>SecureVault is locked.</p>
-    <p class="sv-hint">Open the app and click "Send entries to extension" after unlocking.</p>
+    <p class="sv-hint">Unlock the SecureVault app to fill logins.</p>
   </div>
 
   <div id="unlockedView" hidden>
-    <input id="searchInput" class="sv-search" type="text" placeholder="Search…" autocomplete="off" />
+    <p id="siteLabel" class="sv-hint sv-site"></p>
+    <input id="searchInput" class="sv-search" type="text" placeholder="Search…" autocomplete="off" aria-label="Search entries" />
     <ul id="entryList" class="sv-entry-list"></ul>
-    <p id="emptyState" class="sv-hint" hidden>No matching entries.</p>
+    <p id="emptyState" class="sv-hint" hidden>No logins saved for this site.</p>
   </div>
 
   <script src="popup.js"></script>

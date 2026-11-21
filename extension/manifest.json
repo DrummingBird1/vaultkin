@@ -4,9 +4,9 @@
   "version": "0.1.0",
   "description": "Companion browser extension for SecureVault — autofill credentials and TOTP codes from your local vault.",
   "icons": {
-    "16":  "icons/icon-16.png",
-    "32":  "icons/icon-32.png",
-    "48":  "icons/icon-48.png",
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
     "128": "icons/icon-128.png"
   },
   "action": {
@@ -23,25 +23,17 @@
   },
   "content_scripts": [
     {
-      "matches":  ["<all_urls>"],
-      "js":       ["src/content.js"],
-      "css":      ["src/content.css"],
-      "run_at":   "document_idle",
+      "matches": ["<all_urls>"],
+      "js": ["src/content.js"],
+      "css": ["src/content.css"],
+      "run_at": "document_idle",
       "all_frames": false
     }
   ],
-  "permissions": [
-    "activeTab",
-    "storage",
-    "scripting",
-    "clipboardWrite"
-  ],
+  "permissions": ["activeTab", "storage", "scripting", "clipboardWrite", "nativeMessaging"],
   "host_permissions": ["<all_urls>"],
   "externally_connectable": {
-    "matches": [
-      "http://localhost:5173/*",
-      "https://*.your-securevault-host.com/*"
-    ]
+    "matches": ["http://localhost:5173/*", "https://*.your-securevault-host.com/*"]
   },
   "content_security_policy": {
     "extension_pages": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self' http://localhost:5173 https://*.your-securevault-host.com; img-src 'self' data:;"

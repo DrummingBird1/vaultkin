@@ -1,11 +1,15 @@
 /**
  * SecureVault — Background Service Worker (MV3)
  *
- * Holds an in-memory snapshot of vault entries for the popup + content
- * scripts. The cache is populated by an explicit "Send to extension" action
- * in the main web app, NEVER persisted, and auto-wiped after 5 min idle.
+ * Two sources of logins, in order:
+ *  1. The desktop app over the end-to-end encrypted native-messaging bridge
+ *     (desktop-bridge.ts, ADR 0007): asks for the current site's logins on
+ *     demand and caches nothing.
+ *  2. Legacy (web build): an in-memory snapshot pushed by "Send to extension",
+ *     never persisted, auto-wiped after 5 min idle.
  */
 import sharedConstants from "../../src/constants/shared.json" with { type: "json" };
+import * as Desktop from "./desktop-bridge";
 
 let sessionCache = { entries: [], receivedAt: 0, expiresAt: 0 };
 // Single source of truth is src/constants/shared.json (also read by the main
@@ -83,8 +87,80 @@ chrome.runtime.onMessageExternal.addListener((msg, sender, sendResponse) => {
   sendResponse({ ok: false, error: "Unknown message type" });
 });
 
+// ── Desktop bridge helpers ────────────────────────────────────────────────
+/** (Re)connect and wait for the app's hello (or a terminal state). */
+async function ensureDesktop() {
+  const settled = (k) => k !== "connecting";
+  let s = Desktop.getState();
+  if (["disconnected", "locked", "app-not-running", "rejected"].includes(s.kind)) {
+    Desktop.disconnect();
+    await Desktop.connect();
+  }
+  s = Desktop.getState();
+  if (settled(s.kind)) return s;
+  return new Promise((resolve) => {
+    const off = Desktop.onStateChange((n) => {
+      if (settled(n.kind)) {
+        off();
+        resolve(n);
+      }
+    });
+    setTimeout(() => {
+      off();
+      resolve(Desktop.getState());
+    }, 3000);
+  });
+}
+
+// Desktop-bridge requests are async: these handlers return true to keep the
+// message channel open until sendResponse is called.
+chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
+  if (msg?.type === "SV_DESKTOP_STATUS") {
+    ensureDesktop().then(
+      (s) => sendResponse(s),
+      () => sendResponse({ kind: "disconnected" }),
+    );
+    return true;
+  }
+  if (msg?.type === "SV_DESKTOP_PAIR") {
+    Desktop.pair().then(
+      (code) => sendResponse({ ok: true, code }),
+      (e) => sendResponse({ ok: false, error: String(e?.message ?? e) }),
+    );
+    return true;
+  }
+  if (
+    msg?.type === "SV_DESKTOP_TOTP" &&
+    typeof msg.id === "string" &&
+    typeof msg.url === "string"
+  ) {
+    Desktop.totpCode(msg.id, msg.url).then(
+      (r) => sendResponse(r),
+      () => sendResponse(null),
+    );
+    return true;
+  }
+  return false;
+});
+
 // Messages from popup + content scripts
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+  if (msg?.type?.startsWith?.("SV_DESKTOP_")) return false; // handled above
+  if (msg?.type === "SV_FIND_FOR_URL" && !isUnlocked()) {
+    // No legacy snapshot: ask the desktop app for this site's logins.
+    ensureDesktop()
+      .then((s) => (s.kind === "ready" ? Desktop.credentialsForUrl(msg.url ?? "") : []))
+      .then(
+        (matches) =>
+          sendResponse({
+            matches,
+            unlocked: matches.length > 0 || Desktop.getState().kind === "ready",
+            source: "desktop",
+          }),
+        () => sendResponse({ matches: [], unlocked: false }),
+      );
+    return true;
+  }
   if (msg?.type === "SV_GET_STATUS") {
     sendResponse({
       unlocked: isUnlocked(),

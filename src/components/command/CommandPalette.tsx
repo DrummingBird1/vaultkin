@@ -39,6 +39,8 @@ import { generateTOTP } from "../../core/totp/totp";
 import type { VaultEntry } from "../../core/vault/schema";
 import { SETTINGS_SECTIONS } from "../../pages/settings-sections";
 
+const NO_ENTRIES: VaultEntry[] = [];
+
 const PAGE_ICONS: Record<ActivePage, LucideIcon> = {
   vault: Vault,
   authenticator: Timer,
@@ -87,7 +89,8 @@ export function CommandPalette({
   onNewEntry: () => void;
 }) {
   const { t } = useTranslation();
-  const entries = useVaultStore((s) => s.vault?.entries ?? []);
+  // Stable fallback (a fresh [] per render would make the selector loop).
+  const entries = useVaultStore((s) => s.vault?.entries) ?? NO_ENTRIES;
   const selectEntry = useVaultStore((s) => s.selectEntry);
   const { setActivePage, openEditEntry, theme, setTheme, toastSuccess, toastError } = useUIStore();
   const [search, setSearch] = useState("");
