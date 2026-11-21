@@ -1,5 +1,36 @@
 # Changelog
 
+## [Unreleased] — M3 integrations (2026-11-21)
+
+### Added
+- Watchtower security report (replaces Password Health): breached, weak,
+  reused (grouped), insecure http:// sites, expired / expiring cards, old
+  passwords, missing passwords, no 2FA code; weighted score; per-category
+  advice. Pure, tested analysis in `src/core/watchtower`.
+- Desktop app ↔ browser extension bridge over native messaging, end-to-end
+  encrypted (ADR 0007): one-time pairing confirmed with a 6-digit code in the
+  app, per-connection keys, replay protection; the extension asks for the
+  current site's logins on demand and caches nothing. Settings → Browser
+  extension registers the connection for Chrome / Edge / Brave and lists
+  paired browsers.
+- Passkeys: SecureVault can save and use passkeys on websites (via the
+  extension); every save and sign-in is confirmed in the app; anything it
+  can't handle falls back to the browser's own passkey flow.
+- Tests: Electron E2E drives the real bridge host as Chrome would, including
+  pairing, scoped answers, replay/impostor rejection and a full passkey
+  ceremony verified like a relying party; Chromium test for the page shim.
+
+### Fixed
+- Settings crashed in the browser build (store selector returning a new
+  array each render); found by the accessibility E2E.
+
+### Notes
+- The extension must now be built (`pnpm build:extension`, load
+  `dist/extension`).
+- The native-messaging host runs as Electron in Node mode: the Electron
+  binary writes a CRLF to stdout on Windows, which breaks the protocol.
+  Disabling the RunAsNode fuse (Phase 4) requires a standalone host first.
+
 ## [Unreleased] — M2 design, UX and desktop (2026-11-21)
 
 ### Added
