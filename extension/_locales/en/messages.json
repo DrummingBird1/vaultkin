@@ -1,0 +1,136 @@
+{
+  "extName": {
+    "message": "SecureVault"
+  },
+  "extDescription": {
+    "message": "Autofill logins, one-time codes and passkeys from your SecureVault desktop app."
+  },
+  "openMenu": {
+    "message": "SecureVault: show logins for this site"
+  },
+  "menuTitle": {
+    "message": "Logins for $SITE$",
+    "placeholders": {
+      "site": {
+        "content": "$1"
+      }
+    }
+  },
+  "loading": {
+    "message": "Loading…"
+  },
+  "locked": {
+    "message": "SecureVault is locked. Unlock the app, then try again."
+  },
+  "notConnected": {
+    "message": "Not connected to the SecureVault app. Open the extension popup to connect."
+  },
+  "noLogins": {
+    "message": "No logins saved for this site."
+  },
+  "fillCode": {
+    "message": "Fill one-time code"
+  },
+  "otherSite": {
+    "message": "Saved for $HOST$ — click again to fill here anyway",
+    "placeholders": {
+      "host": {
+        "content": "$1"
+      }
+    }
+  },
+  "thirdPartyFrame": {
+    "message": "This form is in a frame from $HOST$, not the page you're on. Click again to fill anyway.",
+    "placeholders": {
+      "host": {
+        "content": "$1"
+      }
+    }
+  },
+  "close": {
+    "message": "Close"
+  },
+  "saveTitle": {
+    "message": "Save this login to SecureVault?"
+  },
+  "updateTitle": {
+    "message": "Update the saved password for $USER$?",
+    "placeholders": {
+      "user": {
+        "content": "$1"
+      }
+    }
+  },
+  "save": {
+    "message": "Save"
+  },
+  "update": {
+    "message": "Update"
+  },
+  "notNow": {
+    "message": "Not now"
+  },
+  "saved": {
+    "message": "Saved to SecureVault"
+  },
+  "popupSearch": {
+    "message": "Search…"
+  },
+  "popupNoLogins": {
+    "message": "No logins saved for this site."
+  },
+  "popupLockedTitle": {
+    "message": "SecureVault is locked."
+  },
+  "popupLockedHint": {
+    "message": "Unlock the SecureVault app to fill logins."
+  },
+  "popupNotInstalled": {
+    "message": "The SecureVault app isn't connected to this browser yet. In the app: Settings → Browser extension → Set up browser connection."
+  },
+  "popupAppNotRunning": {
+    "message": "Open the SecureVault desktop app to fill logins."
+  },
+  "popupConnecting": {
+    "message": "Connecting to SecureVault…"
+  },
+  "popupDisconnected": {
+    "message": "Not connected to the SecureVault app."
+  },
+  "popupUnpaired": {
+    "message": "Connect this browser to your SecureVault app."
+  },
+  "popupRejected": {
+    "message": "The app rejected the connection."
+  },
+  "popupPairing": {
+    "message": "Check that the SecureVault app shows this code, then approve it there."
+  },
+  "popupRetry": {
+    "message": "Retry"
+  },
+  "popupConnect": {
+    "message": "Connect"
+  },
+  "popupTryAgain": {
+    "message": "Try again"
+  },
+  "copyUser": {
+    "message": "Copy username"
+  },
+  "copyPass": {
+    "message": "Copy password"
+  },
+  "copyCode": {
+    "message": "Copy one-time code"
+  },
+  "fill": {
+    "message": "Fill on this page"
+  },
+  "clearCache": {
+    "message": "Clear cached entries"
+  },
+  "untitled": {
+    "message": "(untitled)"
+  }
+}

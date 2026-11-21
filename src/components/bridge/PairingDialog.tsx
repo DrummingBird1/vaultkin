@@ -11,12 +11,13 @@ import { Modal } from "../ui/Modal";
 import { Button } from "../ui/Button";
 import { useUIStore } from "../../store/ui.store";
 import { BridgeService } from "../../services/bridge.service";
+import { describeExtensionOrigin } from "../../lib/browser-origin";
 
 export function PairingDialog() {
   const { t } = useTranslation();
   const prompt = useUIStore((s) => s.pairingPrompt);
   if (!prompt) return null;
-  const extId = prompt.origin.replace(/^chrome-extension:\/\//, "").replace(/\/$/, "");
+  const extId = describeExtensionOrigin(prompt.origin);
   const code = `${prompt.code.slice(0, 3)} ${prompt.code.slice(3)}`;
 
   return (

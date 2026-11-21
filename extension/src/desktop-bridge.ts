@@ -43,6 +43,16 @@ export interface BridgeCredential {
 }
 
 const HOST = "com.securevault.bridge";
+
+/**
+ * This extension's identity exactly as the native host reports it to the app:
+ * Chrome passes "chrome-extension://<id>/"; Firefox passes the add-on id,
+ * which the host turns into "moz-extension-id:<id>" (bridge-transport.ts).
+ */
+export function bridgeOrigin(): string {
+  const url = chrome.runtime.getURL("");
+  return url.startsWith("moz-extension://") ? `moz-extension-id:${chrome.runtime.id}` : url;
+}
 const REQUEST_TIMEOUT_MS = 10_000;
 
 let state: BridgeState = { kind: "disconnected" };
@@ -182,7 +192,7 @@ export async function connect(): Promise<BridgeState> {
 export async function pair(): Promise<string> {
   if (state.kind !== "unpaired" && state.kind !== "rejected")
     throw new Error(`cannot pair in state ${state.kind}`);
-  const code = await pairingCode(appPub, ownPub, chrome.runtime.getURL(""));
+  const code = await pairingCode(appPub, ownPub, bridgeOrigin());
   setState({ kind: "pairing", code });
   port?.postMessage({ t: "pair-request" });
   return code;
@@ -256,4 +266,22 @@ export async function passkeyGet(req: {
   allow: string[];
 }): Promise<Record<string, string> & { ok: boolean; error?: string }> {
   return request({ op: "passkey-get", ...req }, PASSKEY_TIMEOUT_MS);
+}
+
+/** Save-prompt support: is a submitted login new, a changed password, or already saved? */
+export async function loginStatus(req: {
+  url: string;
+  username: string;
+  password: string;
+}): Promise<{ ok: boolean; status?: "new" | "changed" | "same" }> {
+  return request({ op: "login-status", ...req });
+}
+
+/** Save the submitted login (after a trusted click on the extension's banner). */
+export async function saveLogin(req: {
+  url: string;
+  username: string;
+  password: string;
+}): Promise<{ ok: boolean; result?: string }> {
+  return request({ op: "save-login", ...req });
 }

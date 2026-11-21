@@ -7,6 +7,7 @@ import { ExtensionBridge } from "../../services/extension-bridge.service";
 import { BridgeService } from "../../services/bridge.service";
 import { EXTENSION_ID_STORAGE_KEY } from "../../constants";
 import { Button } from "../ui/Button";
+import { describeExtensionOrigin } from "../../lib/browser-origin";
 import { SettingsSection } from "./shared";
 
 const EXT_ID = /^[a-p]{32}$/;
@@ -128,7 +129,7 @@ export function ExtensionSection() {
                 >
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-mono truncate" dir="ltr">
-                      {p.origin.replace(/^chrome-extension:\/\//, "").replace(/\/$/, "")}
+                      {describeExtensionOrigin(p.origin)}
                     </p>
                     <p className="text-xs text-(--text-tertiary)">
                       {t("bridge.settings.pairedOn", { when: when(p.pairedAt) })}

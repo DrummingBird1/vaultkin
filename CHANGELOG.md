@@ -16,6 +16,16 @@
 - Passkeys: SecureVault can save and use passkeys on websites (via the
   extension); every save and sign-in is confirmed in the app; anything it
   can't handle falls back to the browser's own passkey flow.
+- Autofill v2 in the extension: an inline menu on login and 2FA fields
+  (closed shadow DOM, Alt+↓, doesn't restructure the page), works in iframes,
+  fills the current 2FA code, and asks twice before filling a login saved for
+  another host or into a cross-site frame.
+- Save / update prompt: after a sign-in, the extension offers to save a new
+  login or update a changed password (kept in history); nothing is held
+  longer than 3 minutes, and lock, dismiss or tab close drop it.
+- Extension in Hebrew (and English) following the browser language.
+- Firefox build (`dist/extension-firefox`); Settings → Connect also
+  registers the connection for Firefox.
 - Tests: Electron E2E drives the real bridge host as Chrome would, including
   pairing, scoped answers, replay/impostor rejection and a full passkey
   ceremony verified like a relying party; Chromium test for the page shim.

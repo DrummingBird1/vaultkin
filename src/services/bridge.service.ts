@@ -26,6 +26,7 @@ import { generateTOTP } from "../core/totp/totp";
 import { registrableDomain } from "../core/vault/grouping";
 import type { VaultBridge, VaultEntry } from "../core/vault/schema";
 import { handlePasskeyCreate, handlePasskeyGet } from "./passkey.service";
+import { handleLoginStatus, handleSaveLogin } from "./login-capture.service";
 
 type Transport = NonNullable<NonNullable<Window["electron"]>["bridge"]>;
 
@@ -44,7 +45,8 @@ export interface PairingPrompt {
   code: string;
 }
 
-const ORIGIN_RE = /^chrome-extension:\/\/[a-p]{32}\/$/;
+/** Chrome/Edge/Brave origin, or a Firefox add-on id as reported by the host. */
+const ORIGIN_RE = /^(chrome-extension:\/\/[a-p]{32}\/|moz-extension-id:[\w.@{}-]{3,80})$/;
 const conns = new Map<number, Conn>();
 let transport: Transport | null = null;
 
@@ -142,6 +144,10 @@ async function handleRequest(
   switch (req.op) {
     case "status":
       return sendSealed(connId, { ok: true, unlocked: true });
+    case "login-status":
+      return sendSealed(connId, handleLoginStatus(req));
+    case "save-login":
+      return sendSealed(connId, handleSaveLogin(req));
     case "passkey-create":
       return sendSealed(connId, await handlePasskeyCreate(req));
     case "passkey-get":

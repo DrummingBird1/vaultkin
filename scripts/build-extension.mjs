@@ -23,22 +23,18 @@
 import { build } from "esbuild";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
-import { cpSync, mkdirSync, existsSync } from "node:fs";
+import { cpSync, mkdirSync, existsSync, rmSync, readFileSync, writeFileSync } from "node:fs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const srcDir = path.join(root, "extension");
 const outDir = path.join(root, "dist", "extension");
 
+// Start clean so files removed from the source don't linger in the package.
+rmSync(outDir, { recursive: true, force: true });
 mkdirSync(outDir, { recursive: true });
 
 // Static assets copied as-is.
-const staticEntries = [
-  "manifest.json",
-  "icons",
-  "src/content.css",
-  "popup/popup.html",
-  "popup/popup.css",
-];
+const staticEntries = ["manifest.json", "_locales", "icons", "popup/popup.html", "popup/popup.css"];
 for (const entry of staticEntries) {
   const from = path.join(srcDir, entry);
   const to = path.join(outDir, entry);
@@ -61,7 +57,7 @@ await build({
 });
 
 await build({
-  entryPoints: [path.join(srcDir, "src", "content.js")],
+  entryPoints: [path.join(srcDir, "src", "content.ts")],
   outfile: path.join(outDir, "src", "content.js"),
   bundle: true,
   format: "iife",
@@ -92,3 +88,22 @@ await build({
 });
 
 console.log(`Extension bundled to ${path.relative(root, outDir)}/`);
+
+// ── Firefox package ─────────────────────────────────────────────────────────
+// Same bundles; the manifest differs: background scripts instead of a service
+// worker, a fixed add-on id (native messaging allows it by id), no
+// externally_connectable (unsupported), MAIN-world content scripts need 128+.
+export const FIREFOX_ID = "securevault@securevault.app";
+const ffDir = path.join(root, "dist", "extension-firefox");
+rmSync(ffDir, { recursive: true, force: true });
+cpSync(outDir, ffDir, { recursive: true });
+const ff = JSON.parse(readFileSync(path.join(outDir, "manifest.json"), "utf8"));
+ff.background = { scripts: [ff.background.service_worker], type: "module" };
+delete ff.externally_connectable;
+ff.browser_specific_settings = { gecko: { id: FIREFOX_ID, strict_min_version: "128.0" } };
+if (ff.content_security_policy?.extension_pages)
+  ff.content_security_policy.extension_pages = ff.content_security_policy.extension_pages
+    .replace(/ ?http:\/\/localhost:5173/g, "")
+    .replace(/ ?https:\/\/\*\.your-securevault-host\.com/g, "");
+writeFileSync(path.join(ffDir, "manifest.json"), JSON.stringify(ff, null, 2));
+console.log(`Firefox package in ${path.relative(root, ffDir)}/`);

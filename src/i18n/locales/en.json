@@ -824,7 +824,7 @@
       "title": "Connected browsers",
       "none": "No browser is connected yet.",
       "connect": "Set up browser connection",
-      "connectHint": "Registers SecureVault with Chrome, Edge and Brave on this computer so the extension can talk to the app. Then click Connect in the extension popup.",
+      "connectHint": "Registers SecureVault with Chrome, Edge, Brave and Firefox on this computer so the extension can talk to the app. Then click Connect in the extension popup.",
       "installed_one": "Registered with {{count}} browser.",
       "installed_two": "Registered with {{count}} browsers.",
       "installed_many": "Registered with {{count}} browsers.",
@@ -850,5 +850,10 @@
       "confirm": "Sign in"
     },
     "badge": "Passkey"
+  },
+  "capture": {
+    "saved": "Login saved from the browser",
+    "updated": "Password updated from the browser",
+    "from": "{{site}}"
   }
 }

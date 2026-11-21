@@ -47,9 +47,14 @@ longer be loaded unbundled.
    `chrome://extensions` card → **Set up browser connection**. Then open the
    extension popup → **Connect**, and approve in the app if the 6-digit codes
    match. Logins and passkeys for the current site come from the app on demand.
-4. **With the web build** (`pnpm run dev`, `http://localhost:5173`):
-   Settings → Browser extension → **Send entries to extension** (legacy
-   5-minute snapshot).
+
+**Firefox (128+):** the same build also writes `dist/extension-firefox/`. Open
+`about:debugging#/runtime/this-firefox` → **Load Temporary Add-on** → pick
+`dist/extension-firefox/manifest.json`. Settings → Browser extension →
+**Set up browser connection** registers the Firefox host too (fixed add-on id
+`securevault@securevault.app`), then Connect from the popup as above. 4. **With the web build** (`pnpm run dev`, `http://localhost:5173`):
+Settings → Browser extension → **Send entries to extension** (legacy
+5-minute snapshot).
 
 ### Passkeys
 

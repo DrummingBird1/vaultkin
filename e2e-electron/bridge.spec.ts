@@ -52,9 +52,10 @@ class FakeBrowser {
   private queue: unknown[] = [];
   closed = false;
 
-  constructor(origin: string) {
+  /** `args`: what the browser passes — Chrome: the origin; Firefox: manifest path + add-on id. */
+  constructor(origin: string | string[]) {
     // Exactly what the installed host wrapper runs: Electron in Node mode + bridge-host.js.
-    this.proc = spawn(electronBin, [HOST_JS, origin], {
+    this.proc = spawn(electronBin, [HOST_JS, ...[origin].flat()], {
       env: { ...process.env, ELECTRON_RUN_AS_NODE: "1", SV_BRIDGE_SOCKET: SOCKET },
     });
     this.proc.stdout.on("data", (chunk: Buffer) => {
@@ -311,6 +312,25 @@ test("pair with numeric comparison, then fetch only this site's credentials", as
   await session.open((await b.next()).m!);
   b.send({ t: "sealed", m: replay });
   await expect.poll(() => b.closed, { timeout: 10_000 }).toBe(true);
+});
+
+test("Firefox: the host reports the add-on id and pairing codes still match", async () => {
+  const FF_ID = "securevault@securevault.app";
+  const ext = await generateIdentity();
+  const extPub = await exportPublicKey(ext.publicKey);
+  const b = new FakeBrowser([String.raw`C:\fake\com.securevault.bridge.json`, FF_ID]);
+  b.send({ t: "hello", pub: extPub, nonce: connectionNonce() });
+  const hello = await b.next();
+  expect(hello).toMatchObject({ t: "hello", locked: false, paired: false });
+  b.send({ t: "pair-request" });
+  const dialog = win.getByRole("alertdialog");
+  await expect(dialog).toContainText(`Firefox · ${FF_ID}`);
+  const shown = (await dialog.locator("p.font-mono").innerText()).replace(/\s/g, "");
+  // The extension computes the code with bridgeOrigin() = "moz-extension-id:<id>".
+  expect(shown).toBe(await pairingCode(hello.pub!, extPub, `moz-extension-id:${FF_ID}`));
+  await dialog.getByRole("button", { name: /reject/i }).click();
+  expect(await b.next()).toEqual({ t: "pair-result", ok: false });
+  b.kill();
 });
 
 test("a different key for the same origin is not trusted; locking closes sessions", async () => {

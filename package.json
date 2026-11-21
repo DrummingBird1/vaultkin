@@ -35,7 +35,7 @@
     "test:e2e:headed": "playwright test --config config/playwright.config.ts --headed",
     "test:e2e:ui": "playwright test --config config/playwright.config.ts --ui",
     "test:watch": "vitest --config config/vitest.config.ts",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && tsc -p config/tsconfig.extension.json",
     "typecheck:electron-builder": "tsc -p config/tsconfig.electron-builder.json --noEmit",
     "sbom": "pnpm dlx @cyclonedx/cdxgen -o sbom.json --type npm .",
     "lockfile:lint": "node scripts/lint-lockfile.mjs",

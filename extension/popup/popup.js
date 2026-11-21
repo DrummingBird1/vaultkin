@@ -25,18 +25,27 @@
   let allEntries = [];
   let activeTab = null;
 
+  const t = (key, sub) => chrome.i18n.getMessage(key, sub) || key;
+  document.documentElement.lang = chrome.i18n.getUILanguage();
+  document.documentElement.dir = chrome.i18n.getUILanguage().startsWith("he") ? "rtl" : "ltr";
+  for (const el of document.querySelectorAll("[data-i18n]")) el.textContent = t(el.dataset.i18n);
+  for (const el of document.querySelectorAll("[data-i18n-placeholder]"))
+    el.placeholder = t(el.dataset.i18nPlaceholder);
+  for (const el of document.querySelectorAll("[data-i18n-title]"))
+    el.title = t(el.dataset.i18nTitle);
+  for (const el of document.querySelectorAll("[data-i18n-aria]"))
+    el.setAttribute("aria-label", t(el.dataset.i18nAria));
+
+  // state → [message key, action key or null]
   const MESSAGES = {
-    "not-installed": [
-      "The SecureVault app isn't connected to this browser yet.",
-      "In the app: Settings → Browser extension → Set up browser connection.",
-    ],
-    "app-not-running": ["Open the SecureVault desktop app to fill logins.", null],
-    connecting: ["Connecting to SecureVault…", null],
-    disconnected: ["Not connected to the SecureVault app.", "Retry"],
-    locked: ["SecureVault is locked. Unlock the app, then try again.", "Retry"],
-    unpaired: ["Connect this browser to your SecureVault app.", "Connect"],
-    rejected: ["The app rejected the connection.", "Try again"],
-    pairing: ["Check that the SecureVault app shows this code, then approve it there.", null],
+    "not-installed": ["popupNotInstalled", null],
+    "app-not-running": ["popupAppNotRunning", null],
+    connecting: ["popupConnecting", null],
+    disconnected: ["popupDisconnected", "popupRetry"],
+    locked: ["popupLockedTitle", "popupRetry"],
+    unpaired: ["popupUnpaired", "popupConnect"],
+    rejected: ["popupRejected", "popupTryAgain"],
+    pairing: ["popupPairing", null],
   };
 
   function esc(s) {
@@ -71,14 +80,14 @@
       li.className = "sv-entry";
       li.innerHTML = `
         <div class="sv-entry-info">
-          <div class="sv-entry-title">${esc(entry.title || "(untitled)")}</div>
+          <div class="sv-entry-title">${esc(entry.title || t("untitled"))}</div>
           <div class="sv-entry-user">${esc(entry.username || "")}</div>
         </div>
         <div class="sv-entry-actions">
-          <button type="button" data-action="copy-user" title="Copy username" aria-label="Copy username">👤</button>
-          <button type="button" data-action="copy-pass" title="Copy password" aria-label="Copy password">🔑</button>
-          ${entry.hasTotp ? '<button type="button" data-action="copy-code" title="Copy one-time code" aria-label="Copy one-time code">⏱</button>' : ""}
-          <button type="button" data-action="fill" title="Fill on this page" aria-label="Fill on this page">➜</button>
+          <button type="button" data-action="copy-user" title="${esc(t("copyUser"))}" aria-label="${esc(t("copyUser"))}">👤</button>
+          <button type="button" data-action="copy-pass" title="${esc(t("copyPass"))}" aria-label="${esc(t("copyPass"))}">🔑</button>
+          ${entry.hasTotp ? `<button type="button" data-action="copy-code" title="${esc(t("copyCode"))}" aria-label="${esc(t("copyCode"))}">⏱</button>` : ""}
+          <button type="button" data-action="fill" title="${esc(t("fill"))}" aria-label="${esc(t("fill"))}">➜</button>
         </div>`;
       li.querySelector('[data-action="copy-user"]').addEventListener("click", () =>
         copy(entry.username),
@@ -115,24 +124,17 @@
     );
   }
 
+  let pendingAction = null;
   function showDesktop(state) {
     show("desktop");
-    const [text, action] = MESSAGES[state.kind] ?? ["", null];
-    desktopMessage.textContent = text;
+    const [msgKey, actionKey] = MESSAGES[state.kind] ?? ["popupDisconnected", "popupRetry"];
+    desktopMessage.textContent = t(msgKey);
     pairCode.hidden = state.kind !== "pairing";
     if (state.kind === "pairing")
       pairCode.textContent = `${state.code.slice(0, 3)} ${state.code.slice(3)}`;
-    const clickable =
-      state.kind === "unpaired" ||
-      state.kind === "rejected" ||
-      state.kind === "disconnected" ||
-      state.kind === "locked";
-    desktopAction.hidden = !action || !clickable;
-    if (state.kind === "not-installed") {
-      desktopAction.hidden = true;
-      desktopMessage.textContent = `${MESSAGES["not-installed"][0]} ${MESSAGES["not-installed"][1]}`;
-    }
-    desktopAction.textContent = action ?? "";
+    pendingAction = actionKey;
+    desktopAction.hidden = !actionKey;
+    desktopAction.textContent = actionKey ? t(actionKey) : "";
   }
 
   function loadDesktopEntries() {
@@ -166,8 +168,7 @@
   }
 
   desktopAction.addEventListener("click", () => {
-    const label = desktopAction.textContent;
-    if (label === "Connect" || label === "Try again") {
+    if (pendingAction === "popupConnect" || pendingAction === "popupTryAgain") {
       chrome.runtime.sendMessage({ type: "SV_DESKTOP_PAIR" }, (r) => {
         if (r?.ok) showDesktop({ kind: "pairing", code: r.code });
         setTimeout(refreshDesktop, 1000);

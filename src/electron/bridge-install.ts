@@ -116,5 +116,33 @@ export async function installNativeHost(
       }
     }
   }
+
+  // Firefox: allowed by add-on id (fixed, see scripts/build-extension.mjs),
+  // registered under Mozilla's per-user locations.
+  const ffManifest = {
+    ...manifest,
+    allowed_origins: undefined,
+    allowed_extensions: [FIREFOX_ADDON_ID],
+  };
+  const ffFile = path.join(dir, `${HOST_NAME}.firefox.json`);
+  fs.writeFileSync(ffFile, JSON.stringify(ffManifest, null, 2));
+  try {
+    if (process.platform === "win32")
+      await regAdd("HKCU\\Software\\Mozilla\\NativeMessagingHosts", ffFile);
+    else {
+      const d =
+        process.platform === "darwin"
+          ? path.join(os.homedir(), "Library/Application Support/Mozilla/NativeMessagingHosts")
+          : path.join(os.homedir(), ".mozilla/native-messaging-hosts");
+      fs.mkdirSync(d, { recursive: true });
+      fs.writeFileSync(path.join(d, `${HOST_NAME}.json`), JSON.stringify(ffManifest, null, 2));
+    }
+    registered++;
+  } catch {
+    /* Firefox not installed */
+  }
   return { manifest: file, registered };
 }
+
+/** Must match FIREFOX_ID in scripts/build-extension.mjs. */
+export const FIREFOX_ADDON_ID = "securevault@securevault.app";
