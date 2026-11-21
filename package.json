@@ -74,7 +74,7 @@
     "@vitejs/plugin-react": "^6.0.5",
     "@vitest/coverage-v8": "^4.1.10",
     "autoprefixer": "^10.4.19",
-    "concurrently": "^8.2.2",
+    "concurrently": "^10.0.7",
     "cross-env": "^7.0.3",
     "electron": "^43.3.0",
     "electron-builder": "^26.15.3",
