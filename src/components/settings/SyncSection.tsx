@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { useUIStore } from "../../store/ui.store";
 import { useVaultStore } from "../../store/vault.store";
 import { IPCService } from "../../services/ipc.service";
-import { SyncService } from "../../services/sync.service";
+import { SyncService, InsecureSyncUrlError } from "../../services/sync.service";
 import { RemoteUnlockModal } from "../modals/RemoteUnlock.modal";
 import { ConflictResolutionModal } from "../modals/ConflictResolution.modal";
 import type { VaultData } from "../../core/vault/schema";
@@ -27,7 +27,14 @@ export function SyncSection() {
   const connect = async () => {
     if (!url.trim() || !user.trim())
       return toastError(t("settings.sync.missing"), t("settings.sync.missingBody"));
-    SyncService.configure(url, user, pass);
+    try {
+      SyncService.configure(url, user, pass);
+    } catch (err) {
+      if (err instanceof InsecureSyncUrlError)
+        return toastError(t("settings.sync.httpsOnly"), t("settings.sync.httpsOnlyBody"));
+      throw err;
+    }
+    setPass("");
     setBusy(true);
     const r = await SyncService.testConnection();
     setBusy(false);

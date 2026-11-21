@@ -62,6 +62,9 @@ export interface VaultSettings {
    *  idle timer already covers most of this, and instant lock-on-blur would
    *  surprise users who just alt-tab briefly. */
   lockOnHide?: boolean;
+  /** WebDAV sync credentials. Encrypted with the rest of the vault, so they
+   *  are only readable while it is unlocked (never in browser storage). */
+  sync?: { url: string; username: string; password: string };
 }
 
 export interface VaultMeta {

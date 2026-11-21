@@ -6,7 +6,10 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { DuressService } from "./duress.service";
 import { UnlockThrottleService } from "./unlock-throttle.service";
 import { BreachService } from "./breach.service";
-import { SyncService } from "./sync.service";
+import { SyncService, InsecureSyncUrlError } from "./sync.service";
+import { useVaultStore } from "../store/vault.store";
+import { createDefaultVaultData } from "../core/vault/vault-types";
+import { CURRENT_SCHEMA_VERSION } from "../core/vault/migrations";
 import { ImportExportService } from "./import-export.service";
 import {
   UNLOCK_MAX_ATTEMPTS_BEFORE_DELAY,
@@ -173,6 +176,58 @@ describe("BreachService", () => {
 // ─── WebDAV sync ─────────────────────────────────────────────────────────────
 describe("SyncService", () => {
   const URL_ = "https://dav.example.test/vault.svault";
+  beforeEach(() => {
+    // Credentials live in the (unlocked) vault.
+    useVaultStore.setState({
+      vault: { ...createDefaultVaultData(), schemaVersion: CURRENT_SCHEMA_VERSION },
+      isDirty: false,
+    });
+  });
+  afterEach(() => useVaultStore.setState({ vault: null, isDirty: false }));
+
+  it("stores credentials only inside the vault, never in browser storage", () => {
+    SyncService.configure(URL_, "user", "s3cret-dav");
+    expect(useVaultStore.getState().vault?.settings.sync).toEqual({
+      url: URL_,
+      username: "user",
+      password: "s3cret-dav",
+    });
+    expect(useVaultStore.getState().isDirty).toBe(true);
+    expect(JSON.stringify({ ...sessionStorage, ...localStorage })).not.toContain("s3cret-dav");
+  });
+
+  it("is unavailable while locked", async () => {
+    SyncService.configure(URL_, "user", "pw");
+    useVaultStore.setState({ vault: null });
+    expect(SyncService.getConfig()).toEqual({ enabled: false });
+    expect(await SyncService.push("x")).toEqual({ ok: false, reason: "not-configured" });
+  });
+
+  it("refuses non-https URLs", () => {
+    expect(() => SyncService.configure("http://nas.local/v.svault", "u", "p")).toThrow(
+      InsecureSyncUrlError,
+    );
+    expect(SyncService.getConfig()).toEqual({ enabled: false });
+  });
+
+  it("an empty password keeps the saved one", () => {
+    SyncService.configure(URL_, "user", "first");
+    SyncService.configure(URL_, "user2", "");
+    expect(useVaultStore.getState().vault?.settings.sync).toMatchObject({
+      username: "user2",
+      password: "first",
+    });
+  });
+
+  it("moves a pre-M4 plaintext sessionStorage copy into the vault and deletes it", () => {
+    sessionStorage.setItem(
+      "sv_sync_cred",
+      JSON.stringify({ url: URL_, username: "old", password: "legacy-pw" }),
+    );
+    expect(SyncService.getConfig()).toEqual({ enabled: true, url: URL_, username: "old" });
+    expect(sessionStorage.getItem("sv_sync_cred")).toBeNull();
+    expect(useVaultStore.getState().vault?.settings.sync?.password).toBe("legacy-pw");
+  });
 
   it("reports not-configured before configure()", async () => {
     expect(SyncService.getConfig()).toEqual({ enabled: false });

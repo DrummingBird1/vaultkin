@@ -296,9 +296,9 @@ npm run electron:dist:linux    # AppImage / deb / rpm
 - אם שניהם השתנו → conflict resolution UI.
 
 ### Credentials
-- ב-Electron: ב-OS keychain (TouchID/Windows Credential Manager).
-- בדפדפן: ב-sessionStorage (נמחק עם ה-tab).
-- **לא ב-localStorage**, אף פעם.
+- נשמרים **בתוך הכספת המוצפנת** (בהגדרות שלה), ולכן זמינים רק כשהכספת פתוחה ונמחקים מהזיכרון בנעילה.
+- לא נשמרים ב-localStorage או ב-sessionStorage. גרסאות ישנות שמרו אותם ב-sessionStorage; הם מועברים לכספת ונמחקים משם אוטומטית.
+- רק כתובות `https://`. סנכרון ב-http רגיל נחסם, כדי שסיסמת ה-WebDAV לא תישלח בגלוי.
 
 ---
 

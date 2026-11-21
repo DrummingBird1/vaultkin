@@ -329,7 +329,9 @@
       "pushToUpdate": "העלו כדי לעדכן את העותק ב־WebDAV.",
       "merged": "הכספות מוזגו",
       "appliedRemote": "הכספת מהשרת הוחלה",
-      "savedLocally": "נשמר מקומית. העלו כדי לעדכן את העותק ב־WebDAV."
+      "savedLocally": "נשמר מקומית. העלו כדי לעדכן את העותק ב־WebDAV.",
+      "httpsOnly": "יש להשתמש בכתובת https://",
+      "httpsOnlyBody": "SecureVault מסנכרן רק דרך https, כך שסיסמת ה-WebDAV לא נשלחת אף פעם בגלוי."
     },
     "updates": {
       "title": "עדכוני אפליקציה",

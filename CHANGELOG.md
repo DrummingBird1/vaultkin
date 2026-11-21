@@ -20,6 +20,9 @@
   OS (Windows account protection / macOS Keychain with Touch ID), stops
   working when the master password changes, and the master password is
   required again at least every 14 days.
+- WebDAV sync credentials are stored inside the encrypted vault instead of
+  plaintext browser session storage (moved automatically), are unavailable
+  while locked, and only https:// servers are accepted.
 
 ## [Unreleased] — M3 integrations (2026-11-21)
 
