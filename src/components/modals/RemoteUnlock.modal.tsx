@@ -11,6 +11,8 @@ import { openVault } from "../../core/vault/serializer";
 import { WrongPasswordError } from "../../core/errors";
 import type { VaultData } from "../../core/vault/schema";
 import { Modal } from "../ui/Modal";
+import { Button } from "../ui/Button";
+import { Field } from "../ui/Field";
 
 interface Props {
   payload: string;
@@ -55,23 +57,26 @@ export function RemoteUnlockModal({ payload, onOpened, onCancel }: Props) {
       <p className="sv-modal-subtitle mb-4">
         Enter the master password of the WebDAV copy. Usually it is the same as this vault's.
       </p>
-      <input
-        type="password"
-        className="sv-input mb-2"
-        autoFocus
-        autoComplete="current-password"
-        value={pw}
-        onChange={(e) => setPw(e.target.value)}
-        aria-label="Remote master password"
-      />
-      {err && <p className="sv-error mb-2">{err}</p>}
+      <Field label="Remote master password" error={err}>
+        {(p) => (
+          <input
+            {...p}
+            type="password"
+            className="sv-input w-full mb-2"
+            autoFocus
+            autoComplete="current-password"
+            value={pw}
+            onChange={(e) => setPw(e.target.value)}
+          />
+        )}
+      </Field>
       <div className="flex gap-3 justify-end mt-4">
-        <button type="button" onClick={onCancel} className="sv-btn-secondary">
+        <Button onClick={onCancel} disabled={busy}>
           Cancel
-        </button>
-        <button type="submit" disabled={busy || !pw} className="sv-btn-primary">
-          {busy ? "Decrypting…" : "Continue"}
-        </button>
+        </Button>
+        <Button type="submit" variant="primary" busy={busy} busyLabel="Decrypting…" disabled={!pw}>
+          Continue
+        </Button>
       </div>
     </Modal>
   );
