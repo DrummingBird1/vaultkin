@@ -238,6 +238,31 @@ jobs:
           path: dist/extension/
           retention-days: 7
 
+  # ── 8b. Store packages + CLI (release tags only) ──────────────────────────
+  release-extras:
+    name: Extension store packages + CLI
+    runs-on: ubuntu-latest
+    needs: [typecheck, lint, test]
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+      - name: Build release extension (no dev hosts) and CLI
+        run: |
+          pnpm run build:extension:release
+          pnpm run build:cli
+      - name: Zip store packages
+        run: |
+          mkdir -p extras
+          (cd dist/extension && zip -qr "../../extras/SecureVault-extension-chrome-${GITHUB_REF_NAME}.zip" .)
+          (cd dist/extension-firefox && zip -qr "../../extras/SecureVault-extension-firefox-${GITHUB_REF_NAME}.zip" .)
+          cp dist/cli/sv.cjs "extras/sv-${GITHUB_REF_NAME}.cjs"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: electron-extras-${{ github.ref_name }}
+          path: extras/*
+          retention-days: 90
+
   # ── 9. Electron Builds (release tags only) ────────────────────────────────
   # Packaged by electron-builder.ts (project root) via the electron:dist:*
   # scripts. Only triggers on `v*.*.*` tag pushes, so it doesn't block normal
@@ -269,17 +294,17 @@ jobs:
 
       - name: Build Electron (macOS)
         if: matrix.platform == 'macOS'
-        run: pnpm run electron:dist:mac
+        run: pnpm run electron:dist:mac --publish never
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: false  # Code signing: set CSC_LINK + CSC_KEY_PASSWORD in secrets
 
       - name: Build Electron (Windows)
         if: matrix.platform == 'Windows'
-        run: pnpm run electron:dist:win
+        run: pnpm run electron:dist:win --publish never
 
       - name: Build Electron (Linux)
         if: matrix.platform == 'Linux'
-        run: pnpm run electron:dist:linux
+        run: pnpm run electron:dist:linux --publish never
 
       - name: Upload distributables
         uses: actions/upload-artifact@v4
@@ -292,10 +317,12 @@ jobs:
   release:
     name: Create Release
     runs-on: ubuntu-latest
-    needs: [build-electron]
+    needs: [build-electron, release-extras, dependency-check]
     if: startsWith(github.ref, 'refs/tags/v')
     permissions:
       contents: write
+      id-token: write      # signed build provenance (Sigstore via GitHub attestations)
+      attestations: write
     steps:
       - uses: actions/checkout@v4
       - name: Download all artifacts
@@ -308,17 +335,38 @@ jobs:
       # The release body below promises "SHA-256 checksums are attached" —
       # this step is what actually makes that true. Previously nothing
       # computed them, so the promise in the body was empty.
+      - name: Download SBOM
+        uses: actions/download-artifact@v4
+        with:
+          name: sbom
+          path: release-artifacts/
+
+      # Installers / packages only (electron-builder also leaves unpacked dirs
+      # and blockmaps; those aren't release assets).
+      - name: Collect release files
+        run: |
+          mkdir -p out
+          find release-artifacts -type f \( -name '*.exe' -o -name '*.dmg' -o -name '*.AppImage' \
+            -o -name '*.deb' -o -name '*.rpm' -o -name '*.zip' -o -name '*.cjs' -o -name 'latest*.yml' \
+            -o -name 'sbom.json' \) -not -path '*unpacked*' -exec cp {} out/ \;
+          ls -la out
+
       - name: Generate SHA-256 checksums
         run: |
-          cd release-artifacts
+          cd out
           sha256sum * > SHA256SUMS.txt
           cat SHA256SUMS.txt
+
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: 'out/*' 
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           draft:     true
-          files:     release-artifacts/**/*
+          files:     out/*
           body: |
             ## SecureVault ${{ github.ref_name }}
 
@@ -332,3 +380,5 @@ jobs:
             ### Verification
             SHA-256 checksums are attached to this release as `SHA256SUMS.txt`.
             Verify before installing: `shasum -a 256 -c SHA256SUMS.txt`
+            Build provenance (Sigstore): `gh attestation verify <file> --repo ${{ github.repository }}`
+            SBOM (CycloneDX): `sbom.json`

@@ -1,5 +1,27 @@
 # Changelog
 
+## [Unreleased] — M6 release preparation (2026-11-21)
+
+### Fixed
+- Packaged desktop builds showed a blank window (a hardening fuse blocks
+  loading the app from file://). The app is now served from
+  `app://securevault`, with a real Content-Security-Policy header.
+- The Authenticator page could crash React with an endless re-render
+  ("Maximum update depth exceeded").
+
+### Privacy
+- Entry icons no longer load favicons from Google (that revealed which sites
+  are in your vault); entries show their first letter instead.
+- New PRIVACY.md lists every network request the app makes.
+
+### Release engineering
+- The packaged app no longer ships the renderer's libraries as
+  node_modules (they're already bundled): app.asar went from ~3,800 files to
+  a few dozen (2.2 MB).
+- Store-ready extension packages (`build:extension:release`, no dev hosts),
+  release assets with SHA-256 checksums, CycloneDX SBOM and signed build
+  provenance. docs/RELEASE.md has the checklist and open blockers.
+
 ## [Unreleased] — M5 beyond parity (2026-11-21)
 
 ### Added

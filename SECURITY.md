@@ -32,7 +32,12 @@ X might be a problem" without specifics, or for already-disclosed/fixed CVEs.
   surface).
 - The browser extension's message-passing surface
   (`chrome.runtime.onMessageExternal`, content-script autofill matching).
-- Sync (WebDAV client, conflict handling) and import/export.
+- Sync (WebDAV client, sync folder, conflict handling) and import/export.
+- The native-messaging bridge and its host (`src/electron/bridge-*`,
+  ADR 0007), passkeys (`src/core/passkey/`), the SSH agent
+  (`src/electron/ssh-agent.ts`), remember-this-device / Windows Hello
+  (`src/electron/device-unlock.ts`, `windows-hello.ts`), attachments, secure
+  sharing (`src/core/share/`) and the `sv` CLI.
 
 ## What's out of scope
 

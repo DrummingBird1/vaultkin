@@ -108,6 +108,8 @@ export function DeviceUnlockControl() {
           onChange={async (e) => {
             if (e.target.checked) setAsking(true);
             else {
+              // Reflect the change at once; the key file is removed right after.
+              setState({ kind: "off" });
               await DeviceUnlockService.disable();
               await refresh();
             }

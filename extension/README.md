@@ -82,15 +82,13 @@ submission, and also what you load unpacked during development.
 
 Before publishing to the Chrome Web Store:
 
-1. Replace the placeholder origin in `manifest.json`'s
-   `externally_connectable.matches` and `content_security_policy` (currently
-   `https://*.your-securevault-host.com/*`) with wherever you actually host
-   the SecureVault web build. This is a template, not a real domain — leaving
-   it as-is just means the production origin can't reach the extension yet;
-   it's not otherwise a security hole.
-2. `pnpm run build:extension`, then zip the contents of `dist/extension/`
-   (not `extension/` — the dist output is what's actually minified/bundled)
-   and submit it.
+1. `pnpm run build:extension:release`. This build drops
+   `externally_connectable` and the localhost dev hosts (the desktop app
+   talks to the extension over native messaging, ADR 0007). It produces
+   `dist/extension/` (Chrome / Edge) and `dist/extension-firefox/`.
+2. Zip the contents of each folder (the release workflow does this) and
+   submit. See [docs/RELEASE.md](../docs/RELEASE.md) for the permission
+   justifications and the privacy policy link.
 3. Consider commissioning a proper designed icon — `icons/*.png` and
    `build/icon.png` (desktop app) are currently generated programmatically
    (`scripts/generate-icons.cjs`, a solid-color lock glyph). Functional and
