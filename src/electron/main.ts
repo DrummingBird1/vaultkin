@@ -23,6 +23,7 @@ import { installNativeHost } from "./bridge-install";
 import * as deviceUnlock from "./device-unlock";
 import { writeSecretExcludedFromHistory } from "./secure-clipboard";
 import { createHash } from "crypto";
+import { startSshAgent, sshAgentPath, type AgentRequest, type AgentIdentity } from "./ssh-agent";
 
 const isDev = !!process.env.VITE_DEV_SERVER_URL || !app.isPackaged;
 
@@ -237,6 +238,73 @@ function startApp(): void {
     return installNativeHost(ids as string[]);
   });
 
+  // ── SSH agent (opt-in; keys + approval live in the renderer) ──────────
+  let sshAgent: { stop(): void } | null = null;
+  let nextAgentReq = 1;
+  const agentPending = new Map<number, (v: unknown) => void>();
+  const askRenderer = (req: AgentRequest, timeoutMs: number) =>
+    new Promise<unknown>((resolve) => {
+      const win = mainWindow;
+      if (!win) return resolve(null);
+      const id = nextAgentReq++;
+      const timer = setTimeout(() => {
+        agentPending.delete(id);
+        resolve(null);
+      }, timeoutMs);
+      agentPending.set(id, (v) => {
+        clearTimeout(timer);
+        agentPending.delete(id);
+        resolve(v);
+      });
+      if (req.kind === "sign") {
+        if (win.isMinimized()) win.restore();
+        win.show();
+        win.focus();
+      }
+      win.webContents.send("sv-ssh-agent-request", { id, req });
+    });
+  ipcMain.handle("sv-ssh-agent-reply", (event, id: unknown, value: unknown) => {
+    if (!fromMainWindow(event) || typeof id !== "number") return;
+    agentPending.get(id)?.(value);
+  });
+  ipcMain.handle("sv-ssh-agent-enable", (event, on: unknown) => {
+    if (!fromMainWindow(event)) return null;
+    if (on === true && !sshAgent) {
+      try {
+        sshAgent = startSshAgent(
+          sshAgentPath(),
+          {
+            list: async () => {
+              const r = await askRenderer({ kind: "list" }, 10_000);
+              return Array.isArray(r)
+                ? r.filter(
+                    (i): i is AgentIdentity =>
+                      typeof i?.blob === "string" && typeof i?.comment === "string",
+                  )
+                : [];
+            },
+            sign: async (req) => {
+              const r = await askRenderer(req, 120_000);
+              return typeof r === "string" ? r : null;
+            },
+          },
+          (err) => {
+            mainLog.warn("ssh agent error", { message: err.message });
+            sshAgent?.stop();
+            sshAgent = null;
+          },
+        );
+      } catch (err) {
+        mainLog.warn("ssh agent failed to start", { message: (err as Error).message });
+        return null;
+      }
+    } else if (on === false && sshAgent) {
+      sshAgent.stop();
+      sshAgent = null;
+    }
+    return sshAgent ? sshAgentPath() : null;
+  });
+
   // ── Secret clipboard ───────────────────────────────────────────────────
   // Copies of secrets skip Windows Clipboard History / cloud clipboard, and the
   // auto-clear only wipes the clipboard if it still holds what we put there.
@@ -305,6 +373,7 @@ function startApp(): void {
   app.on("will-quit", () => {
     globalShortcut.unregisterAll();
     bridge?.stop();
+    sshAgent?.stop();
   });
   app.on("window-all-closed", () => {
     mainLog.info("window-all-closed");

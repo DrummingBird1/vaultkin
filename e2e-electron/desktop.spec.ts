@@ -11,10 +11,17 @@ import {
   type Page,
 } from "@playwright/test";
 import fs from "fs";
+import { execFile, execFileSync, spawnSync } from "child_process";
 import os from "os";
 import path from "path";
 
 const root = path.resolve(__dirname, "..");
+const AGENT_SOCK =
+  process.platform === "win32"
+    ? `\\\\.\\pipe\\sv-e2e-ssh-agent-${process.pid}`
+    : path.join(os.tmpdir(), `sv-e2e-ssh-agent-${process.pid}.sock`);
+/** Windows' own OpenSSH speaks named pipes; Git's msys build doesn't. */
+const OPENSSH_DIR = process.platform === "win32" ? "C:\\Windows\\System32\\OpenSSH\\" : "";
 const MASTER = "correct-horse-battery-staple-77!";
 const SHOTS = process.env.SV_SHOTS_DIR;
 
@@ -33,6 +40,7 @@ test.beforeAll(async () => {
       // A Hello prompt can't be answered in CI; the Hello path is covered by
       // the unit-tested wrap/unwrap and a manual check.
       SV_DEVICE_UNLOCK_NO_HELLO: "1",
+      SV_SSH_AGENT_SOCK: AGENT_SOCK,
     },
   });
   win = await app.firstWindow();
@@ -65,6 +73,7 @@ test("window is hardened (sandbox, isolation, no node in the page)", async () =>
     "clipboard",
     "deviceUnlock",
     "platform",
+    "sshAgent",
     "updates",
     "version",
     "window",
@@ -200,6 +209,71 @@ test("secret copies are kept out of Windows clipboard history, and cleared only 
   expect(await win.evaluate(() => window.electron!.clipboard!.clearSecret())).toBe(false);
   expect(await app.evaluate(({ clipboard }) => clipboard.readText())).toBe("user text");
   await app.evaluate(({ clipboard }) => clipboard.clear());
+});
+
+test("SSH agent: ssh-add lists the vault key; signing needs approval and verifies", async () => {
+  test.skip(
+    process.platform === "win32" && !fs.existsSync(`${OPENSSH_DIR}ssh-add.exe`),
+    "OpenSSH client not installed",
+  );
+  const env = { ...process.env, SSH_AUTH_SOCK: AGENT_SOCK };
+  // An SSH key entry, generated in the app.
+  await win.evaluate(() => (location.hash = "#/vault"));
+  await win
+    .getByRole("button", { name: /add entry/i })
+    .first()
+    .click();
+  await win.getByLabel(/^title/i).fill("e2e server key");
+  await win.getByRole("tab", { name: /ssh key/i }).click();
+  await win.getByRole("button", { name: /generate ed25519 key/i }).click();
+  await expect(win.getByText(/^SHA256:/)).toBeVisible();
+  await win.locator('button[type="submit"]').last().click();
+
+  await win.evaluate(() => (location.hash = "#/settings/sshAgent"));
+  await win.getByLabel(/turn on the ssh agent/i).check();
+  await expect(win.getByText(/SSH_AUTH_SOCK|IdentityAgent/)).toBeVisible();
+
+  const add = spawnSync(`${OPENSSH_DIR}ssh-add`, ["-L"], { env, encoding: "utf8" });
+  expect(add.stderr + `status=${add.status}`).toBe("status=0");
+  const listed = add.stdout;
+  expect(listed).toMatch(/^ssh-ed25519 AAAA\S+ e2e server key$/m);
+
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "sv-agent-"));
+  const pub = path.join(dir, "key.pub");
+  const msg = path.join(dir, "msg.txt");
+  fs.writeFileSync(pub, listed.trim().split("\n")[0] + "\n");
+  fs.writeFileSync(msg, "signed through the SecureVault agent\n");
+  const signing = new Promise<number>((resolve) => {
+    const c = execFile(`${OPENSSH_DIR}ssh-keygen`, ["-Y", "sign", "-f", pub, "-n", "file", msg], {
+      env,
+    });
+    c.on("exit", (code) => resolve(code ?? 1));
+  });
+  // The app asks first.
+  await expect(win.getByRole("alertdialog")).toBeVisible({ timeout: 15_000 });
+  await win.getByRole("button", { name: /^allow$/i }).click();
+  expect(await signing).toBe(0);
+
+  const signers = path.join(dir, "allowed");
+  fs.writeFileSync(signers, `me@test ${listed.trim().split(" ").slice(0, 2).join(" ")}\n`);
+  const verified = execFileSync(
+    `${OPENSSH_DIR}ssh-keygen`,
+    ["-Y", "verify", "-f", signers, "-I", "me@test", "-n", "file", "-s", `${msg}.sig`],
+    { input: fs.readFileSync(msg), encoding: "utf8" },
+  );
+  expect(verified).toMatch(/Good "file" signature/);
+
+  // Denying makes the signature fail.
+  fs.rmSync(`${msg}.sig`);
+  const denied = new Promise<number>((resolve) => {
+    const c = execFile(`${OPENSSH_DIR}ssh-keygen`, ["-Y", "sign", "-f", pub, "-n", "file", msg], {
+      env,
+    });
+    c.on("exit", (code) => resolve(code ?? 1));
+  });
+  await expect(win.getByRole("alertdialog")).toBeVisible({ timeout: 15_000 });
+  await win.getByRole("button", { name: /^deny$/i }).click();
+  expect(await denied).not.toBe(0);
 });
 
 // Last: Playwright keeps waiting on the cancelled navigation afterwards.

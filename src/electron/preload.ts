@@ -33,6 +33,23 @@ contextBridge.exposeInMainWorld("electron", {
     installHost: (extensionIds: string[]): Promise<{ manifest: string; registered: number }> =>
       ipcRenderer.invoke("sv-bridge-install", extensionIds),
   },
+  /** SSH agent: requests from ssh arrive here; keys never leave this process. */
+  sshAgent: {
+    setEnabled: (on: boolean): Promise<string | null> =>
+      ipcRenderer.invoke("sv-ssh-agent-enable", on),
+    onRequest: (
+      cb: (r: {
+        id: number;
+        req: { kind: "list" } | { kind: "sign"; keyBlob: string; data: string; flags: number };
+      }) => void,
+    ): (() => void) => {
+      const l = (_e: Electron.IpcRendererEvent, r: Parameters<typeof cb>[0]) => cb(r);
+      ipcRenderer.on("sv-ssh-agent-request", l);
+      return () => ipcRenderer.removeListener("sv-ssh-agent-request", l);
+    },
+    reply: (id: number, value: unknown): Promise<void> =>
+      ipcRenderer.invoke("sv-ssh-agent-reply", id, value),
+  },
   /** Copy a secret (kept out of Windows Clipboard History) / clear it again. */
   clipboard: {
     writeSecret: (text: string): Promise<{ ok: boolean; excluded: boolean }> =>

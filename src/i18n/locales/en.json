@@ -333,7 +333,7 @@
       "connect": "Test / Connect",
       "push": "Push ↑",
       "pull": "Pull ↓",
-      "hint": "With 2FA on Nextcloud, use an app password. Credentials stay in session memory only — re-enter after restart.",
+      "hint": "With 2FA on Nextcloud, use an app password. The server address and credentials are saved inside your encrypted vault (https only) and are unavailable while it's locked.",
       "missing": "Missing details",
       "missingBody": "Enter URL and username.",
       "connected": "Connected",
@@ -373,6 +373,14 @@
       "confirmRequired": "Confirmation required",
       "confirmRequiredBody": "Type DELETE to confirm.",
       "failed": "Delete failed"
+    },
+    "sshAgent": {
+      "title": "SSH agent",
+      "description": "Let ssh and git use the SSH keys in your vault. Every use asks for your approval, and nothing is available while the vault is locked.",
+      "enable": "Turn on the SSH agent",
+      "running": "Running. Point ssh at it:",
+      "copy": "Copy",
+      "notRunning": "Couldn't start the agent."
     }
   },
   "bulk": {
@@ -892,5 +900,13 @@
     "saved": "Login saved from the browser",
     "updated": "Password updated from the browser",
     "from": "{{site}}"
+  },
+  "sshAgent": {
+    "title": "Allow SSH sign-in?",
+    "body": "A program wants to sign in with your SSH key “{{key}}”.",
+    "user": "Account",
+    "remember": "Don't ask again for this key for 10 minutes",
+    "allow": "Allow",
+    "deny": "Deny"
   }
 }

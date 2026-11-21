@@ -10,6 +10,7 @@ import { AppearanceSection } from "../components/settings/AppearanceSection";
 import { SecuritySection } from "../components/settings/SecuritySection";
 import { DuressSection } from "../components/settings/DuressSection";
 import { ExtensionSection } from "../components/settings/ExtensionSection";
+import { SshAgentSection } from "../components/settings/SshAgentSection";
 import { SyncSection } from "../components/settings/SyncSection";
 import { UpdatesSection } from "../components/settings/UpdatesSection";
 import { DangerZoneSection } from "../components/settings/DangerZoneSection";
@@ -30,6 +31,7 @@ export function SettingsPage({ section }: { section?: SettingsSectionId } = {}) 
       <SecuritySection />
       <DuressSection />
       <ExtensionSection />
+      <SshAgentSection />
       <SyncSection />
       <UpdatesSection />
       <DangerZoneSection />

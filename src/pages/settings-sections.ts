@@ -5,6 +5,7 @@ export const SETTINGS_SECTIONS = [
   "security",
   "duress",
   "extension",
+  "sshAgent",
   "sync",
   "updates",
   "danger",

@@ -16,6 +16,8 @@ import { VaultPage } from "./pages/Vault.page";
 import { Toaster } from "./components/ui/Toaster";
 import { PairingDialog } from "./components/bridge/PairingDialog";
 import { PasskeyDialog } from "./components/bridge/PasskeyDialog";
+import { SshApprovalDialog } from "./components/bridge/SshApprovalDialog";
+import { SshAgentService } from "./services/ssh-agent.service";
 import { BridgeService } from "./services/bridge.service";
 import { lockApplication } from "./store";
 
@@ -154,6 +156,8 @@ export function App() {
   // Browser-extension bridge (desktop only). Runs while locked too, so a
   // connecting extension is told "locked" instead of getting no answer.
   useEffect(() => BridgeService.start(), []);
+  // SSH agent (desktop, opt-in): answers ssh with keys from the vault.
+  useEffect(() => SshAgentService.start(), []);
 
   // Auto-lock on inactivity
   useAutoLock();
@@ -185,6 +189,7 @@ export function App() {
 
       {isUnlocked && <PairingDialog />}
       {isUnlocked && <PasskeyDialog />}
+      {isUnlocked && <SshApprovalDialog />}
       <Toaster />
     </>
   );

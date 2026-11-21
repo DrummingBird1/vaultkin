@@ -26,6 +26,18 @@ export interface ElectronBridge {
     close: (connId: number) => Promise<void>;
     installHost: (extensionIds: string[]) => Promise<{ manifest: string; registered: number }>;
   };
+  /** Present from M5: SSH agent served from the app. */
+  sshAgent?: {
+    /** Returns the agent socket/pipe path when running, else null. */
+    setEnabled: (on: boolean) => Promise<string | null>;
+    onRequest: (
+      cb: (r: {
+        id: number;
+        req: { kind: "list" } | { kind: "sign"; keyBlob: string; data: string; flags: number };
+      }) => void,
+    ) => () => void;
+    reply: (id: number, value: unknown) => Promise<void>;
+  };
   /** Present from M4: secret copies kept out of clipboard history. */
   clipboard?: {
     writeSecret: (text: string) => Promise<{ ok: boolean; excluded: boolean }>;

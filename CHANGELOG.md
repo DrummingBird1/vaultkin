@@ -1,5 +1,20 @@
 # Changelog
 
+## [Unreleased] — M5 beyond parity (2026-11-21)
+
+### Added
+- SSH keys as a vault item: generate Ed25519 or import an existing OpenSSH
+  key; copy the public key; fingerprint shown. Works with OpenSSH's own
+  `ssh-keygen` (tested both ways).
+- SSH agent (desktop, Settings → SSH agent): ssh and git can use the vault's
+  keys. Every signature asks for approval (optionally remembered for 10
+  minutes per key); nothing is available while the vault is locked.
+
+### Fixed
+- New entries silently dropped fields the store didn't list (found while
+  adding SSH keys).
+- Sync settings still said credentials stay in session memory.
+
 ## [Unreleased] — M4 security hardening, part 1 (2026-11-21)
 
 ### Security

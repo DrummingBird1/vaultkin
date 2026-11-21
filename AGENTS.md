@@ -71,7 +71,7 @@ Load-bearing for the zero-knowledge model. Breaking them is a security regressio
 1. **Master password never leaves the device.** No telemetry, no error reports include vault content. The HIBP check sends 5 hex chars of a SHA-1 hash, nothing more.
 2. **Crypto types in one place** — `src/core/vault/vault-types.ts` is the single source of truth for `KdfParams`, `SessionKeys`, `VaultPayload`, `wipeSessionKeys`, `createDefaultVaultData`. Both `engine.ts` and `serializer.ts` import from there.
 3. **`serializer.ts` is the public façade.** Outside `core/`, code calls `createVault` / `openVault` / `reEncryptVault` / `changeMasterPassword` from `serializer.ts`. It does not poke at the engine's raw `Uint8Array` key API.
-4. **Memory hygiene on lock.** `BreachService._cache`, `HistoryService.versions`, and the paired browser extension's cache (via `ExtensionBridge.lock`) **must** be cleared in `AppLifecycle.onLock`. Adding a new in-memory cache holding plaintext-derived data? Wire it into lock teardown.
+4. **Memory hygiene on lock.** `BreachService._cache`, `HistoryService.versions`, SSH-agent approvals (`SshAgentService.onLock`), the clipboard (`ClipboardService.clearNow`), and the paired browser extension's cache (via `ExtensionBridge.lock`) **must** be cleared in `AppLifecycle.onLock`. Adding a new in-memory cache holding plaintext-derived data? Wire it into lock teardown.
 5. **`ErrorBoundary` wraps the whole tree.** Crashes must not leak a blank screen.
 6. **Password strength API.** Exported function is `analyzeStrength(...)`, entropy field is `effectiveEntropy`. `analyzePassword` is kept only as a documented backward-compat alias — don't add new callers of it, and don't reintroduce `.entropy`-only callers.
 7. **`lockApplication` reasons.** Valid `LockReason`: `"manual"`, `"inactivity"`, `"duress"`. Not `"system"`.
@@ -116,4 +116,5 @@ Load-bearing for the zero-knowledge model. Breaking them is a security regressio
 - **QR backup** uses `qrcode-generator` (full spec) in `VaultBackupQR.modal.tsx`; the old hand-rolled `src/lib/qrcode.ts` was removed. Still verify with a real scanner.
 - **WebDAV pull never overwrites blindly**: pull → `RemoteUnlockModal` (remote master password) → `ConflictResolutionModal` (merge / keep local / keep remote) → autosave re-encrypts under the current session keys.
 - **`ImportVault` 50 MB cap reads the full file into memory.** Streaming parser preferred for large LastPass exports.
+- **SSH agent (desktop, opt-in).** `src/electron/ssh-agent.ts` only frames the agent protocol on a per-user pipe/socket; keys and the approval dialog stay in the renderer (`ssh-agent.service.ts`). List + sign only (no add/remove), Ed25519 only, every sign approved (optional 10-minute per-key memory, cleared on lock). E2E drives it with the real Windows OpenSSH `ssh-add` / `ssh-keygen -Y sign`.
 - **`BulkActionBar` only supports delete**, not move-to-folder or add-tag — a known, scoped limitation, not an oversight.

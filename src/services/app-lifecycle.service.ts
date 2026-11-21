@@ -8,6 +8,7 @@ import type { VaultData } from "../core/vault/schema";
 import type { SessionKeys } from "../core/vault/vault-types";
 import { AutosaveService } from "./autosave.service";
 import { ClipboardService } from "./clipboard.service";
+import { SshAgentService } from "./ssh-agent.service";
 import { BreachService } from "./breach.service";
 import { HistoryService } from "./history.service";
 import { ExtensionBridge } from "./extension-bridge.service";
@@ -34,6 +35,8 @@ export const AppLifecycle = {
     HistoryService.clear();
     // Native-messaging bridge: close every extension session (ADR 0007).
     BridgeService.onLock();
+    // SSH agent: forget remembered approvals, refuse a pending one.
+    SshAgentService.onLock();
     // Tell the paired browser extension to drop its cached entries too —
     // otherwise a locked main vault would leave plaintext credentials
     // reachable in the extension for up to its own 5-minute idle timeout.
