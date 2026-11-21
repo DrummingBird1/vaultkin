@@ -1,6 +1,6 @@
 {
   "name": "vaultkin",
-  "version": "2.0.0",
+  "version": "1.0.0-beta.1",
   "description": "Zero-knowledge password manager & 2FA authenticator",
   "main": "dist/electron/main.js",
   "homepage": "https://github.com/DrummingBird1/vaultkin",
