@@ -16,6 +16,10 @@
   `.svshare` file plus a separate code (send them over two channels), with
   an expiry of 1 hour, 1 day or 7 days and only the fields you pick. The
   recipient opens it in SecureVault and adds it to their vault.
+- Sync folder (desktop, Settings → Sync): keeps an encrypted copy of the
+  vault in a folder another tool syncs (Syncthing, OneDrive, Dropbox, NAS),
+  updated after every change. A copy changed on another device is never
+  overwritten: pull it and merge first.
 
 ### Fixed
 - New entries silently dropped fields the store didn't list (found while

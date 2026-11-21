@@ -26,6 +26,14 @@ export interface ElectronBridge {
     close: (connId: number) => Promise<void>;
     installHost: (extensionIds: string[]) => Promise<{ manifest: string; registered: number }>;
   };
+  /** Present from M5: encrypted vault copy in a user-chosen folder. */
+  folderSync?: {
+    status: () => Promise<{ dir: string; file: string } | null>;
+    choose: () => Promise<{ dir: string; file: string } | null>;
+    clear: () => Promise<void>;
+    read: () => Promise<string | null>;
+    write: (payload: string, force?: boolean) => Promise<"written" | "conflict" | "off" | "error">;
+  };
   /** Present from M5: SSH agent served from the app. */
   sshAgent?: {
     /** Returns the agent socket/pipe path when running, else null. */

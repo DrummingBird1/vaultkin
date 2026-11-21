@@ -33,6 +33,17 @@ contextBridge.exposeInMainWorld("electron", {
     installHost: (extensionIds: string[]): Promise<{ manifest: string; registered: number }> =>
       ipcRenderer.invoke("sv-bridge-install", extensionIds),
   },
+  /** Folder sync: encrypted vault copy in a user-chosen folder. */
+  folderSync: {
+    status: (): Promise<{ dir: string; file: string } | null> =>
+      ipcRenderer.invoke("sv-folder-sync-status"),
+    choose: (): Promise<{ dir: string; file: string } | null> =>
+      ipcRenderer.invoke("sv-folder-sync-choose"),
+    clear: (): Promise<void> => ipcRenderer.invoke("sv-folder-sync-clear"),
+    read: (): Promise<string | null> => ipcRenderer.invoke("sv-folder-sync-read"),
+    write: (payload: string, force = false): Promise<"written" | "conflict" | "off" | "error"> =>
+      ipcRenderer.invoke("sv-folder-sync-write", payload, force),
+  },
   /** SSH agent: requests from ssh arrive here; keys never leave this process. */
   sshAgent: {
     setEnabled: (on: boolean): Promise<string | null> =>

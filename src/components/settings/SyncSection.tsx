@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useUIStore } from "../../store/ui.store";
 import { useVaultStore } from "../../store/vault.store";
 import { IPCService } from "../../services/ipc.service";
@@ -8,6 +8,8 @@ import { RemoteUnlockModal } from "../modals/RemoteUnlock.modal";
 import { ConflictResolutionModal } from "../modals/ConflictResolution.modal";
 import type { VaultData } from "../../core/vault/schema";
 import { SettingsSection } from "./shared";
+import { FolderSyncService, useFolderSyncStore } from "../../services/folder-sync.service";
+import { AutosaveService } from "../../services/autosave.service";
 
 export function SyncSection() {
   const { t } = useTranslation();
@@ -23,6 +25,18 @@ export function SyncSection() {
   // CURRENT session keys. Nothing is overwritten before the user decides.
   const [pulled, setPulled] = useState<string | null>(null);
   const [remote, setRemote] = useState<VaultData | null>(null);
+  const [pullSource, setPullSource] = useState<"webdav" | "folder">("webdav");
+  const folder = useFolderSyncStore();
+  useEffect(() => {
+    void FolderSyncService.refresh();
+  }, []);
+
+  const pullFolder = async () => {
+    const payload = await FolderSyncService.pull();
+    if (!payload) return toastError(t("settings.sync.folder.empty"));
+    setPullSource("folder");
+    setPulled(payload);
+  };
 
   const connect = async () => {
     if (!url.trim() || !user.trim())
@@ -63,6 +77,7 @@ export function SyncSection() {
         return toastError(t("settings.sync.pullFailed"), result.message ?? result.reason);
       if (!payload)
         return toastError(t("settings.sync.pullFailed"), t("settings.sync.emptyRemote"));
+      setPullSource("webdav");
       setPulled(payload);
     } finally {
       setBusy(false);
@@ -76,6 +91,15 @@ export function SyncSection() {
 
   const resolve = (winner: VaultData, strategy: "local" | "remote" | "merge") => {
     reset();
+    if (pullSource === "folder") {
+      // The folder copy has now been seen; write the resolved vault back once
+      // autosave has stored it.
+      setTimeout(async () => {
+        await AutosaveService.flushNow();
+        const p = await IPCService.vault.load();
+        if (p) await FolderSyncService.push(p);
+      }, 0);
+    }
     if (strategy === "local")
       return toastSuccess(t("settings.sync.keptLocal"), t("settings.sync.pushToUpdate"));
     useVaultStore.setState({
@@ -157,6 +181,51 @@ export function SyncSection() {
         </button>
       </div>
       <p className="sv-hint mt-2">{t("settings.sync.hint")}</p>
+
+      {FolderSyncService.available() && (
+        <div className="mt-6 pt-4 border-t border-(--border-subtle)">
+          <h3 className="font-medium text-sm mb-1">{t("settings.sync.folder.title")}</h3>
+          <p className="text-xs text-(--text-tertiary) mb-3">
+            {t("settings.sync.folder.description")}
+          </p>
+          {folder.dir && (
+            <p
+              dir="ltr"
+              data-testid="sync-folder"
+              className="text-xs font-mono text-(--text-secondary) mb-2 break-all"
+            >
+              {folder.dir}
+            </p>
+          )}
+          {folder.state === "conflict" && (
+            <p className="sv-error mb-2">{t("settings.sync.folder.conflict")}</p>
+          )}
+          {folder.state === "error" && (
+            <p className="sv-error mb-2">{t("settings.sync.folder.error")}</p>
+          )}
+          <div className="flex gap-2">
+            <button
+              onClick={() => void FolderSyncService.choose()}
+              className="sv-btn-secondary flex-1"
+            >
+              {folder.dir ? t("settings.sync.folder.change") : t("settings.sync.folder.choose")}
+            </button>
+            {folder.dir && (
+              <>
+                <button onClick={() => void pullFolder()} className="sv-btn-secondary px-4">
+                  {t("settings.sync.folder.pull")}
+                </button>
+                <button
+                  onClick={() => void FolderSyncService.stop()}
+                  className="sv-btn-secondary px-4"
+                >
+                  {t("settings.sync.folder.stop")}
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </SettingsSection>
   );
 }

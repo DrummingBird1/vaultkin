@@ -20,6 +20,7 @@ const AGENT_SOCK =
   process.platform === "win32"
     ? `\\\\.\\pipe\\sv-e2e-ssh-agent-${process.pid}`
     : path.join(os.tmpdir(), `sv-e2e-ssh-agent-${process.pid}.sock`);
+const SYNC_DIR = fs.mkdtempSync(path.join(os.tmpdir(), "sv-sync-"));
 /** Windows' own OpenSSH speaks named pipes; Git's msys build doesn't. */
 const OPENSSH_DIR = process.platform === "win32" ? "C:\\Windows\\System32\\OpenSSH\\" : "";
 const MASTER = "correct-horse-battery-staple-77!";
@@ -41,6 +42,7 @@ test.beforeAll(async () => {
       // the unit-tested wrap/unwrap and a manual check.
       SV_DEVICE_UNLOCK_NO_HELLO: "1",
       SV_SSH_AGENT_SOCK: AGENT_SOCK,
+      SV_FOLDER_SYNC_DIR: SYNC_DIR,
     },
   });
   win = await app.firstWindow();
@@ -72,6 +74,7 @@ test("window is hardened (sandbox, isolation, no node in the page)", async () =>
     "bridge",
     "clipboard",
     "deviceUnlock",
+    "folderSync",
     "platform",
     "sshAgent",
     "updates",
@@ -274,6 +277,30 @@ test("SSH agent: ssh-add lists the vault key; signing needs approval and verifie
   await expect(win.getByRole("alertdialog")).toBeVisible({ timeout: 15_000 });
   await win.getByRole("button", { name: /^deny$/i }).click();
   expect(await denied).not.toBe(0);
+});
+
+test("folder sync writes only ciphertext and never overwrites another device's copy", async () => {
+  const file = path.join(SYNC_DIR, "SecureVault.svault");
+  await win.evaluate(() => (location.hash = "#/settings/sync"));
+  await win.getByRole("button", { name: /^choose folder$/i }).click();
+  await expect(win.getByTestId("sync-folder")).toHaveText(SYNC_DIR);
+
+  // Any change triggers autosave → folder copy.
+  await win.evaluate(() => (location.hash = "#/settings/security"));
+  await win.getByLabel(/lock immediately/i).click();
+  await expect.poll(() => fs.existsSync(file), { timeout: 10_000 }).toBe(true);
+  const first = fs.readFileSync(file, "utf8");
+  expect(JSON.parse(first)).toMatchObject({ version: 1 });
+  expect(first).not.toMatch(/e2e server key|Home Wi-Fi/);
+
+  // "Another device" rewrites the file.
+  const other = JSON.stringify({ ...JSON.parse(first), updatedAt: "2099-01-01T00:00:00.000Z" });
+  fs.writeFileSync(file, other);
+  await win.evaluate(() => (location.hash = "#/settings/security"));
+  await win.getByLabel(/lock immediately/i).click();
+  await win.evaluate(() => (location.hash = "#/settings/sync"));
+  await expect(win.getByText(/changed on another device/i)).toBeVisible({ timeout: 10_000 });
+  expect(fs.readFileSync(file, "utf8")).toBe(other);
 });
 
 // Last: Playwright keeps waiting on the cancelled navigation afterwards.

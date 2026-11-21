@@ -14,6 +14,7 @@ import {
   powerMonitor,
   session,
   clipboard,
+  dialog,
 } from "electron";
 import * as path from "path";
 import { mainLog } from "./logger";
@@ -21,6 +22,7 @@ import { wireUpdater, checkForUpdates, downloadUpdate, quitAndInstall } from "./
 import { bridgeSocketPath, startBridgeServer } from "./bridge-transport";
 import { installNativeHost } from "./bridge-install";
 import * as deviceUnlock from "./device-unlock";
+import * as folderSync from "./folder-sync";
 import { writeSecretExcludedFromHistory } from "./secure-clipboard";
 import { createHash } from "crypto";
 import { startSshAgent, sshAgentPath, type AgentRequest, type AgentIdentity } from "./ssh-agent";
@@ -304,6 +306,36 @@ function startApp(): void {
     }
     return sshAgent ? sshAgentPath() : null;
   });
+
+  // ── Folder sync (encrypted copy in a user-chosen folder) ──────────────
+  ipcMain.handle("sv-folder-sync-status", (event) =>
+    fromMainWindow(event) ? folderSync.status() : null,
+  );
+  ipcMain.handle("sv-folder-sync-choose", async (event) => {
+    if (!fromMainWindow(event) || !mainWindow) return null;
+    // Tests (unpackaged only) can't drive the native dialog.
+    let dir = !app.isPackaged ? process.env.SV_FOLDER_SYNC_DIR : undefined;
+    if (!dir) {
+      const r = await dialog.showOpenDialog(mainWindow, {
+        properties: ["openDirectory", "createDirectory"],
+      });
+      if (r.canceled || !r.filePaths[0]) return folderSync.status();
+      dir = r.filePaths[0];
+    }
+    folderSync.setDir(dir);
+    return folderSync.status();
+  });
+  ipcMain.handle("sv-folder-sync-clear", (event) => {
+    if (fromMainWindow(event)) folderSync.setDir(null);
+  });
+  ipcMain.handle("sv-folder-sync-read", (event) =>
+    fromMainWindow(event) ? folderSync.read() : null,
+  );
+  ipcMain.handle("sv-folder-sync-write", (event, payload: unknown, force: unknown) =>
+    fromMainWindow(event) && typeof payload === "string"
+      ? folderSync.write(payload, force === true)
+      : "error",
+  );
 
   // ── Secret clipboard ───────────────────────────────────────────────────
   // Copies of secrets skip Windows Clipboard History / cloud clipboard, and the

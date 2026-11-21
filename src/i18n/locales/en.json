@@ -352,7 +352,19 @@
       "appliedRemote": "Remote vault applied",
       "savedLocally": "Saved locally. Push to update the WebDAV copy.",
       "httpsOnly": "Use an https:// address",
-      "httpsOnlyBody": "SecureVault only syncs over https, so your WebDAV password is never sent in the clear."
+      "httpsOnlyBody": "SecureVault only syncs over https, so your WebDAV password is never sent in the clear.",
+      "folder": {
+        "title": "Sync folder",
+        "description": "Keep an encrypted copy of your vault in a folder that another tool syncs (Syncthing, OneDrive, Dropbox, a NAS share). It's updated after every change. If another device changed it, nothing is overwritten: pull to merge.",
+        "choose": "Choose folder",
+        "change": "Change",
+        "stop": "Stop",
+        "pull": "Pull from folder",
+        "conflict": "The folder copy was changed on another device. Pull to merge before it's updated again.",
+        "empty": "There's no vault in that folder yet.",
+        "error": "Couldn't write to the sync folder.",
+        "saved": "Copy saved to the folder"
+      }
     },
     "updates": {
       "title": "App updates",
