@@ -14,6 +14,10 @@ import { createPasskey, signAssertion, b64u } from "../src/core/passkey/authenti
 const SHIM = path.resolve(__dirname, "..", "dist", "extension", "src", "webauthn-inject.js");
 const ORIGIN = "https://login.example.com";
 
+// Playwright's Linux WebKit build ships without WebAuthn (no
+// navigator.credentials), so there is nothing for the shim to wrap there.
+test.skip(({ browserName }) => browserName === "webkit", "WebKit test build has no WebAuthn");
+
 test.beforeAll(() => {
   if (!fs.existsSync(SHIM))
     execSync("node scripts/build-extension.mjs", { cwd: path.resolve(__dirname, "..") });

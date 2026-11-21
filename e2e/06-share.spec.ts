@@ -39,7 +39,8 @@ test("share an entry as file + code, then open it", async ({ page }) => {
   const download = page.waitForEvent("download");
   await page.getByRole("button", { name: /create share file/i }).click();
   const d = await download;
-  expect(d.suggestedFilename()).toBe("Home Wi-Fi.svshare");
+  // WebKit replaces spaces in download names with underscores.
+  expect(d.suggestedFilename()).toMatch(/^Home[ _]Wi-Fi\.svshare$/);
   const filePath = await d.path();
   const file = fs.readFileSync(filePath, "utf8");
   expect(file).not.toMatch(/wifi-pass|guest|Home Wi-Fi/);
