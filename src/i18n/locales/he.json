@@ -153,7 +153,8 @@
       "login": "התחברות",
       "notes": "הערות",
       "card": "כרטיס",
-      "fields": "מותאם"
+      "fields": "מותאם",
+      "ssh": "מפתח SSH"
     },
     "username": "שם משתמש / אימייל",
     "url": "כתובת",
@@ -216,7 +217,21 @@
     "added": "הרשומה נוספה",
     "addedBody": "\"{{title}}\" נוספה לכספת.",
     "updated": "הרשומה עודכנה",
-    "updatedBody": "\"{{title}}\" נשמרה."
+    "updatedBody": "\"{{title}}\" נשמרה.",
+    "ssh": {
+      "generate": "יצירת מפתח Ed25519",
+      "import": "ייבוא מפתח קיים",
+      "importLabel": "מפתח פרטי (OpenSSH, בלי passphrase)",
+      "importButton": "ייבוא",
+      "importFailed": "לא ניתן לייבא את המפתח",
+      "publicKey": "מפתח ציבורי",
+      "fingerprint": "טביעת אצבע",
+      "copyPublic": "העתקת המפתח הציבורי",
+      "remove": "הסרת המפתח",
+      "none": "עדיין אין מפתח SSH. אפשר ליצור חדש או לייבא מ-~/.ssh.",
+      "comment": "הערה (למשל you@laptop)",
+      "agentHint": "בדסקטופ, סוכן ה-SSH של SecureVault יכול להשתמש במפתח הזה; כל שימוש מבקש את אישורכם."
+    }
   },
   "confirmDelete": {
     "title": "מחיקת רשומה",

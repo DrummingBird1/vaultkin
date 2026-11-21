@@ -153,7 +153,8 @@
       "login": "Login",
       "notes": "Notes",
       "card": "Card",
-      "fields": "Custom"
+      "fields": "Custom",
+      "ssh": "SSH key"
     },
     "username": "Username / Email",
     "url": "URL",
@@ -216,7 +217,21 @@
     "added": "Entry added",
     "addedBody": "\"{{title}}\" added to vault.",
     "updated": "Entry updated",
-    "updatedBody": "\"{{title}}\" saved."
+    "updatedBody": "\"{{title}}\" saved.",
+    "ssh": {
+      "generate": "Generate Ed25519 key",
+      "import": "Import existing key",
+      "importLabel": "Private key (OpenSSH, no passphrase)",
+      "importButton": "Import",
+      "importFailed": "Couldn't import the key",
+      "publicKey": "Public key",
+      "fingerprint": "Fingerprint",
+      "copyPublic": "Copy public key",
+      "remove": "Remove key",
+      "none": "No SSH key yet. Generate a new one or import one from ~/.ssh.",
+      "comment": "Comment (e.g. you@laptop)",
+      "agentHint": "On desktop, the SecureVault SSH agent can use this key; each use asks for your approval."
+    }
   },
   "confirmDelete": {
     "title": "Delete Entry",

@@ -23,6 +23,7 @@ import {
   type ValidationErrors,
 } from "../vault/entry-form/entry-form";
 import { CardTab, CustomFieldsTab, LoginTab, NotesTab } from "../vault/entry-form/fields";
+import { SshTab } from "../vault/entry-form/SshTab";
 
 interface Props {
   entry?: VaultEntry | null; // null/undefined = create mode
@@ -30,7 +31,7 @@ interface Props {
   onClose: () => void;
 }
 
-const TABS: EntryTab[] = ["login", "notes", "card", "fields"];
+const TABS: EntryTab[] = ["login", "notes", "card", "ssh", "fields"];
 
 export function AddEditEntryModal({ entry, folderId, onClose }: Props) {
   const { t } = useTranslation();
@@ -175,6 +176,7 @@ export function AddEditEntryModal({ entry, folderId, onClose }: Props) {
         {tab === "login" && <LoginTab s={s} set={set} errors={errors} allTags={allTags} />}
         {tab === "notes" && <NotesTab s={s} set={set} />}
         {tab === "card" && <CardTab s={s} set={set} />}
+        {tab === "ssh" && <SshTab s={s} set={set} />}
         {tab === "fields" && <CustomFieldsTab s={s} set={set} />}
       </div>
 

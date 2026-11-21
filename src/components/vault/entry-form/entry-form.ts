@@ -4,10 +4,16 @@
  * validation, TOTP secret cleanup, entry-type inference, payload building.
  * Validation returns i18n KEYS (entry.errors.*); the UI translates them.
  */
-import type { CategoryType, CustomField, EntryType, VaultEntry } from "../../../core/vault/schema";
+import type {
+  CategoryType,
+  CustomField,
+  EntryType,
+  SshKeyData,
+  VaultEntry,
+} from "../../../core/vault/schema";
 import { validateBase32Secret } from "../../../core/totp/base32";
 
-export type EntryTab = "login" | "notes" | "card" | "fields";
+export type EntryTab = "login" | "notes" | "card" | "ssh" | "fields";
 
 export interface EntryFormState {
   title: string;
@@ -24,6 +30,7 @@ export interface EntryFormState {
   cardHolder: string;
   cardExpiry: string;
   cardCVV: string;
+  ssh: SshKeyData | null;
 }
 
 /** Label: t(`entry.categories.${value}`). */
@@ -54,6 +61,7 @@ export function initialState(entry?: VaultEntry | null): EntryFormState {
     cardHolder: entry?.cardHolder ?? "",
     cardExpiry: entry?.cardExpiry ?? "",
     cardCVV: entry?.cardCVV ?? "",
+    ssh: entry?.ssh ?? null,
   };
 }
 
@@ -61,6 +69,7 @@ export function initialState(entry?: VaultEntry | null): EntryFormState {
 export function initialTab(entry?: VaultEntry | null): EntryTab {
   if (entry?.type === "card") return "card";
   if (entry?.type === "note") return "notes";
+  if (entry?.type === "ssh") return "ssh";
   return "login";
 }
 
@@ -98,6 +107,7 @@ export function inferType(s: EntryFormState, existing?: EntryType): EntryType {
   if (existing) return existing;
   const hasLogin = !!(s.username.trim() || s.password || s.url.trim() || s.totpSecret);
   if (hasLogin) return "login";
+  if (s.ssh) return "ssh";
   if (s.cardNumber.trim()) return "card";
   if (s.notes.trim()) return "note";
   return "login";
@@ -144,5 +154,6 @@ export function buildPayload(
     cardHolder: s.cardHolder.trim() || undefined,
     cardExpiry: s.cardExpiry.trim() || undefined,
     cardCVV: s.cardCVV.trim() || undefined,
+    ssh: s.ssh ?? undefined,
   };
 }

@@ -7,7 +7,14 @@ import type { StoredPasskey } from "../passkey/authenticator";
 export type CategoryType =
   "websites" | "apps" | "finance" | "gaming" | "servers" | "identity" | "email" | "custom";
 
-export type EntryType = "login" | "note" | "card" | "totp" | "identity";
+export type EntryType = "login" | "note" | "card" | "totp" | "identity" | "ssh";
+
+/** An Ed25519 SSH key (OpenSSH formats; see core/ssh/ssh-key.ts). */
+export interface SshKeyData {
+  publicKey: string;
+  privateKey: string;
+  fingerprint: string;
+}
 
 export interface CustomField {
   id: string;
@@ -42,6 +49,8 @@ export interface VaultEntry {
   updatedAt?: string;
   /** Passkeys saved for this login (software WebAuthn authenticator). */
   passkeys?: StoredPasskey[];
+  /** SSH key for type "ssh" (served by the SSH agent on desktop). */
+  ssh?: SshKeyData;
 }
 
 export interface VaultFolder {

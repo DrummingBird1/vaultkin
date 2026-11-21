@@ -219,6 +219,29 @@ export function EntryDetail({
           </div>
         )}
 
+        {/* SSH key: public half only; the private key never leaves the vault UI. */}
+        {entry.ssh && (
+          <div>
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-medium text-(--text-tertiary) uppercase tracking-wider">
+                {t("entry.ssh.publicKey")}
+              </label>
+              <button
+                onClick={() => copyField(entry.ssh!.publicKey, t("entry.ssh.publicKey"))}
+                className="text-(--text-tertiary) hover:text-(--accent-text) transition-colors text-xs"
+              >
+                {t("entryDetail.copy")}
+              </button>
+            </div>
+            <p dir="ltr" className="text-xs font-mono text-(--text-secondary) mt-1 break-all">
+              {entry.ssh.publicKey}
+            </p>
+            <p dir="ltr" className="text-xs font-mono text-(--text-tertiary) mt-1">
+              {entry.ssh.fingerprint}
+            </p>
+          </div>
+        )}
+
         {/* TOTP badge */}
         {entry.totpSecret && (
           <div className="p-3 bg-(--accent-dim) border border-(--accent)/20 rounded-xl">

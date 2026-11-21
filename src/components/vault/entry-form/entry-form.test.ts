@@ -85,4 +85,13 @@ describe("entry-form", () => {
     expect(p.notes).toBeUndefined();
     expect(p.cardNumber).toBeUndefined();
   });
+
+  it("an entry holding only an SSH key is an ssh entry, and keeps its key", () => {
+    const ssh = { publicKey: "ssh-ed25519 AAAA x", privateKey: "PEM", fingerprint: "SHA256:x" };
+    const st = { ...initialState(), title: "server", ssh };
+    expect(inferType(st)).toBe("ssh");
+    expect(buildPayload(st, {}).ssh).toEqual(ssh);
+    expect(initialTab(base({ type: "ssh", ssh }))).toBe("ssh");
+    expect(initialState(base({ type: "ssh", ssh })).ssh).toEqual(ssh);
+  });
 });
