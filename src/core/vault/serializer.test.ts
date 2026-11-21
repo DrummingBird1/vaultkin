@@ -6,6 +6,7 @@
  * than the full app-lifecycle flow already covered by
  * tests/integration/vault-lifecycle.test.ts.
  */
+import { CURRENT_SCHEMA_VERSION } from "./migrations";
 import { describe, it, expect } from "vitest";
 import {
   createVault,
@@ -27,9 +28,9 @@ describe("createVault", () => {
     expect(sessionKeys.kdf).toEqual(DEFAULT_KDF);
   });
 
-  it("stamps schemaVersion 1 onto the vault data", async () => {
+  it("stamps the current schemaVersion onto the vault data", async () => {
     const { vault } = await createVault(PASSWORD, createDefaultVaultData());
-    expect(vault.schemaVersion).toBe(1);
+    expect(vault.schemaVersion).toBe(CURRENT_SCHEMA_VERSION);
   });
 });
 

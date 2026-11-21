@@ -67,10 +67,18 @@ export interface VaultMeta {
   entryCount?: number;
 }
 
+/** Marks an entry as deleted so sync merge doesn't resurrect it (schema v2). */
+export interface VaultTombstone {
+  id: string;
+  deletedAt: string;
+}
+
 export interface VaultData {
+  /** See CURRENT_SCHEMA_VERSION in migrations.ts. */
   schemaVersion: number;
   entries: VaultEntry[];
   folders: VaultFolder[];
+  tombstones: VaultTombstone[];
   settings: VaultSettings;
   meta: VaultMeta;
 }

@@ -32,6 +32,7 @@ export function RecoveryKitModal({ onClose }: { onClose: () => void }) {
       const { encryptedPayload } = await createVault(key, {
         entries: vault.entries,
         folders: vault.folders,
+        tombstones: vault.tombstones ?? [],
         settings: vault.settings,
         meta: vault.meta,
       });

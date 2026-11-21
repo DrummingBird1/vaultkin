@@ -8,6 +8,7 @@ import { useTranslation } from "react-i18next";
 import type { TFunction } from "i18next";
 import { useSessionStore } from "../store/session.store";
 import { onVaultUnlocked } from "../store";
+import { useVaultStore } from "../store/vault.store";
 import { openVault, createVault } from "../core/vault/serializer";
 import { createDefaultVaultData } from "../core/vault/vault-types";
 import { WrongPasswordError, VaultCorruptError } from "../core/errors";
@@ -166,11 +167,15 @@ export function UnlockPage() {
         }
 
         setKDFProgress(0.2);
-        const { vault, sessionKeys } = await openVault(stored, password);
+        const { vault, sessionKeys, migrated } = await openVault(stored, password);
         setKDFProgress(0.9);
         unlock(sessionKeys, vault.settings.autoLockMs);
         onVaultUnlocked(vault);
         await AppLifecycle.onUnlock(vault, sessionKeys, vault.settings.autoLockMs);
+        // Upgraded to a newer schema on open: mark dirty AFTER onUnlock has
+        // started autosave (it reacts to the isDirty false→true edge), so the
+        // migrated document is written back, re-encrypted with the same keys.
+        if (migrated) useVaultStore.setState({ isDirty: true });
         UnlockThrottleService.recordSuccess();
         setKDFProgress(1);
       } catch (err: unknown) {

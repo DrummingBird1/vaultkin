@@ -13,19 +13,20 @@
  */
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { createVault, openVault, saveVault } from "../../src/core/vault/serializer";
-import { useVaultStore }    from "../../src/store/vault.store";
-import { useSessionStore }  from "../../src/store/session.store";
+import { useVaultStore } from "../../src/store/vault.store";
+import { useSessionStore } from "../../src/store/session.store";
 import { onVaultUnlocked, lockApplication } from "../../src/store";
-import type { VaultData }   from "../../src/core/vault/schema";
+import type { VaultData } from "../../src/core/vault/schema";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const MASTER_PW = "correct-horse-battery-staple-77!";
-const WRONG_PW  = "incorrect-password-attempt-xyz!!";
+const WRONG_PW = "incorrect-password-attempt-xyz!!";
 
 const MINIMAL_VAULT: Omit<VaultData, "schemaVersion"> = {
   entries: [],
   folders: [],
+  tombstones: [],
   settings: {
     autoLockMs: 900_000,
     defaultCategory: "websites",
@@ -98,7 +99,7 @@ describe("Vault unlock", () => {
 
   it("rejects incorrect password with specific error", async () => {
     await expect(openVault(encryptedPayload, WRONG_PW)).rejects.toThrow(
-      /master password|integrity|decrypt/i
+      /master password|integrity|decrypt/i,
     );
   });
 
@@ -110,18 +111,18 @@ describe("Vault unlock", () => {
     const outer = JSON.parse(encryptedPayload);
     // Flip a byte in the ciphertext
     const data = Buffer.from(outer.data, "base64");
-    data[10] ^= 0xFF;
+    data[10] ^= 0xff;
     outer.data = data.toString("base64");
     const tampered = JSON.stringify(outer);
     await expect(openVault(tampered, MASTER_PW)).rejects.toThrow(
-      /integrity|master password|decrypt/i
+      /integrity|master password|decrypt/i,
     );
   });
 
   it("rejects tampered IV", async () => {
     const outer = JSON.parse(encryptedPayload);
     const iv = Buffer.from(outer.iv, "base64");
-    iv[0] ^= 0xFF;
+    iv[0] ^= 0xff;
     outer.iv = iv.toString("base64");
     const tampered = JSON.stringify(outer);
     await expect(openVault(tampered, MASTER_PW)).rejects.toThrow();
@@ -149,9 +150,15 @@ describe("Vault CRUD operations", () => {
     expect(store.isDirty).toBe(false);
 
     store.addEntry({
-      type: "login", title: "GitHub", username: "dev@example.com",
-      password: "secret123", url: "https://github.com",
-      category: "websites", tags: [], favorite: false, customFields: [],
+      type: "login",
+      title: "GitHub",
+      username: "dev@example.com",
+      password: "secret123",
+      url: "https://github.com",
+      category: "websites",
+      tags: [],
+      favorite: false,
+      customFields: [],
     } as any);
 
     const updated = useVaultStore.getState();
@@ -163,21 +170,33 @@ describe("Vault CRUD operations", () => {
   it("updates an existing entry", () => {
     const store = useVaultStore.getState();
     const entry = store.addEntry({
-      type: "login", title: "GitHub", username: "user@example.com",
-      password: "old_pass", url: "https://github.com",
-      category: "websites", tags: [], favorite: false, customFields: [],
+      type: "login",
+      title: "GitHub",
+      username: "user@example.com",
+      password: "old_pass",
+      url: "https://github.com",
+      category: "websites",
+      tags: [],
+      favorite: false,
+      customFields: [],
     } as any);
 
     store.updateEntry(entry.id, { password: "new_pass" });
-    const updated = useVaultStore.getState().vault?.entries.find(e => e.id === entry.id);
+    const updated = useVaultStore.getState().vault?.entries.find((e) => e.id === entry.id);
     expect(updated?.password).toBe("new_pass");
   });
 
   it("deletes an entry", () => {
     const store = useVaultStore.getState();
     const entry = store.addEntry({
-      type: "login", title: "ToDelete", username: "u",
-      password: "p", category: "websites", tags: [], favorite: false, customFields: [],
+      type: "login",
+      title: "ToDelete",
+      username: "u",
+      password: "p",
+      category: "websites",
+      tags: [],
+      favorite: false,
+      customFields: [],
     } as any);
 
     expect(useVaultStore.getState().vault?.entries.length).toBe(1);
@@ -188,8 +207,14 @@ describe("Vault CRUD operations", () => {
   it("toggles favorite", () => {
     const store = useVaultStore.getState();
     const entry = store.addEntry({
-      type: "login", title: "GitHub", username: "u",
-      password: "p", category: "websites", tags: [], favorite: false, customFields: [],
+      type: "login",
+      title: "GitHub",
+      username: "u",
+      password: "p",
+      category: "websites",
+      tags: [],
+      favorite: false,
+      customFields: [],
     } as any);
 
     expect(useVaultStore.getState().vault?.entries[0]?.favorite).toBe(false);
@@ -205,8 +230,11 @@ describe("Vault CRUD operations", () => {
 describe("Vault re-encryption and persistence", () => {
   it("re-encrypts vault after entry addition and re-opens successfully", async () => {
     // 1. Create vault
-    const { encryptedPayload: original, vault: v1, sessionKeys } =
-      await createVault(MASTER_PW, MINIMAL_VAULT);
+    const {
+      encryptedPayload: original,
+      vault: v1,
+      sessionKeys,
+    } = await createVault(MASTER_PW, MINIMAL_VAULT);
 
     // 2. Unlock and populate store
     onVaultUnlocked(v1);
@@ -214,14 +242,20 @@ describe("Vault re-encryption and persistence", () => {
     // 3. Add entry (mutates store, marks dirty)
     const { addEntry, vault } = useVaultStore.getState();
     addEntry({
-      type: "login", title: "Test Entry", username: "user@test.com",
-      password: "super_secret_pass!", url: "https://test.com",
-      category: "websites", tags: ["test"], favorite: false, customFields: [],
+      type: "login",
+      title: "Test Entry",
+      username: "user@test.com",
+      password: "super_secret_pass!",
+      url: "https://test.com",
+      category: "websites",
+      tags: ["test"],
+      favorite: false,
+      customFields: [],
     } as any);
 
     // 4. Re-encrypt with new in-memory vault data
     const currentVault = useVaultStore.getState().vault!;
-    const reEncrypted  = await saveVault(currentVault, sessionKeys);
+    const reEncrypted = await saveVault(currentVault, sessionKeys);
 
     // 5. Open the re-encrypted vault
     const { vault: reopened } = await openVault(reEncrypted, MASTER_PW);
@@ -235,7 +269,11 @@ describe("Vault re-encryption and persistence", () => {
   });
 
   it("preserves all entry fields across encrypt/decrypt cycle", async () => {
-    const { encryptedPayload, vault: v1, sessionKeys } = await createVault(MASTER_PW, MINIMAL_VAULT);
+    const {
+      encryptedPayload,
+      vault: v1,
+      sessionKeys,
+    } = await createVault(MASTER_PW, MINIMAL_VAULT);
     onVaultUnlocked(v1);
 
     const entry = useVaultStore.getState().addEntry({
@@ -253,15 +291,21 @@ describe("Vault re-encryption and persistence", () => {
       tags: ["work", "finance"],
       favorite: true,
       customFields: [
-        { id: "cf1", label: "API Key", value: "sk-1234567890abcdef", type: "password", protected: true },
+        {
+          id: "cf1",
+          label: "API Key",
+          value: "sk-1234567890abcdef",
+          type: "password",
+          protected: true,
+        },
       ],
     } as any);
 
     const currentVault = useVaultStore.getState().vault!;
-    const reEncrypted  = await saveVault(currentVault, sessionKeys);
+    const reEncrypted = await saveVault(currentVault, sessionKeys);
     const { vault: reopened } = await openVault(reEncrypted, MASTER_PW);
 
-    const saved = reopened.entries.find(e => e.id === entry.id)!;
+    const saved = reopened.entries.find((e) => e.id === entry.id)!;
     expect(saved).toBeDefined();
     expect(saved.title).toBe("Full Entry");
     expect(saved.notes).toBe("This is a secure note with unicode: 日本語 🔒");
@@ -317,10 +361,46 @@ describe("Vault search and filtering", () => {
     onVaultUnlocked(vault);
 
     const store = useVaultStore.getState();
-    store.addEntry({ type:"login", title:"GitHub",  username:"dev@gh.com",   password:"p1", category:"websites", tags:["dev"],     favorite:false, customFields:[] } as any);
-    store.addEntry({ type:"login", title:"Google",  username:"u@gmail.com",  password:"p2", category:"websites", tags:["personal"], favorite:true,  customFields:[] } as any);
-    store.addEntry({ type:"login", title:"AWS",     username:"admin@aws.com",password:"p3", category:"servers",  tags:["dev","work"],favorite:false, customFields:[] } as any);
-    store.addEntry({ type:"login", title:"Binance", username:"crypto@user",  password:"p4", category:"finance",  tags:["finance"],  favorite:false, customFields:[] } as any);
+    store.addEntry({
+      type: "login",
+      title: "GitHub",
+      username: "dev@gh.com",
+      password: "p1",
+      category: "websites",
+      tags: ["dev"],
+      favorite: false,
+      customFields: [],
+    } as any);
+    store.addEntry({
+      type: "login",
+      title: "Google",
+      username: "u@gmail.com",
+      password: "p2",
+      category: "websites",
+      tags: ["personal"],
+      favorite: true,
+      customFields: [],
+    } as any);
+    store.addEntry({
+      type: "login",
+      title: "AWS",
+      username: "admin@aws.com",
+      password: "p3",
+      category: "servers",
+      tags: ["dev", "work"],
+      favorite: false,
+      customFields: [],
+    } as any);
+    store.addEntry({
+      type: "login",
+      title: "Binance",
+      username: "crypto@user",
+      password: "p4",
+      category: "finance",
+      tags: ["finance"],
+      favorite: false,
+      customFields: [],
+    } as any);
   });
 
   afterEach(() => lockApplication());

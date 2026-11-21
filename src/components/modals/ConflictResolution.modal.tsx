@@ -7,13 +7,13 @@
  * derive from the same parent. Shows entry-level diffs and lets the
  * user pick "Keep local", "Keep remote", or "Merge both".
  *
- * "Merge both" is naive: it takes the union of entries (unique by id),
- * and for entries with the same id, picks the one with the most recent
- * updatedAt. Folders follow the same rule.
+ * "Merge both" uses mergeVaults() (core/vault/merge.ts): newest updatedAt
+ * wins per entry and schema-v2 tombstones keep deletions deleted.
  */
 
 import React, { useMemo, useState } from "react";
 import type { VaultData, VaultEntry } from "../../core/vault/schema";
+import { mergeVaults } from "../../core/vault/merge";
 
 // Compare two entries for "meaningful" equality so the conflict UI doesn't
 // flag false positives because of property-order differences in JSON.stringify
@@ -119,36 +119,7 @@ export function ConflictResolutionModal({ local, remote, onResolve, onCancel }: 
     let winner: VaultData;
     if (strategy === "local") winner = local;
     else if (strategy === "remote") winner = remote;
-    else {
-      // Merge: for each id, pick the entry with the latest updatedAt
-      const merged = new Map<string, VaultEntry>();
-      for (const e of local.entries) merged.set(e.id, e);
-      for (const e of remote.entries) {
-        const existing = merged.get(e.id);
-        if (!existing) {
-          merged.set(e.id, e);
-          continue;
-        }
-        const lt = new Date(existing.updatedAt ?? 0).getTime();
-        const rt = new Date(e.updatedAt ?? 0).getTime();
-        if (rt > lt) merged.set(e.id, e);
-      }
-      // Same for folders
-      const mergedFolders = new Map<string, (typeof local.folders)[number]>();
-      for (const f of local.folders) mergedFolders.set(f.id, f);
-      for (const f of remote.folders) if (!mergedFolders.has(f.id)) mergedFolders.set(f.id, f);
-
-      winner = {
-        ...local,
-        entries: [...merged.values()],
-        folders: [...mergedFolders.values()],
-        meta: {
-          ...local.meta,
-          lastModifiedAt: new Date().toISOString(),
-          entryCount: merged.size,
-        },
-      };
-    }
+    else winner = mergeVaults(local, remote);
     onResolve(winner, strategy);
   }
 

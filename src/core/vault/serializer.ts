@@ -9,6 +9,7 @@ import type { SessionKeys, VaultPayload } from "./vault-types";
 import type { VaultData } from "./schema";
 import { bytesToBase64, base64ToBytes } from "../crypto/encoding";
 import { VaultCorruptError } from "../errors";
+import { CURRENT_SCHEMA_VERSION, migrateVault } from "./migrations";
 
 export interface CreateVaultResult {
   encryptedPayload: string;
@@ -19,6 +20,9 @@ export interface CreateVaultResult {
 export interface OpenVaultResult {
   vault: VaultData;
   sessionKeys: SessionKeys;
+  /** True when the decrypted document was upgraded to CURRENT_SCHEMA_VERSION;
+   *  the caller should persist it (autosave does this via isDirty). */
+  migrated: boolean;
 }
 
 function freshSalt(): string {
@@ -32,7 +36,7 @@ export async function createVault(
   onProgress?: (p: number) => void,
 ): Promise<CreateVaultResult> {
   const keys = await deriveKeys(password, freshSalt(), DEFAULT_KDF, onProgress);
-  const vault: VaultData = { schemaVersion: 1, ...initial };
+  const vault: VaultData = { ...initial, schemaVersion: CURRENT_SCHEMA_VERSION };
   const payload = await encryptVault(JSON.stringify(vault), keys, vault.meta.createdAt);
   return { encryptedPayload: JSON.stringify(payload), vault, sessionKeys: keys };
 }
@@ -115,9 +119,9 @@ export async function openVault(
   // KDF is chosen from the payload, so PBKDF2-era vaults still open.
   const keys = await deriveKeys(password, payload.salt, payload.kdf, onProgress);
   const json = await decryptVault(payload, keys);
-  let vault: VaultData;
+  let parsed: unknown;
   try {
-    vault = JSON.parse(json) as VaultData;
+    parsed = JSON.parse(json);
   } catch {
     // The HMAC already verified integrity before decryptVault() returned, so
     // this should be unreachable in practice — but if it ever isn't, this
@@ -125,7 +129,8 @@ export async function openVault(
     // callers), not a raw SyntaxError.
     throw new VaultCorruptError("Decrypted vault content is not valid JSON");
   }
-  return { vault, sessionKeys: keys };
+  const { vault, migrated } = migrateVault(parsed);
+  return { vault, sessionKeys: keys, migrated };
 }
 
 /** Re-encrypt the (mutated) in-memory vault with the SAME session keys.

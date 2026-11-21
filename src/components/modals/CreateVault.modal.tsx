@@ -107,6 +107,7 @@ export function CreateVaultModal({ onClose }: Props) {
       const { encryptedPayload, vault, sessionKeys } = await createVault(password, {
         entries: [],
         folders: [],
+        tombstones: [],
         settings: {
           autoLockMs: 5 * 60 * 1000,
           defaultCategory: "websites",

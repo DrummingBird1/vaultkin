@@ -166,8 +166,13 @@ export const useVaultStore = create<VaultState>((set, get) => ({
     const { vault, searchQuery, selectedEntryId } = get();
     if (!vault) return;
     const newEntries = vault.entries.filter((e) => e.id !== id);
+    // Tombstone (schema v2) so a later sync merge doesn't resurrect the entry.
+    const tombstones = [
+      ...(vault.tombstones ?? []).filter((t) => t.id !== id),
+      { id, deletedAt: new Date().toISOString() },
+    ];
     set({
-      vault: { ...vault, entries: newEntries },
+      vault: { ...vault, entries: newEntries, tombstones },
       entries: newEntries,
       filteredEntries: recomputeFiltered(newEntries, searchQuery),
       isDirty: true,

@@ -53,6 +53,7 @@ export function createDefaultVaultData(): Omit<VaultData, "schemaVersion"> {
   return {
     entries: [],
     folders: [],
+    tombstones: [],
     settings: {
       autoLockMs: 5 * 60 * 1000,
       defaultCategory: "websites",
