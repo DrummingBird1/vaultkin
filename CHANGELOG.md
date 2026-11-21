@@ -3,6 +3,9 @@
 ## [Unreleased] — M6 release preparation (2026-11-21)
 
 ### Changed
+- Hebrew translation now covers the whole app, including copy and update
+  notifications, import errors and accent color names; a test keeps the
+  English and Hebrew string lists in sync.
 - The browser extension's native-messaging host now ships as its own small
   program, so the desktop app's "run as Node" fuse is turned off in release
   builds (one less way to abuse the signed app binary).

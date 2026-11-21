@@ -7,6 +7,7 @@
 import React from "react";
 import { useUIStore, type Toast } from "../../store/ui.store";
 import { IconClose, IconInfo, IconWarning } from "../icons";
+import i18n from "../../i18n";
 
 const TONE: Record<Toast["type"], string> = {
   success: "var(--success)",
@@ -55,7 +56,7 @@ export function Toaster() {
           <button
             type="button"
             onClick={() => remove(t.id)}
-            aria-label="Dismiss notification"
+            aria-label={i18n.t("toast.dismiss")}
             className="text-(--text-tertiary) hover:text-(--text-primary) transition-colors shrink-0"
           >
             <IconClose className="w-3.5 h-3.5" />

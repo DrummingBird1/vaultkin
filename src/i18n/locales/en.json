@@ -255,7 +255,15 @@
       "themeHint": "High contrast maximizes text/background contrast for low-vision users.",
       "language": "Language",
       "accent": "Accent color",
-      "accentNamed": "Accent color {{name}}"
+      "accentNamed": "Accent color {{name}}",
+      "accents": {
+        "indigo": "Indigo",
+        "violet": "Violet",
+        "pink": "Pink",
+        "emerald": "Emerald",
+        "amber": "Amber",
+        "red": "Red"
+      }
     },
     "security": {
       "title": "Security",
@@ -617,7 +625,13 @@
     "added_two": "entries added",
     "added_many": "entries added",
     "skippedSuffix_two": "skipped",
-    "skippedSuffix_many": "skipped"
+    "skippedSuffix_many": "skipped",
+    "parse": {
+      "keepassUnsupported": "KeePass XML import is not supported yet. Export to CSV instead.",
+      "onePasswordUnsupported": "1Password .1pux import is not supported yet. Export to CSV instead.",
+      "unknownFormat": "Unknown format.",
+      "error": "Parse error: {{message}}"
+    }
   },
   "recoveryKit": {
     "title": "Recovery Kit",
@@ -966,5 +980,20 @@
     "fromLabel": "From {{from}}",
     "addToVault": "Add to my vault",
     "added": "Added to your vault"
+  },
+  "toast": {
+    "dismiss": "Dismiss notification"
+  },
+  "quickCopy": {
+    "copied": "{{label}} copied",
+    "clearsIn": "Clears in {{seconds}}s",
+    "notCopied": "{{label}} not copied",
+    "permissionDenied": "Clipboard permission denied."
+  },
+  "pwa": {
+    "updateTitle": "Update available",
+    "updateBody": "Vaultkin will use the new version next time you fully restart it.",
+    "offlineTitle": "Ready for offline use",
+    "offlineBody": "Vaultkin can now open without an internet connection."
   }
 }

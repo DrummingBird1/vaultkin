@@ -4,6 +4,7 @@
  * import + CSV export. Other formats degrade to CSV-like parsing.
  */
 import type { VaultEntry, CustomField } from "../core/vault/schema";
+import i18n from "../i18n";
 
 export type ImportFormat = "bitwarden" | "1password" | "lastpass" | "keepass" | "csv" | "unknown";
 
@@ -45,13 +46,12 @@ export const ImportExportService = {
     try {
       if (format === "bitwarden") entries = parseBitwarden(content);
       else if (format === "csv" || format === "lastpass") entries = parseCSV(content);
-      else if (format === "keepass")
-        errors.push("KeePass XML not yet supported in MVP — export to CSV instead.");
+      else if (format === "keepass") errors.push(i18n.t("importVault.parse.keepassUnsupported"));
       else if (format === "1password")
-        errors.push("1Password 1pux not yet supported in MVP — export to CSV instead.");
-      else errors.push("Unknown format.");
+        errors.push(i18n.t("importVault.parse.onePasswordUnsupported"));
+      else errors.push(i18n.t("importVault.parse.unknownFormat"));
     } catch (e: any) {
-      errors.push(`Parse error: ${e?.message ?? String(e)}`);
+      errors.push(i18n.t("importVault.parse.error", { message: e?.message ?? String(e) }));
     }
 
     return {

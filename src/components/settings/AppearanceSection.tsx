@@ -62,7 +62,9 @@ export function AppearanceSection() {
                   setAccent(a.hex, a.name);
                   persistSettings({ accentColor: a.hex });
                 }}
-                aria-label={t("settings.appearance.accentNamed", { name: a.name })}
+                aria-label={t("settings.appearance.accentNamed", {
+                  name: t(`settings.appearance.accents.${a.name.toLowerCase()}`),
+                })}
                 aria-pressed={active}
                 className={`w-8 h-8 rounded-full border-2 transition-transform ${active ? "scale-110 border-(--text-primary)" : "border-transparent hover:scale-105"}`}
                 style={{ background: a.hex }}

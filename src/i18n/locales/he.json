@@ -255,7 +255,15 @@
       "themeHint": "ניגודיות גבוהה מגבירה את הניגוד בין טקסט לרקע, לטובת לקויי ראייה.",
       "language": "שפה",
       "accent": "צבע הדגשה",
-      "accentNamed": "צבע הדגשה {{name}}"
+      "accentNamed": "צבע הדגשה {{name}}",
+      "accents": {
+        "indigo": "אינדיגו",
+        "violet": "סגול",
+        "pink": "ורוד",
+        "emerald": "ירוק אזמרגד",
+        "amber": "ענבר",
+        "red": "אדום"
+      }
     },
     "security": {
       "title": "אבטחה",
@@ -617,7 +625,13 @@
     "skippedSuffix_two": "דולגו",
     "skippedSuffix_many": "דולגו",
     "skippedSuffix_other": "דולגו",
-    "done": "סיום"
+    "done": "סיום",
+    "parse": {
+      "keepassUnsupported": "ייבוא KeePass XML עדיין לא נתמך. יש לייצא ל-CSV.",
+      "onePasswordUnsupported": "ייבוא 1Password ‏.1pux עדיין לא נתמך. יש לייצא ל-CSV.",
+      "unknownFormat": "פורמט לא מוכר.",
+      "error": "שגיאה בקריאת הקובץ: {{message}}"
+    }
   },
   "recoveryKit": {
     "title": "ערכת שחזור",
@@ -966,5 +980,20 @@
     "fromLabel": "מאת {{from}}",
     "addToVault": "הוספה לכספת שלי",
     "added": "נוסף לכספת שלכם"
+  },
+  "toast": {
+    "dismiss": "סגירת ההודעה"
+  },
+  "quickCopy": {
+    "copied": "{{label}} הועתק",
+    "clearsIn": "יימחק מהלוח בעוד {{seconds}} שנ׳",
+    "notCopied": "לא ניתן היה להעתיק: {{label}}",
+    "permissionDenied": "אין הרשאת גישה ללוח."
+  },
+  "pwa": {
+    "updateTitle": "יש עדכון",
+    "updateBody": "Vaultkin יעבור לגרסה החדשה בהפעלה המלאה הבאה.",
+    "offlineTitle": "מוכן לעבודה ללא חיבור",
+    "offlineBody": "אפשר לפתוח את Vaultkin גם בלי חיבור לאינטרנט."
   }
 }

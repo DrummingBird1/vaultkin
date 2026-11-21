@@ -302,7 +302,7 @@ function CustomFieldRow({
           <input
             className="sv-input flex-1 text-sm"
             aria-label={t("entry.fieldLabel")}
-            placeholder="Label"
+            placeholder={t("entry.fieldLabel")}
             value={field.label}
             onChange={(e) => onChange({ label: e.target.value })}
           />
@@ -324,7 +324,7 @@ function CustomFieldRow({
             className="sv-input w-full text-sm pe-10"
             aria-label={field.label || t("entry.fieldValue")}
             type={secret && !shown ? "password" : "text"}
-            placeholder="Value"
+            placeholder={t("entry.fieldValue")}
             value={field.value}
             onChange={(e) => onChange({ value: e.target.value })}
           />
