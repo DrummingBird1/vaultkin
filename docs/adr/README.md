@@ -24,6 +24,7 @@ existing ADR.
 | [0004](0004-vault-schema-migrations.md) | Versioned vault schema with forward-only migrations | Accepted |
 | [0005](0005-hash-routing.md) | Typed hash routing on the UI store instead of a router library | Accepted |
 | [0006](0006-quick-access-in-main-window.md) | Quick Access reuses the main window instead of a second window | Accepted |
+| [0007](0007-native-messaging-bridge.md) | Browser extension ↔ desktop app over native messaging, end-to-end encrypted | Accepted |
 
 ## Numbering
 
