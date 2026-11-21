@@ -3,6 +3,7 @@
  * Public types describing a decrypted vault's shape.
  */
 import type { StoredPasskey } from "../passkey/authenticator";
+import type { VaultAttachment } from "./attachment";
 
 export type CategoryType =
   "websites" | "apps" | "finance" | "gaming" | "servers" | "identity" | "email" | "custom";
@@ -51,6 +52,8 @@ export interface VaultEntry {
   passkeys?: StoredPasskey[];
   /** SSH key for type "ssh" (served by the SSH agent on desktop). */
   ssh?: SshKeyData;
+  /** Encrypted files (keys here; ciphertext in services/attachment-store). */
+  attachments?: VaultAttachment[];
 }
 
 export interface VaultFolder {

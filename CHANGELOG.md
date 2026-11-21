@@ -9,6 +9,9 @@
 - SSH agent (desktop, Settings → SSH agent): ssh and git can use the vault's
   keys. Every signature asks for approval (optionally remembered for 10
   minutes per key); nothing is available while the vault is locked.
+- Attachments: add files to any entry (up to 25 MB each). Each file is
+  encrypted with its own key, kept inside the vault; deleting the vault (or
+  the duress password) removes them too. Attachments don't sync yet.
 
 ### Fixed
 - New entries silently dropped fields the store didn't list (found while

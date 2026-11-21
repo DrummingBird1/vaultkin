@@ -2,6 +2,7 @@
  * @file src/components/vault/EntryDetail.tsx
  * Right-hand detail panel for the selected entry.
  */
+import { AttachmentsPanel } from "./AttachmentsPanel";
 import { useTranslation } from "react-i18next";
 import React, { useState, useCallback, useEffect, useRef } from "react";
 import { useVaultStore } from "../../store/vault.store";
@@ -241,6 +242,8 @@ export function EntryDetail({
             </p>
           </div>
         )}
+
+        <AttachmentsPanel entry={entry} />
 
         {/* TOTP badge */}
         {entry.totpSecret && (

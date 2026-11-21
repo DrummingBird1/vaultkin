@@ -908,5 +908,20 @@
     "remember": "Don't ask again for this key for 10 minutes",
     "allow": "Allow",
     "deny": "Deny"
+  },
+  "attachments": {
+    "title": "Attachments",
+    "add": "Add file",
+    "none": "No files. Files are encrypted on this device.",
+    "save": "Save",
+    "saveNamed": "Save {{name}}",
+    "remove": "Remove",
+    "removeNamed": "Remove {{name}}",
+    "added_one": "File added",
+    "added_other": "{{count}} files added",
+    "tooLarge": "{{name}} is larger than 25 MB",
+    "failed": "Couldn't add the file",
+    "missing": "This file isn't on this device (attachments don't sync yet)",
+    "damaged": "This file is damaged and can't be opened"
   }
 }

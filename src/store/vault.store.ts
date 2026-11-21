@@ -130,6 +130,7 @@ export const useVaultStore = create<VaultState>((set, get) => ({
       cardCVV: partial.cardCVV,
       passkeys: partial.passkeys,
       ssh: partial.ssh,
+      attachments: partial.attachments,
       createdAt: now,
       updatedAt: now,
     };
