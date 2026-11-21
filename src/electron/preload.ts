@@ -43,6 +43,12 @@ contextBridge.exposeInMainWorld("electron", {
       ipcRenderer.on("sv-quick-access", listener);
       return () => ipcRenderer.removeListener("sv-quick-access", listener);
     },
+    /** Machine is going to sleep / OS session locked; returns an unsubscribe function. */
+    onSystemLock: (callback: () => void): (() => void) => {
+      const listener = () => callback();
+      ipcRenderer.on("sv-system-lock", listener);
+      return () => ipcRenderer.removeListener("sv-system-lock", listener);
+    },
   },
   updates: {
     check: (): Promise<void> => ipcRenderer.invoke("sv-check-for-updates"),

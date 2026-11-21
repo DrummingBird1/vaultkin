@@ -130,3 +130,36 @@ test("title-bar theme IPC rejects anything but #rrggbb", async () => {
   });
   expect(results).toEqual(["ok", "ignored"]);
 });
+
+test("sleep / screen lock locks the vault", async () => {
+  const lockBtn = win.getByRole("button", { name: /lock vault/i });
+  await expect(lockBtn).toBeVisible();
+  await app.evaluate(({ powerMonitor }) => powerMonitor.emit("lock-screen"));
+  await expect(lockBtn).toHaveCount(0, { timeout: 10_000 });
+  await expect(win.locator('input[type="password"]').first()).toBeVisible();
+});
+
+// Last: Playwright keeps waiting on the cancelled navigation afterwards.
+test("the window can't be navigated away, and permission requests are denied", async () => {
+  const before = win.url();
+  await win.evaluate(() => {
+    location.href = "https://example.com/";
+  });
+  await win.waitForTimeout(500);
+  expect(win.url()).toBe(before);
+  const perm = await win.evaluate(async () => {
+    try {
+      await navigator.mediaDevices.getUserMedia({ audio: true });
+      return "granted";
+    } catch (e) {
+      return (e as Error).name;
+    }
+  });
+  expect(perm).not.toBe("granted");
+  const protectedWin = await app.evaluate(({ BrowserWindow }) =>
+    BrowserWindow.getAllWindows()
+      .filter((x) => !x.webContents.getURL().startsWith("devtools://"))
+      .every((x) => x.isContentProtected()),
+  );
+  expect(protectedWin).toBe(true);
+});

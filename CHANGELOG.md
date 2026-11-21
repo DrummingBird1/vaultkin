@@ -1,5 +1,19 @@
 # Changelog
 
+## [Unreleased] — M4 security hardening, part 1 (2026-11-21)
+
+### Security
+- Production Content-Security-Policy (`default-src 'self'`, no frames, no
+  plugins, `connect-src` https only). WebDAV servers must use https.
+- Desktop window: can't be navigated away or host a `<webview>`; every
+  permission request (camera, mic, notifications, devices…) is denied; window
+  contents are hidden from screenshots and screen sharing.
+- The vault locks when the computer sleeps, the screen is locked or the user
+  switches.
+- Duress password stored as salted Argon2id instead of unsalted SHA-256;
+  existing enrollments keep working until re-enrolled.
+- `docs/THREAT_MODEL.md` (STRIDE), listing what is done and what is open.
+
 ## [Unreleased] — M3 integrations (2026-11-21)
 
 ### Added

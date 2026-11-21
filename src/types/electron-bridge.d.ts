@@ -30,6 +30,8 @@ export interface ElectronBridge {
   window?: {
     setTitleBarTheme: (colors: { color: string; symbolColor: string }) => Promise<void>;
     onQuickAccess: (callback: () => void) => () => void;
+    /** Present from M4: sleep / screen lock / user switch. */
+    onSystemLock?: (callback: () => void) => () => void;
   };
   updates: {
     check: () => Promise<void>;

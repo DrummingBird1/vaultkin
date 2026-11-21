@@ -3,7 +3,17 @@
  * Electron main process. Minimal: hardened BrowserWindow loads either the
  * Vite dev server (development) or the built bundle (production).
  */
-import { app, BrowserWindow, Menu, shell, crashReporter, ipcMain, globalShortcut } from "electron";
+import {
+  app,
+  BrowserWindow,
+  Menu,
+  shell,
+  crashReporter,
+  ipcMain,
+  globalShortcut,
+  powerMonitor,
+  session,
+} from "electron";
 import * as path from "path";
 import { mainLog } from "./logger";
 import { wireUpdater, checkForUpdates, downloadUpdate, quitAndInstall } from "./update.service";
@@ -41,6 +51,42 @@ const QUICK_ACCESS_ACCELERATOR = "CommandOrControl+Shift+Space";
 
 let mainWindow: BrowserWindow | null = null;
 
+const DEV_URL = process.env.VITE_DEV_SERVER_URL ?? "http://localhost:5173";
+/** URLs the window may show: the built bundle, or the dev server in dev. */
+function isAppUrl(url: string): boolean {
+  try {
+    const u = new URL(url);
+    if (u.protocol === "file:") return !isDev;
+    return isDev && u.origin === new URL(DEV_URL).origin;
+  } catch {
+    return false;
+  }
+}
+
+/** Deny every permission request (camera, mic, notifications, geolocation,
+ *  HID, serial, ...). Clipboard writes from a user gesture don't need one. */
+function lockDownSession(): void {
+  const ses = session.defaultSession;
+  ses.setPermissionRequestHandler((_wc, permission, callback) => {
+    mainLog.warn("denied permission", { permission });
+    callback(false);
+  });
+  ses.setPermissionCheckHandler(() => false);
+  ses.setDevicePermissionHandler(() => false);
+}
+
+/** Lock the vault when the machine sleeps or the OS session is locked. */
+function wireSystemLock(): void {
+  const lock = (why: string) => {
+    mainLog.info("system lock", { why });
+    mainWindow?.webContents.send("sv-system-lock");
+  };
+  powerMonitor.on("suspend", () => lock("suspend"));
+  powerMonitor.on("lock-screen", () => lock("lock-screen"));
+  // macOS fast user switching.
+  powerMonitor.on("user-did-resign-active", () => lock("user-switch"));
+}
+
 function createWindow(): void {
   const isMac = process.platform === "darwin";
   const win = new BrowserWindow({
@@ -70,11 +116,27 @@ function createWindow(): void {
   // Disable menu in production (keeps DevTools available via Ctrl+Shift+I)
   if (!isDev) Menu.setApplicationMenu(null);
 
-  // External links open in the user's default browser, not inside Electron
+  // External links open in the user's default browser (http/https only),
+  // never inside Electron.
   win.webContents.setWindowOpenHandler(({ url }) => {
-    shell.openExternal(url);
+    if (/^https?:\/\//i.test(url)) void shell.openExternal(url);
     return { action: "deny" };
   });
+  // The window never navigates away from the app itself, and never hosts a
+  // <webview>.
+  win.webContents.on("will-navigate", (event, url) => {
+    if (!isAppUrl(url)) {
+      event.preventDefault();
+      mainLog.warn("blocked navigation", { scheme: url.split(":")[0] });
+    }
+  });
+  win.webContents.on("will-redirect", (event, url) => {
+    if (!isAppUrl(url)) event.preventDefault();
+  });
+  win.webContents.on("will-attach-webview", (event) => event.preventDefault());
+  // Keep vault contents out of screenshots, screen sharing and recording
+  // (Windows/macOS). SV_ALLOW_CAPTURE=1 turns it off for dev screenshots.
+  if (!process.env.SV_ALLOW_CAPTURE) win.setContentProtection(true);
 
   win.webContents.on("render-process-gone", (_event, details) => {
     mainLog.error("render-process-gone", { reason: details.reason, exitCode: details.exitCode });
@@ -87,8 +149,7 @@ function createWindow(): void {
   });
 
   if (isDev) {
-    const url = process.env.VITE_DEV_SERVER_URL ?? "http://localhost:5173";
-    win.loadURL(url);
+    win.loadURL(DEV_URL);
     // Dev-only visual check: SV_CAPTURE=<file.png> saves a screenshot of the
     // window 2 s after load, then quits. Ignored in packaged builds.
     const capture = process.env.SV_CAPTURE;
@@ -178,6 +239,8 @@ function startApp(): void {
       electron: process.versions.electron,
       logFile: mainLog.filePath(),
     });
+    lockDownSession();
+    wireSystemLock();
     createWindow();
     try {
       bridge = startBridgeServer(bridgeSocketPath(), {

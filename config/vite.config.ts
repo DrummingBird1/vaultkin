@@ -10,9 +10,35 @@ import path from "path";
 // because the import itself is eager. A dynamic import sidesteps the
 // loader mismatch and also means the plugin's cost isn't paid on every
 // normal build, only when actually requested.
+export const CSP = [
+  "default-src 'self'",
+  "script-src 'self' 'wasm-unsafe-eval'",
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data: blob:",
+  "font-src 'self'",
+  "connect-src 'self' https:",
+  "worker-src 'self'",
+  "object-src 'none'",
+  "base-uri 'none'",
+  "form-action 'none'",
+  "frame-src 'none'",
+].join("; ");
+
 export default defineConfig(async () => ({
   root: path.resolve(__dirname, ".."),
   plugins: [
+    // Production CSP (dev is left alone: React Refresh injects inline script).
+    // 'wasm-unsafe-eval' is for Argon2 (hash-wasm); connect-src https: covers
+    // the HIBP range API and the user's own WebDAV server (https only).
+    {
+      name: "sv-csp",
+      apply: "build" as const,
+      transformIndexHtml: (html: string) =>
+        html.replace(
+          "<head>",
+          `<head>\n    <meta http-equiv="Content-Security-Policy" content="${CSP}" />`,
+        ),
+    },
     react(),
     tailwindcss(),
     VitePWA({

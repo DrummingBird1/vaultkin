@@ -17,6 +17,7 @@ import { Toaster } from "./components/ui/Toaster";
 import { PairingDialog } from "./components/bridge/PairingDialog";
 import { PasskeyDialog } from "./components/bridge/PasskeyDialog";
 import { BridgeService } from "./services/bridge.service";
+import { lockApplication } from "./store";
 
 import { readableAccent, solidAccent } from "./lib/contrast";
 // Route-based code splitting: Vault/Unlock stay eager (the pages basically
@@ -138,8 +139,13 @@ export function App() {
       if (useSessionStore.getState().isUnlocked) useUIStore.getState().setPaletteOpen(true);
       else document.querySelector<HTMLInputElement>('input[type="password"]')?.focus();
     });
+    // Sleep / screen lock / user switch locks the vault right away.
+    const offSystemLock = bridge.window.onSystemLock?.(() => {
+      if (useSessionStore.getState().isUnlocked) lockApplication("inactivity");
+    });
     return () => {
       offQuickAccess();
+      offSystemLock?.();
       wco?.removeEventListener("geometrychange", measure);
       window.removeEventListener("resize", measure);
     };

@@ -45,6 +45,23 @@ describe("DuressService", () => {
     expect(await DuressService.isDuress("")).toBe(false);
   });
 
+  it("stores a salted Argon2id hash (different salt each enrollment)", async () => {
+    await DuressService.enroll("panic-pass-1", "real-master");
+    const a = localStorage.getItem("sv_duress_hash")!;
+    await DuressService.enroll("panic-pass-1", "real-master");
+    const b = localStorage.getItem("sv_duress_hash")!;
+    expect(a).toMatch(/^argon2id\$[A-Za-z0-9+/=]{24}\$[0-9a-f]{64}$/);
+    expect(a).not.toBe(b);
+  });
+
+  it("still recognises a legacy unsalted SHA-256 enrollment", async () => {
+    const d = await crypto.subtle.digest("SHA-256", new TextEncoder().encode("old-panic"));
+    const hex = Array.from(new Uint8Array(d), (x) => x.toString(16).padStart(2, "0")).join("");
+    localStorage.setItem("sv_duress_hash", hex);
+    expect(await DuressService.isDuress("old-panic")).toBe(true);
+    expect(await DuressService.isDuress("other")).toBe(false);
+  });
+
   it("rejects empty, short, or same-as-master duress passwords", async () => {
     await expect(DuressService.enroll("", "m")).rejects.toThrow();
     await expect(DuressService.enroll("short", "m")).rejects.toThrow();

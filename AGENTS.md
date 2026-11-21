@@ -75,9 +75,9 @@ Load-bearing for the zero-knowledge model. Breaking them is a security regressio
 5. **`ErrorBoundary` wraps the whole tree.** Crashes must not leak a blank screen.
 6. **Password strength API.** Exported function is `analyzeStrength(...)`, entropy field is `effectiveEntropy`. `analyzePassword` is kept only as a documented backward-compat alias — don't add new callers of it, and don't reintroduce `.entropy`-only callers.
 7. **`lockApplication` reasons.** Valid `LockReason`: `"manual"`, `"inactivity"`, `"duress"`. Not `"system"`.
-8. **Electron sandbox.** `contextIsolation: true`, `sandbox: true`, `nodeIntegration: false`, CSP `default-src 'self'`. Don't loosen.
+8. **Electron sandbox.** `contextIsolation: true`, `sandbox: true`, `nodeIntegration: false`, CSP `default-src 'self'` (injected at build by `sv-csp` in `config/vite.config.ts`), navigation/webview blocked, all permission requests denied, content protection on. Don't loosen.
 9. **Browser extension data minimization.** `ExtensionBridge` sends only `{id, title, url, username, password, totpSecret}`. Cache auto-wipes after 5 min idle. Autofill enforces strict domain match; generous match is only used for "what entries belong to this site".
-10. **Duress password.** Stored as SHA-256 hash in `localStorage` under `sv_duress_hash`. Constant-time comparison.
+10. **Duress password.** Stored as a salted Argon2id hash (`argon2id$<salt>$<hex>`) in `localStorage` under `sv_duress_hash`; legacy unsalted SHA-256 is only read, never written. Constant-time comparison.
 11. **Password generator RNG buffer.** `crypto.getRandomValues(buf)` must be called immediately after allocating the buffer in `generatePassword`/`randomWordIndices`, not only inside the "buffer exhausted" refill check — see the comment in `src/core/password/generator.ts` for the exact regression this guards against.
 12. **Autosave flush before lock clears state.** `lockApplication` must call `AutosaveService.flushNow()` before `setVault(null)` — a pending debounced edit would otherwise be silently discarded.
 
