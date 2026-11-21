@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.0.0-beta.1] — 2026-11-21
+
+First public pre-release of Vaultkin. Everything in the sections below ships in it. Windows builds are not code-signed yet (SmartScreen will warn), and macOS builds are not notarized.
+
 ## [Unreleased] — M6 release preparation (2026-11-21)
 
 ### Changed
