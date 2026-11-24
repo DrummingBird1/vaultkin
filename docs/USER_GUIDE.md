@@ -251,11 +251,18 @@ Export the **encrypted** vault as a series of QR codes.
 1. **Settings → Export → "Show as QR codes"**.
 2. Each QR holds about 240 bytes. An average vault needs 5-15 QR codes.
 3. Scroll or use the left/right arrows to see them all.
-4. Keep every code. The app does not yet have an importer that scans them back, so **do not rely on QR as your only backup**.
+4. To restore, scan every code with a phone or scanner app and paste their text under **Restore from backup** (any order). The app does not scan with the camera.
 
 ### Important
 - The QR codes contain the vault **encrypted**. Reading them back still needs the master password.
 - Each QR is marked `SVQR:N/M:` with its place in the series.
+
+### Restore from backup
+Available on the first screen when there is no vault, and in **Settings → Sync** to merge into an open vault. It opens:
+- a `.svault` file, including a Recovery Kit (enter its recovery passphrase);
+- the text of scanned QR codes.
+
+On an empty device, the backup's password becomes the master password. After restoring a Recovery Kit, change it in Settings. Attachments are not included in these backups.
 
 ---
 
@@ -288,7 +295,7 @@ When you pull a vault from WebDAV or a sync folder, nothing is replaced until yo
 
 ### How does it work?
 - WebDAV sync is manual. Autosave does not upload to it.
-- **Push** uploads the saved encrypted vault and **overwrites the server file**, even if another device changed it.
+- **Push** uploads the saved encrypted vault. If the server copy has changed since this vault last saw it, the app asks you to pull first or to confirm the overwrite. The first Push to an existing file asks too.
 - **Pull** downloads the server file, asks for its master password and opens the merge view.
 - Attachments are not synced over WebDAV.
 
@@ -296,7 +303,7 @@ When you pull a vault from WebDAV or a sync folder, nothing is replaced until yo
 The server address and credentials are stored inside the vault, so a new device does not know them.
 1. Create a new vault.
 2. **Settings → Sync**: enter the WebDAV URL, username and password, then click **Connect**.
-3. Click **Pull**. **Do not click Push first**: it would overwrite your backup.
+3. Click **Pull**. Do not choose **Overwrite server copy**: it would replace your backup.
 4. Enter the master password of the backed-up vault.
 5. Choose **Keep remote** and apply. The entries are saved under the new vault's master password.
 6. Check your entries before you push.
