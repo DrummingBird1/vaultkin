@@ -1,6 +1,8 @@
 # Changelog
 
-## [Unreleased]
+## [1.0.0-beta.2]
+
+Builds are not code-signed: Windows SmartScreen and macOS Gatekeeper warn.
 
 ### Added
 - Restore from backup: opens a `.svault` file (including a Recovery Kit) or the
@@ -8,7 +10,13 @@
 
 ### Fixed
 - WebDAV Push no longer overwrites a server copy this vault has not seen. It
-  asks to pull first, or to confirm the overwrite.
+  asks to pull first, or to confirm the overwrite. The first Push to an
+  existing file asks too.
+- The user guide and troubleshooting no longer suggest deleting the local vault
+  to reload it from WebDAV. English is now the main version of both.
+
+### Changed
+- Electron 43.8.12, electron-updater 6.8.11, Vite 8.2.4.
 
 ## [1.0.0-beta.1] — 2026-11-21
 
