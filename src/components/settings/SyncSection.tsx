@@ -8,6 +8,9 @@ import { RemoteUnlockModal } from "../modals/RemoteUnlock.modal";
 import { ConflictResolutionModal } from "../modals/ConflictResolution.modal";
 import type { VaultData } from "../../core/vault/schema";
 import { SettingsSection } from "./shared";
+import { BackupPickerModal } from "../modals/BackupPicker.modal";
+import { Modal } from "../ui/Modal";
+import { Button } from "../ui/Button";
 import { FolderSyncService, useFolderSyncStore } from "../../services/folder-sync.service";
 import { AutosaveService } from "../../services/autosave.service";
 
@@ -25,7 +28,10 @@ export function SyncSection() {
   // CURRENT session keys. Nothing is overwritten before the user decides.
   const [pulled, setPulled] = useState<string | null>(null);
   const [remote, setRemote] = useState<VaultData | null>(null);
-  const [pullSource, setPullSource] = useState<"webdav" | "folder">("webdav");
+  const [pullSource, setPullSource] = useState<"webdav" | "folder" | "backup">("webdav");
+  const [pulledVersion, setPulledVersion] = useState<string | undefined>();
+  const [picking, setPicking] = useState(false);
+  const [confirmOverwrite, setConfirmOverwrite] = useState(false);
   const folder = useFolderSyncStore();
   useEffect(() => {
     void FolderSyncService.refresh();
@@ -56,12 +62,20 @@ export function SyncSection() {
     else toastError(t("settings.sync.connectFailed"), r.reason);
   };
 
-  const push = async () => {
+  const push = async (force = false) => {
+    setConfirmOverwrite(false);
     setBusy(true);
     try {
+      // Upload what the user sees, not a copy from before a pending save (a
+      // merge just applied would otherwise be overwritten on the server).
+      if (useVaultStore.getState().isDirty) {
+        await AutosaveService.flushNow();
+        if (useVaultStore.getState().isDirty) return toastError(t("settings.sync.pushFailed"));
+      }
       const payload = await IPCService.vault.load();
       if (!payload) return toastError(t("settings.sync.nothing"), t("settings.sync.nothingBody"));
-      const r = await SyncService.push(payload);
+      const r = await SyncService.push(payload, force);
+      if (!r.ok && r.reason === "conflict") return setConfirmOverwrite(true);
       if (r.ok) toastSuccess(t("settings.sync.pushed"), t("settings.sync.pushedBody"));
       else toastError(t("settings.sync.pushFailed"), r.message ?? r.reason);
     } finally {
@@ -78,6 +92,7 @@ export function SyncSection() {
       if (!payload)
         return toastError(t("settings.sync.pullFailed"), t("settings.sync.emptyRemote"));
       setPullSource("webdav");
+      setPulledVersion(result.etag);
       setPulled(payload);
     } finally {
       setBusy(false);
@@ -100,10 +115,15 @@ export function SyncSection() {
         if (p) await FolderSyncService.push(p);
       }, 0);
     }
+    if (pullSource === "webdav") SyncService.markSeen(pulledVersion);
     if (strategy === "local")
-      return toastSuccess(t("settings.sync.keptLocal"), t("settings.sync.pushToUpdate"));
+      return toastSuccess(
+        t("settings.sync.keptLocal"),
+        pullSource === "backup" ? undefined : t("settings.sync.pushToUpdate"),
+      );
+    const settings = useVaultStore.getState().vault?.settings ?? winner.settings;
     useVaultStore.setState({
-      vault: { ...winner, settings: vault?.settings ?? winner.settings },
+      vault: { ...winner, settings },
       isDirty: true,
     });
     toastSuccess(
@@ -118,8 +138,39 @@ export function SyncSection() {
       title={t("settings.sync.title")}
       description={t("settings.sync.description")}
     >
+      {picking && (
+        <BackupPickerModal
+          onCancel={() => setPicking(false)}
+          onPicked={(payload) => {
+            setPicking(false);
+            setPullSource("backup");
+            setPulled(payload);
+          }}
+        />
+      )}
+      {confirmOverwrite && (
+        <Modal onClose={() => setConfirmOverwrite(false)} label={t("settings.sync.conflictTitle")}>
+          <h2 className="sv-modal-title mb-1">{t("settings.sync.conflictTitle")}</h2>
+          <p className="sv-modal-subtitle mb-4">{t("settings.sync.conflictBody")}</p>
+          <div className="flex flex-wrap gap-3 justify-end">
+            <Button onClick={() => setConfirmOverwrite(false)}>{t("remoteUnlock.cancel")}</Button>
+            <Button variant="danger" onClick={() => void push(true)}>
+              {t("settings.sync.overwrite")}
+            </Button>
+            <Button
+              variant="primary"
+              onClick={() => {
+                setConfirmOverwrite(false);
+                void pull();
+              }}
+            >
+              {t("settings.sync.pull")}
+            </Button>
+          </div>
+        </Modal>
+      )}
       {pulled && !remote && (
-        <RemoteUnlockModal payload={pulled} onOpened={setRemote} onCancel={reset} />
+        <RemoteUnlockModal payload={pulled} onOpened={(v) => setRemote(v)} onCancel={reset} />
       )}
       {remote && vault && (
         <ConflictResolutionModal
@@ -166,7 +217,7 @@ export function SyncSection() {
           {busy ? "…" : t("settings.sync.connect")}
         </button>
         <button
-          onClick={push}
+          onClick={() => void push()}
           disabled={busy}
           className="sv-btn-secondary px-4 disabled:opacity-50"
         >
@@ -181,6 +232,14 @@ export function SyncSection() {
         </button>
       </div>
       <p className="sv-hint mt-2">{t("settings.sync.hint")}</p>
+      <button
+        type="button"
+        disabled={busy}
+        onClick={() => setPicking(true)}
+        className="sv-btn-secondary mt-3 disabled:opacity-50"
+      >
+        {t("restoreBackup.button")}
+      </button>
 
       {FolderSyncService.available() && (
         <div className="mt-6 pt-4 border-t border-(--border-subtle)">

@@ -17,6 +17,8 @@ import { AppLifecycle } from "../services/app-lifecycle.service";
 import { DeviceUnlockService } from "../services/device-unlock.service";
 import { DuressService } from "../services/duress.service";
 import { UnlockThrottleService, type LockStatus } from "../services/unlock-throttle.service";
+import { BackupPickerModal } from "../components/modals/BackupPicker.modal";
+import { RemoteUnlockModal } from "../components/modals/RemoteUnlock.modal";
 import { CreateVaultModal } from "../components/modals/CreateVault.modal";
 import { VaultkinLogo } from "../components/VaultkinLogo";
 import {
@@ -45,6 +47,8 @@ export function UnlockPage() {
   const [loading, setLoading] = useState(false);
   const [vaultExists, setVaultExists] = useState<boolean | null>(null);
   const [showCreate, setShowCreate] = useState(false);
+  const [picking, setPicking] = useState(false);
+  const [backup, setBackup] = useState<string | null>(null);
   const [showPw, setShowPw] = useState(false);
   const [bioAvail, setBioAvail] = useState(false);
   const [deviceProtection, setDeviceProtection] = useState<"hello" | "touchid" | "account" | null>(
@@ -221,6 +225,31 @@ export function UnlockPage() {
     <>
       {/* Lets the frameless desktop window be dragged from the top edge. */}
       <div aria-hidden="true" className="app-drag fixed top-0 inset-x-0 h-11 z-10" />
+      {picking && (
+        <BackupPickerModal
+          onCancel={() => setPicking(false)}
+          onPicked={(payload) => {
+            setPicking(false);
+            setBackup(payload);
+          }}
+        />
+      )}
+      {backup && (
+        <RemoteUnlockModal
+          payload={backup}
+          onCancel={() => setBackup(null)}
+          onOpened={async (_vault, opened) => {
+            // Only ever fills an empty device: never replaces a stored vault.
+            if (await IPCService.vault.load()) {
+              setBackup(null);
+              setVaultExists(true);
+              return;
+            }
+            await IPCService.vault.save(backup);
+            await finishUnlock(opened);
+          }}
+        />
+      )}
       {showCreate && <CreateVaultModal onClose={() => setShowCreate(false)} />}
       <div
         className="min-h-screen bg-(--bg-base) flex items-center justify-center p-6"
@@ -397,6 +426,9 @@ export function UnlockPage() {
                 className="w-full bg-(--accent-solid) text-white font-semibold py-3 rounded-xl hover:opacity-90 transition-opacity"
               >
                 {t("unlock.firstRun.createButton")}
+              </button>
+              <button type="button" onClick={() => setPicking(true)} className="sv-btn-secondary">
+                {t("restoreBackup.button")}
               </button>
             </div>
           )}

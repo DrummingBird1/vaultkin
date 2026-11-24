@@ -5,10 +5,10 @@
  *
  * Design choice: this exposes explicit **push** (upload local → remote) and
  * **pull** (download remote → local) with caller confirmation, rather than
- * silent bidirectional sync. Auto-merge of two diverged encrypted blobs needs
- * the decrypt→compare→re-encrypt loop (see ConflictResolutionModal); until that
- * is wired, last-write-wins automation could destroy data, so we keep the user
- * in control. ETag is tracked so push can warn on remote changes (If-Match).
+ * silent bidirectional sync. Push refuses to replace a server file this vault
+ * has not seen: the version (ETag, else Last-Modified) of the last push or
+ * resolved pull is kept in settings.sync.seen and compared before uploading,
+ * with If-Match / If-None-Match closing the race on servers that support it.
  *
  * Credentials live inside the encrypted vault (settings.sync), so they are
  * only available while it is unlocked and are wiped from memory on lock. The
@@ -33,9 +33,8 @@ export type SyncResult =
     };
 
 const LEGACY_CRED_KEY = "sv_sync_cred"; // sessionStorage, pre-M4 (plaintext)
-const ETAG_KEY = "sv_sync_etag"; // sessionStorage, not secret
 
-type Cred = { url: string; username: string; password: string };
+type Cred = { url: string; username: string; password: string; seen?: string };
 
 /** Only https: the production CSP blocks anything else, and Basic auth over
  *  plain http would expose the WebDAV password. */
@@ -70,6 +69,21 @@ function authHeader(username: string, password: string): string {
   return "Basic " + btoa(`${username}:${password}`);
 }
 
+/** Comparable version of a server file. Weak/strong ETag forms compare equal. */
+function versionOf(res: Response): string | undefined {
+  const etag = res.headers.get("ETag");
+  if (etag) return etag.replace(/^W\//, "");
+  return res.headers.get("Last-Modified") ?? undefined;
+}
+
+function head(c: Cred): Promise<Response> {
+  return fetch(c.url, {
+    method: "HEAD",
+    cache: "no-store",
+    headers: { Authorization: authHeader(c.username, c.password) },
+  });
+}
+
 export const SyncService = {
   getConfig(): SyncConfig {
     const c = loadCred();
@@ -82,13 +96,18 @@ export const SyncService = {
     const u = url.trim();
     if (!/^https:\/\//i.test(u)) throw new InsecureSyncUrlError("WebDAV URL must use https");
     const keep = loadCred();
-    writeCred({ url: u, username, password: password || keep?.password || "" });
+    writeCred({
+      url: u,
+      username,
+      password: password || keep?.password || "",
+      // Another file's version says nothing about this one.
+      ...(keep?.url === u && keep.seen ? { seen: keep.seen } : {}),
+    });
   },
 
   disconnect(): void {
     writeCred(undefined);
     sessionStorage.removeItem(LEGACY_CRED_KEY);
-    sessionStorage.removeItem(ETAG_KEY);
   },
 
   /** Verify the URL is reachable and credentials are accepted. */
@@ -96,10 +115,7 @@ export const SyncService = {
     const c = loadCred();
     if (!c) return { ok: false, reason: "not-configured" };
     try {
-      const res = await fetch(c.url, {
-        method: "HEAD",
-        headers: { Authorization: authHeader(c.username, c.password) },
-      });
+      const res = await head(c);
       if (res.status === 401 || res.status === 403) return { ok: false, reason: "auth" };
       if (res.status === 404) return { ok: true }; // file not there yet — fine, first push creates it
       if (!res.ok) return { ok: false, reason: "network", message: `HTTP ${res.status}` };
@@ -109,24 +125,55 @@ export const SyncService = {
     }
   },
 
-  /** Upload the local encrypted payload. */
-  async push(encryptedPayload: string): Promise<SyncResult> {
+  /** Record that the user has resolved this vault against a server version. */
+  markSeen(seen: string | undefined): void {
+    const c = loadCred();
+    if (!c || c.seen === seen) return;
+    const next = { ...c };
+    if (seen) next.seen = seen;
+    else delete next.seen;
+    writeCred(next);
+  },
+
+  /** Upload the local encrypted payload. Returns "conflict" instead of
+   *  replacing a server file this vault has not seen, unless `force`. */
+  async push(encryptedPayload: string, force = false): Promise<SyncResult> {
     const c = loadCred();
     if (!c) return { ok: false, reason: "not-configured" };
+    const denied = (s: number) => s === 401 || s === 403;
     try {
-      const res = await fetch(c.url, {
-        method: "PUT",
-        headers: {
-          Authorization: authHeader(c.username, c.password),
-          "Content-Type": "application/octet-stream",
-        },
-        body: encryptedPayload,
-      });
-      if (res.status === 401 || res.status === 403) return { ok: false, reason: "auth" };
+      const headers: Record<string, string> = {
+        Authorization: authHeader(c.username, c.password),
+        "Content-Type": "application/octet-stream",
+      };
+      if (!force) {
+        const cur = await head(c);
+        if (denied(cur.status)) return { ok: false, reason: "auth" };
+        if (cur.status === 404) {
+          headers["If-None-Match"] = "*";
+        } else if (!cur.ok) {
+          return { ok: false, reason: "network", message: `HTTP ${cur.status}` };
+        } else {
+          const version = versionOf(cur);
+          if (!version || version !== c.seen) return { ok: false, reason: "conflict" };
+          // If-Match needs a strong ETag; a weak one would always fail.
+          const etag = cur.headers.get("ETag");
+          if (etag && !etag.startsWith("W/")) headers["If-Match"] = etag;
+        }
+      }
+      const res = await fetch(c.url, { method: "PUT", headers, body: encryptedPayload });
+      if (denied(res.status)) return { ok: false, reason: "auth" };
+      if (res.status === 412) return { ok: false, reason: "conflict" };
       if (!res.ok) return { ok: false, reason: "network", message: `HTTP ${res.status}` };
-      const etag = res.headers.get("ETag");
-      if (etag) sessionStorage.setItem(ETAG_KEY, etag);
-      return { ok: true, etag: etag ?? undefined };
+      let seen = res.headers.get("ETag") ? versionOf(res) : undefined;
+      if (!seen) {
+        // Many servers omit the ETag on PUT. The upload itself succeeded, so a
+        // failure here only means the next push asks for a pull first.
+        const after = await head(c).catch(() => null);
+        if (after?.ok) seen = versionOf(after);
+      }
+      this.markSeen(seen);
+      return { ok: true, etag: seen };
     } catch (e: any) {
       return { ok: false, reason: "network", message: e?.message };
     }
@@ -139,6 +186,7 @@ export const SyncService = {
     try {
       const res = await fetch(c.url, {
         method: "GET",
+        cache: "no-store",
         headers: { Authorization: authHeader(c.username, c.password) },
       });
       if (res.status === 401 || res.status === 403)
@@ -147,9 +195,8 @@ export const SyncService = {
       if (!res.ok)
         return { result: { ok: false, reason: "network", message: `HTTP ${res.status}` } };
       const payload = await res.text();
-      const etag = res.headers.get("ETag");
-      if (etag) sessionStorage.setItem(ETAG_KEY, etag);
-      return { result: { ok: true, etag: etag ?? undefined }, payload };
+      // Not marked seen here: the caller does that once the user has resolved it.
+      return { result: { ok: true, etag: versionOf(res) }, payload };
     } catch (e: any) {
       return { result: { ok: false, reason: "network", message: e?.message } };
     }

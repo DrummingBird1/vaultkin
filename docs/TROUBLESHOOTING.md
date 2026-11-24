@@ -55,7 +55,7 @@ pnpm install --frozen-lockfile
 
 **Recovery:**
 - If you have a WebDAV backup: leave the local vault in place and restore on another device or a separate browser profile, following [Restoring from WebDAV](USER_GUIDE.md#restoring-from-webdav-on-a-new-device). You need the master password of the backed-up vault.
-- If there is no backup and the password is lost, the vault cannot be recovered.
+- With a Recovery Kit or QR backup, use [Restore from backup](USER_GUIDE.md#restore-from-backup) on another device or browser profile. If there is no backup and the password is lost, the vault cannot be recovered.
 
 ### I completely forgot the password
 There is no recovery. That is what makes the app zero-knowledge: if there were a backdoor, it would not be zero-knowledge.
@@ -92,7 +92,7 @@ Your options:
 
 ### "Sync conflict"
 - **Pull** shows the differences between the local and the server vault.
-- Choose a strategy there. **Push** does not check for conflicts and overwrites the server file, so pull first.
+- Choose a strategy there. **Push** warns before replacing a server copy this vault has not seen.
 
 ---
 

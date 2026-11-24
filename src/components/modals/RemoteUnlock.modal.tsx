@@ -1,14 +1,14 @@
 /**
  * @file RemoteUnlock.modal.tsx
- * Asks for the master password of a vault pulled from WebDAV so it can be
- * decrypted locally and diffed against the open vault (ConflictResolutionModal).
+ * Asks for the password of a vault pulled from WebDAV or picked from a backup
+ * so it can be decrypted locally and diffed against the open vault (ConflictResolutionModal).
  * The remote copy may use a different salt/KDF, so the current session keys
  * can't open it — the password is needed. It is only passed to openVault()
  * and never stored.
  */
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { openVault } from "../../core/vault/serializer";
+import { openVault, type OpenVaultResult } from "../../core/vault/serializer";
 import { WrongPasswordError } from "../../core/errors";
 import type { VaultData } from "../../core/vault/schema";
 import { Modal } from "../ui/Modal";
@@ -17,7 +17,7 @@ import { Field } from "../ui/Field";
 
 interface Props {
   payload: string;
-  onOpened: (remote: VaultData) => void;
+  onOpened: (remote: VaultData, opened: OpenVaultResult) => void | Promise<void>;
   onCancel: () => void;
 }
 
@@ -32,9 +32,9 @@ export function RemoteUnlockModal({ payload, onOpened, onCancel }: Props) {
     setBusy(true);
     setErr("");
     try {
-      const { vault } = await openVault(payload, pw);
+      const opened = await openVault(payload, pw);
       setPw("");
-      onOpened(vault);
+      await onOpened(opened.vault, opened);
     } catch (ex: unknown) {
       setErr(
         ex instanceof WrongPasswordError
