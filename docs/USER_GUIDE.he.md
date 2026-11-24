@@ -240,28 +240,27 @@ Firefox 128+: ראה [extension/README.md](../extension/README.md).
 
 ## QR Backup
 
-ייצוא ה-vault **המוצפן** כסדרת QR codes לסריקה במכשיר אחר.
+ייצוא ה-vault **המוצפן** כסדרת QR codes.
 
 ### מתי להשתמש?
-- העברה לטלפון בלי לעבור דרך שירות ענן.
 - גיבוי פיזי מודפס (הקפד על מקום מאובטח!).
 
 ### איך?
 1. **Settings → Export → "Show as QR codes"**.
 2. כל QR מכיל ~240 בייט. ל-vault ממוצע יוצאים 5-15 QR codes.
 3. גלול / חצים שמאלה-ימינה כדי לראות את כולם.
-4. במכשיר היעד: **Import → "Scan QR codes"** וסרוק לפי הסדר.
+4. שמור את כל הקודים. באפליקציה עדיין אין ייבוא שסורק אותם בחזרה, ולכן **אל תסתמך על QR כגיבוי היחיד**.
 
 ### חשוב
-- ה-QR מכיל את ה-vault **מוצפן**. דרושה הסיסמה הראשית גם אחרי הסריקה.
-- כל QR מסומן `SVQR:N/M:` כדי שה-importer יידע שהוא חלק מסדרה.
+- ה-QR מכיל את ה-vault **מוצפן**. גם קריאה שלו בחזרה דורשת את סיסמת המאסטר.
+- כל QR מסומן `SVQR:N/M:` לפי מקומו בסדרה.
 
 ---
 
 ## Conflict Resolution
 
-כשמסנכרון WebDAV מזהה ש-vault מקומי וגם מרוחק שונו עצמאית:
-1. תופיע modal **"Sync Conflict"**.
+כשמורידים vault מ-WebDAV או מתיקיית סנכרון, שום דבר לא מוחלף עד שבוחרים:
+1. הקלד את סיסמת המאסטר של ה-vault המרוחק, ואז תיפתח ההשוואה.
 2. תראה רשימה:
    - 🔴 **Conflicts** — אותו entry עם שינויים בשני הצדדים
    - 🟡 **Local only** — קיים אצלך, לא במרוחק
@@ -269,7 +268,7 @@ Firefox 128+: ראה [extension/README.md](../extension/README.md).
    - ⚪ **Identical** — תואם בשני הצדדים
 3. בחר אסטרטגיה:
    - **Merge (recommended)** — מאחד הכל, ולקונפליקטים בוחר את ה-`updatedAt` המאוחר יותר.
-   - **Keep local** — דורסים את המרוחק.
+   - **Keep local** — ה-vault המקומי נשאר כמו שהוא. לעדכון השרת לחץ **Push**.
    - **Keep remote** — דורסים את המקומי.
 4. **Apply resolution**.
 
@@ -280,15 +279,25 @@ Firefox 128+: ראה [extension/README.md](../extension/README.md).
 ### הגדרה
 1. **Settings → Sync**.
 2. הזן:
-   - **WebDAV URL** (למשל `https://nextcloud.example.com/remote.php/webdav/securevault/`)
+   - **WebDAV URL** — הכתובת המלאה של קובץ ה-vault (למשל `https://nextcloud.example.com/remote.php/webdav/vaultkin.svault`)
    - **Username**
    - **Password** (App password אם יש 2FA)
-3. **Test connection** → **Save**.
+3. לחץ **Connect**.
 
 ### איך זה עובד?
-- בכל autosave, ה-vault המוצפן מועלה ל-WebDAV.
-- בפתיחה, נטען המאוחר יותר (לוקאלי vs ענן) לפי `updatedAt`.
-- אם שניהם השתנו → conflict resolution UI.
+- סנכרון WebDAV הוא ידני. השמירה האוטומטית לא מעלה אליו.
+- **Push** מעלה את ה-vault המוצפן השמור ו**דורס את הקובץ בשרת**, גם אם מכשיר אחר שינה אותו.
+- **Pull** מוריד את הקובץ מהשרת, מבקש את סיסמת המאסטר שלו ופותח את מסך המיזוג.
+- קבצים מצורפים לא מסונכרנים דרך WebDAV.
+
+### שחזור מ-WebDAV במכשיר חדש
+כתובת השרת ופרטי הכניסה שמורים בתוך ה-vault, ולכן מכשיר חדש לא מכיר אותם.
+1. צור vault חדש.
+2. ב-**Settings → Sync** הזן את ה-WebDAV URL, שם המשתמש והסיסמה, ולחץ **Connect**.
+3. לחץ **Pull**. **אל תלחץ Push קודם**: הוא ידרוס את הגיבוי.
+4. הקלד את סיסמת המאסטר של ה-vault המגובה.
+5. בחר **Keep remote** ואשר. הרשומות יישמרו תחת סיסמת המאסטר של ה-vault החדש.
+6. בדוק את הרשומות לפני Push.
 
 ### Credentials
 - נשמרים **בתוך הכספת המוצפנת** (בהגדרות שלה), ולכן זמינים רק כשהכספת פתוחה ונמחקים מהזיכרון בנעילה.
@@ -304,7 +313,6 @@ Firefox 128+: ראה [extension/README.md](../extension/README.md).
 - **Bitwarden JSON**
 - **LastPass CSV**
 - **Generic CSV** (גם ל-1Password ול-KeePass: ייצא מהם ל-CSV. קובצי 1PUX ו-KeePass XML עדיין לא נתמכים)
-- **Vaultkin QR codes**
 
 זיהוי פורמט אוטומטי. בקונפליקטים: **Skip / Overwrite / Keep both**.
 
@@ -368,7 +376,7 @@ Verification on unlock:
 ### "Sync failed"
 - שמירה לוקאלית הצליחה — ה-vault שלך מאובטח.
 - בדוק WebDAV URL וcredentials.
-- ינסה שוב בשמירה הבאה.
+- נסה שוב **Push** או **Pull**. אין ניסיון חוזר אוטומטי.
 
 ### פתיחה עם Windows Hello / Touch ID לא מוצעת
 - הפעל **Remember this device** ב-Settings → Security.

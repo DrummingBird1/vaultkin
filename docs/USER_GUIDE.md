@@ -242,28 +242,27 @@ The web build (no desktop app) has **Send entries to extension** instead: an in-
 
 ## QR backup
 
-Export the **encrypted** vault as a series of QR codes to scan on another device.
+Export the **encrypted** vault as a series of QR codes.
 
 ### When to use it?
-- Moving to a phone without going through a cloud service.
 - A printed physical backup (keep it somewhere secure!).
 
 ### How?
 1. **Settings → Export → "Show as QR codes"**.
 2. Each QR holds about 240 bytes. An average vault needs 5-15 QR codes.
 3. Scroll or use the left/right arrows to see them all.
-4. On the target device: **Import → "Scan QR codes"** and scan them in order.
+4. Keep every code. The app does not yet have an importer that scans them back, so **do not rely on QR as your only backup**.
 
 ### Important
-- The QR codes contain the vault **encrypted**. You still need the master password after scanning.
-- Each QR is marked `SVQR:N/M:` so the importer knows it is part of a series.
+- The QR codes contain the vault **encrypted**. Reading them back still needs the master password.
+- Each QR is marked `SVQR:N/M:` with its place in the series.
 
 ---
 
 ## Conflict resolution
 
-When WebDAV sync finds that the local and remote vaults were both changed independently:
-1. A **"Sync Conflict"** modal appears.
+When you pull a vault from WebDAV or a sync folder, nothing is replaced until you choose:
+1. Enter the remote vault's master password, and the comparison opens.
 2. You will see a list:
    - 🔴 **Conflicts**: the same entry changed on both sides
    - 🟡 **Local only**: exists on your side, not remotely
@@ -271,7 +270,7 @@ When WebDAV sync finds that the local and remote vaults were both changed indepe
    - ⚪ **Identical**: the same on both sides
 3. Choose a strategy:
    - **Merge (recommended)**: combines everything, and for conflicts picks the later `updatedAt`.
-   - **Keep local**: overwrites the remote copy.
+   - **Keep local**: leaves the local vault as it is. Use **Push** to update the server.
    - **Keep remote**: overwrites the local copy.
 4. **Apply resolution**.
 
@@ -282,15 +281,25 @@ When WebDAV sync finds that the local and remote vaults were both changed indepe
 ### Setup
 1. **Settings → Sync**.
 2. Enter:
-   - **WebDAV URL** (for example `https://nextcloud.example.com/remote.php/webdav/securevault/`)
+   - **WebDAV URL**: the full URL of the vault file (for example `https://nextcloud.example.com/remote.php/webdav/vaultkin.svault`)
    - **Username**
    - **Password** (an app password if you use 2FA)
-3. **Test connection** → **Save**.
+3. Click **Connect**.
 
 ### How does it work?
-- On every autosave, the encrypted vault is uploaded to WebDAV.
-- On open, the newer copy (local vs cloud) is loaded, by `updatedAt`.
-- If both changed → the conflict resolution UI.
+- WebDAV sync is manual. Autosave does not upload to it.
+- **Push** uploads the saved encrypted vault and **overwrites the server file**, even if another device changed it.
+- **Pull** downloads the server file, asks for its master password and opens the merge view.
+- Attachments are not synced over WebDAV.
+
+### Restoring from WebDAV on a new device
+The server address and credentials are stored inside the vault, so a new device does not know them.
+1. Create a new vault.
+2. **Settings → Sync**: enter the WebDAV URL, username and password, then click **Connect**.
+3. Click **Pull**. **Do not click Push first**: it would overwrite your backup.
+4. Enter the master password of the backed-up vault.
+5. Choose **Keep remote** and apply. The entries are saved under the new vault's master password.
+6. Check your entries before you push.
 
 ### Credentials
 - Stored **inside the encrypted vault** (in its settings), so they are only available while the vault is unlocked and are cleared from memory on lock.
@@ -306,7 +315,6 @@ When WebDAV sync finds that the local and remote vaults were both changed indepe
 - **Bitwarden JSON**
 - **LastPass CSV**
 - **Generic CSV** (also for 1Password and KeePass: export to CSV there; 1PUX and KeePass XML files are not supported yet)
-- **Vaultkin QR codes**
 
 The format is detected automatically. For conflicts: **Skip / Overwrite / Keep both**.
 
@@ -370,7 +378,7 @@ If it still happens:
 ### "Sync failed"
 - The local save succeeded; your vault is safe.
 - Check the WebDAV URL and credentials.
-- It will retry on the next save.
+- Try **Push** or **Pull** again. Sync is not retried automatically.
 
 ### Windows Hello / Touch ID unlock is not offered
 - Turn on **Remember this device** in Settings → Security.

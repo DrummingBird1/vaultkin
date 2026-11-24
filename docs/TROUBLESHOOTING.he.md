@@ -22,14 +22,7 @@
 אם בכל זאת המסך שחור:
 1. **רענון חזק**: `Ctrl+Shift+R` (`⌘+Shift+R` ב-Mac).
 2. **DevTools** (F12) → Console: האם יש שגיאות אדומות? צלם וצרף ל-issue.
-3. **localStorage corrupt**?
-   ```js
-   // ב-DevTools console:
-   localStorage.clear();
-   indexedDB.deleteDatabase("securevault");
-   location.reload();
-   ```
-   ⚠️ זה ימחק את ה-vault המקומי. אם יש לך גיבוי בענן (WebDAV) — תיטען משם בלוגין הבא.
+3. **אל תנקה את נתוני האתר ואל תמחק את מסד הנתונים כדי לפתור את זה.** זה מוחק את ה-vault המקומי, והוא לא חוזר מעצמו.
 4. **Cache של service worker מקולקל**:
    - `chrome://serviceworker-internals/` → unregister
    - או DevTools → Application → Service Workers → Unregister.
@@ -59,8 +52,8 @@ pnpm install --frozen-lockfile
 3. **ה-payload פגום** — אם פתחת את ה-DB ב-IndexedDB inspector ושינית בייטים, ה-HMAC ייכשל ונקבל שגיאה זו (גם אם הסיסמה נכונה).
 
 **שחזור:**
-- אם יש לך WebDAV backup: מחק את ה-vault המקומי (`localStorage.clear()` + `indexedDB.deleteDatabase("securevault")`), היכנס מחדש, וה-app ימשוך מהענן.
-- אם אין: **אין שחזור**. צור vault חדש מאפס.
+- אם יש לך גיבוי WebDAV: השאר את ה-vault המקומי במקומו ושחזר במכשיר אחר או בפרופיל דפדפן נפרד, לפי [שחזור מ-WebDAV](USER_GUIDE.he.md#שחזור-מ-webdav-במכשיר-חדש). דרושה סיסמת המאסטר של ה-vault המגובה.
+- אם אין גיבוי והסיסמה אבדה, אי אפשר לשחזר את ה-vault.
 
 ### שכחתי לחלוטין את הסיסמה
 אין שחזור. זה הרי מה שעושה את האפליקציה zero-knowledge — אם היה backdoor, היא לא הייתה zero-knowledge.
@@ -78,26 +71,26 @@ pnpm install --frozen-lockfile
 - DevTools → Network: האם יש קריאה ל-`indexedDB`?
 - DevTools → Application → IndexedDB: האם יש DB בשם `securevault`?
   - אם כן: בדוק אם ב-`vault` store יש עצם.
-  - אם לא: צור vault חדש.
+  - אם לא: אין vault במכשיר הזה. אם יש גיבוי, שחזר אותו לפני הוספת נתונים חדשים.
 
 ### סימפטום: "Failed to unlock vault. The file may be corrupted."
 - ה-`headerMac` נכשל. או שהvault שונה ידנית, או ש-Argon2 מחזיר ערך שונה (קרה בעבר עם בעיות ב-WASM).
-- נסה את הvault המגובה בענן.
+- שחזר קודם גיבוי WebDAV במכשיר אחר או בפרופיל דפדפן נפרד ([השלבים](USER_GUIDE.he.md#שחזור-מ-webdav-במכשיר-חדש)). אל תמחק את ה-vault המקומי.
 
 ---
 
 ## Sync לא עובד
 
 ### "Sync failed"
-- שמירה לוקאלית **הצליחה** — ה-vault שלך מאובטח. ה-sync יעיף ניסיון נוסף בשמירה הבאה.
+- Push או Pull שנכשלו לא משנים את ה-vault המקומי. הסנכרון ידני, ואין ניסיון חוזר אוטומטי.
 - בדוק:
-  1. **WebDAV URL** נכון ומסתיים ב-`/`.
+  1. **WebDAV URL** מתחיל ב-`https://` והוא הכתובת המלאה של קובץ ה-vault.
   2. **Credentials** נכונים. עם 2FA בנקסטקלאוד — חייבים **App Password**, לא הסיסמה הראשית.
   3. CORS — אם השרת לא שולח `Access-Control-Allow-Origin` נכון, יש בעיה. לרוב זה Nextcloud/ownCloud ובהם מספיק להיכנס דרך Electron במקום דרך הדפדפן.
 
 ### "Sync conflict"
-- שניכם (אתה והמכשיר השני) שיניתם את ה-vault מאז ה-sync האחרון.
-- פתח את ה-Conflict Resolution modal (Settings → Sync → Resolve) ובחר אסטרטגיה.
+- **Pull** מציג את ההבדלים בין ה-vault המקומי לזה שבשרת.
+- בחר שם אסטרטגיה. **Push** לא בודק קונפליקטים ודורס את הקובץ בשרת, לכן קודם Pull.
 
 ---
 

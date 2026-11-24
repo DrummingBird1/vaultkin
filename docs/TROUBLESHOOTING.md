@@ -24,14 +24,7 @@
 If the screen is still black:
 1. **Hard refresh**: `Ctrl+Shift+R` (`⌘+Shift+R` on Mac).
 2. **DevTools** (F12) → Console: are there red errors? Take a screenshot and attach it to an issue.
-3. **Corrupt localStorage?**
-   ```js
-   // In the DevTools console:
-   localStorage.clear();
-   indexedDB.deleteDatabase("securevault");
-   location.reload();
-   ```
-   ⚠️ This deletes the local vault. If you have a cloud backup (WebDAV), it will load from there on the next login.
+3. **Do not clear site data or delete the database to fix this.** That deletes the local vault, and it does not come back on its own.
 4. **Broken service worker cache**:
    - `chrome://serviceworker-internals/` → unregister
    - or DevTools → Application → Service Workers → Unregister.
@@ -61,8 +54,8 @@ pnpm install --frozen-lockfile
 3. **The payload is damaged**: if you opened the DB in an IndexedDB inspector and changed bytes, the HMAC fails and you get this error (even with the right password).
 
 **Recovery:**
-- If you have a WebDAV backup: delete the local vault (`localStorage.clear()` + `indexedDB.deleteDatabase("securevault")`), sign in again, and the app pulls it from the cloud.
-- If not: **there is no recovery**. Create a new vault from scratch.
+- If you have a WebDAV backup: leave the local vault in place and restore on another device or a separate browser profile, following [Restoring from WebDAV](USER_GUIDE.md#restoring-from-webdav-on-a-new-device). You need the master password of the backed-up vault.
+- If there is no backup and the password is lost, the vault cannot be recovered.
 
 ### I completely forgot the password
 There is no recovery. That is what makes the app zero-knowledge: if there were a backdoor, it would not be zero-knowledge.
@@ -80,26 +73,26 @@ Your options:
 - DevTools → Network: is there a call to `indexedDB`?
 - DevTools → Application → IndexedDB: is there a DB named `securevault`?
   - If yes: check whether the `vault` store contains an object.
-  - If not: create a new vault.
+  - If not: there is no vault on this device. If you have a backup, restore it before adding new data.
 
 ### Symptom: "Failed to unlock vault. The file may be corrupted."
 - The `headerMac` check failed. Either the vault was changed by hand, or Argon2 returned a different value (this happened in the past with WASM issues).
-- Try the vault backed up in the cloud.
+- Restore a WebDAV backup on another device or browser profile first ([steps](USER_GUIDE.md#restoring-from-webdav-on-a-new-device)). Do not delete the local vault.
 
 ---
 
 ## Sync does not work
 
 ### "Sync failed"
-- The local save **succeeded**; your vault is safe. Sync will try again on the next save.
+- The local vault is not changed by a failed push or pull. Sync is manual and is not retried automatically.
 - Check:
-  1. The **WebDAV URL** is correct and ends with `/`.
+  1. The **WebDAV URL** starts with `https://` and is the full URL of the vault file.
   2. The **credentials** are correct. With 2FA on Nextcloud you need an **app password**, not your main password.
   3. CORS: if the server does not send the right `Access-Control-Allow-Origin`, it will fail. This is usually Nextcloud/ownCloud, and using the Electron app instead of the browser is enough.
 
 ### "Sync conflict"
-- Both you and the other device changed the vault since the last sync.
-- Open the Conflict Resolution modal (Settings → Sync → Resolve) and choose a strategy.
+- **Pull** shows the differences between the local and the server vault.
+- Choose a strategy there. **Push** does not check for conflicts and overwrites the server file, so pull first.
 
 ---
 
