@@ -76,7 +76,13 @@ export interface VaultSettings {
   lockOnHide?: boolean;
   /** WebDAV sync credentials. Encrypted with the rest of the vault, so they
    *  are only readable while it is unlocked (never in browser storage). */
-  sync?: { url: string; username: string; password: string };
+  sync?: {
+    url: string;
+    username: string;
+    password: string;
+    /** Version of the server file this vault last pushed or merged. */
+    seen?: string;
+  };
 }
 
 export interface VaultMeta {

@@ -236,13 +236,16 @@ describe("SyncService", () => {
 
   it("pushes the ciphertext with Basic auth and records the ETag", async () => {
     SyncService.configure(` ${URL_} `, "user", "pass");
-    const fetchMock = vi.fn(
-      async (_u: string, _i?: RequestInit) =>
-        new Response(null, { status: 201, headers: { ETag: '"e1"' } }),
+    const fetchMock = vi.fn(async (_u: string, _i?: RequestInit) =>
+      _i?.method === "HEAD"
+        ? new Response(null, { status: 404 })
+        : new Response(null, { status: 201, headers: { ETag: '"e1"' } }),
     );
     vi.stubGlobal("fetch", fetchMock);
     expect(await SyncService.push("CIPHERTEXT")).toEqual({ ok: true, etag: '"e1"' });
-    const [u, init] = fetchMock.mock.calls[0];
+    const [u, init] = fetchMock.mock.calls[1];
+    expect((init?.headers as Record<string, string>)["If-None-Match"]).toBe("*");
+    expect(useVaultStore.getState().vault?.settings.sync?.seen).toBe('"e1"');
     expect(u).toBe(URL_);
     expect(init?.method).toBe("PUT");
     expect(init?.body).toBe("CIPHERTEXT");
@@ -265,6 +268,76 @@ describe("SyncService", () => {
       ok: false,
       reason,
     });
+  });
+
+  /** Minimal WebDAV server holding one file. */
+  function server(opts: { etag?: string; modified?: string; raceOnPut?: boolean }) {
+    const state = { etag: opts.etag, puts: 0, headers: {} as Record<string, string> };
+    const meta = (): Record<string, string> => ({
+      ...(state.etag ? { ETag: state.etag } : {}),
+      ...(opts.modified ? { "Last-Modified": opts.modified } : {}),
+    });
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (_u: string, init?: RequestInit) => {
+        if (init?.method !== "PUT") return new Response(null, { headers: meta() });
+        state.headers = init.headers as Record<string, string>;
+        if (opts.raceOnPut) return new Response(null, { status: 412 });
+        state.puts++;
+        if (state.etag) state.etag = `"after-${state.puts}"`;
+        return new Response(null, { status: 204 });
+      }),
+    );
+    return state;
+  }
+
+  it("refuses to overwrite a server file it has not seen, unless forced", async () => {
+    SyncService.configure(URL_, "u", "p");
+    const s = server({ etag: '"other-device"' });
+    expect(await SyncService.push("x")).toEqual({ ok: false, reason: "conflict" });
+    await SyncService.pull(); // downloading alone is not resolving
+    expect(await SyncService.push("x")).toEqual({ ok: false, reason: "conflict" });
+    expect(s.puts).toBe(0);
+    expect(await SyncService.push("x", true)).toMatchObject({ ok: true });
+    expect(s.puts).toBe(1);
+  });
+
+  it("pushes after a resolved pull, then keeps working, and detects a later change", async () => {
+    SyncService.configure(URL_, "u", "p");
+    const s = server({ etag: 'W/"v1"' });
+    SyncService.markSeen((await SyncService.pull()).result.ok ? '"v1"' : undefined);
+    expect(await SyncService.push("a")).toMatchObject({ ok: true });
+    expect(s.headers["If-Match"]).toBeUndefined(); // weak ETag
+    expect(await SyncService.push("b")).toMatchObject({ ok: true });
+    expect(s.headers["If-Match"]).toBe('"after-1"');
+    s.etag = '"someone-else"';
+    expect(await SyncService.push("c")).toEqual({ ok: false, reason: "conflict" });
+  });
+
+  it("reports a conflict when the file changes between the check and the upload", async () => {
+    SyncService.configure(URL_, "u", "p");
+    server({ etag: '"v1"', raceOnPut: true });
+    SyncService.markSeen('"v1"');
+    expect(await SyncService.push("x")).toEqual({ ok: false, reason: "conflict" });
+  });
+
+  it("falls back to Last-Modified, and treats an unversioned file as a conflict", async () => {
+    const modified = "Tue, 24 Nov 2026 10:00:00 GMT";
+    SyncService.configure(URL_, "u", "p");
+    server({ modified });
+    SyncService.markSeen(modified);
+    expect(await SyncService.push("x")).toMatchObject({ ok: true });
+    server({});
+    expect(await SyncService.push("x")).toEqual({ ok: false, reason: "conflict" });
+  });
+
+  it("forgets the seen version when the URL changes", () => {
+    SyncService.configure(URL_, "u", "p");
+    SyncService.markSeen('"v1"');
+    SyncService.configure(URL_, "u2", "");
+    expect(useVaultStore.getState().vault?.settings.sync?.seen).toBe('"v1"');
+    SyncService.configure(URL_ + "2", "u2", "");
+    expect(useVaultStore.getState().vault?.settings.sync?.seen).toBeUndefined();
   });
 
   it("pull returns the payload, or not-found on 404", async () => {

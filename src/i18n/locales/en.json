@@ -372,7 +372,10 @@
         "empty": "There's no vault in that folder yet.",
         "error": "Couldn't write to the sync folder.",
         "saved": "Copy saved to the folder"
-      }
+      },
+      "conflictTitle": "The server copy has changed",
+      "conflictBody": "This vault has not seen the version on the server. Pull to compare and merge. Overwriting replaces the server copy and can't be undone here.",
+      "overwrite": "Overwrite server copy"
     },
     "updates": {
       "title": "App updates",
@@ -566,11 +569,11 @@
     "confirm": "Export Anyway"
   },
   "remoteUnlock": {
-    "title": "Unlock remote vault",
-    "description": "Enter the master password of the WebDAV copy. Usually it is the same as this vault's.",
-    "passwordLabel": "Remote master password",
-    "wrongPassword": "Wrong password for the remote vault.",
-    "openFailed": "Remote vault could not be opened.",
+    "title": "Unlock backup",
+    "description": "Enter the password of this copy. For a Recovery Kit, enter its recovery passphrase.",
+    "passwordLabel": "Backup password",
+    "wrongPassword": "Wrong password for this copy.",
+    "openFailed": "This copy could not be opened.",
     "cancel": "Cancel",
     "decrypting": "Decrypting…",
     "continue": "Continue"
@@ -995,5 +998,15 @@
     "updateBody": "Vaultkin will use the new version next time you fully restart it.",
     "offlineTitle": "Ready for offline use",
     "offlineBody": "Vaultkin can now open without an internet connection."
+  },
+  "restoreBackup": {
+    "button": "Restore from backup",
+    "title": "Restore from backup",
+    "description": "Choose a backup file, or paste the text of your scanned QR codes. You'll need the password of that backup; for a Recovery Kit, that is its recovery passphrase.",
+    "file": "Backup file (.svault)",
+    "text": "Or scanned QR text (all parts, any order)",
+    "missing": "Missing parts: {{parts}}.",
+    "mixed": "These parts don't belong to the same backup.",
+    "invalid": "This isn't a valid Vaultkin backup."
   }
 }

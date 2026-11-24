@@ -3,21 +3,20 @@
  * Export the encrypted vault as a series of scannable QR codes.
  *
  * The encrypted payload (already ciphertext — safe to render) is split into
- * fixed-size chunks, each prefixed `SVQR:<i>/<n>:` so a companion importer can
- * reassemble them in order. Uses qrcode-generator (full QR spec: all versions,
+ * fixed-size chunks, each prefixed `SVQR:<i>/<n>:` so services/backup-text.ts
+ * can reassemble them (Restore from backup). Uses qrcode-generator (full QR spec: all versions,
  * alignment patterns, masks) so the codes scan reliably on real devices.
  */
 import React, { useEffect, useMemo, useState } from "react";
 import qrcode from "qrcode-generator";
 import { IPCService } from "../../services/ipc.service";
+import { splitBackup } from "../../services/backup-text";
 import { Modal } from "../ui/Modal";
 import { useTranslation } from "react-i18next";
 
 interface Props {
   onClose: () => void;
 }
-
-const CHUNK_SIZE = 700; // bytes of payload per QR (kept well under v40 capacity)
 
 export function VaultBackupQRModal({ onClose }: Props) {
   const { t } = useTranslation();
@@ -48,16 +47,7 @@ export function VaultBackupQRModal({ onClose }: Props) {
     return () => window.removeEventListener("keydown", h);
   });
 
-  const chunks = useMemo(() => {
-    if (!payload) return [] as string[];
-    const out: string[] = [];
-    const total = Math.ceil(payload.length / CHUNK_SIZE);
-    for (let i = 0; i < total; i++) {
-      const slice = payload.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE);
-      out.push(`SVQR:${i + 1}/${total}:${slice}`);
-    }
-    return out;
-  }, [payload]);
+  const chunks = useMemo(() => (payload ? splitBackup(payload) : []), [payload]);
 
   const svg = useMemo(() => {
     if (!chunks[page]) return "";

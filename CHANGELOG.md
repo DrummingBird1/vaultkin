@@ -1,5 +1,15 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+- Restore from backup: opens a `.svault` file (including a Recovery Kit) or the
+  text of scanned QR backup codes, on an empty device or merged into an open vault.
+
+### Fixed
+- WebDAV Push no longer overwrites a server copy this vault has not seen. It
+  asks to pull first, or to confirm the overwrite.
+
 ## [1.0.0-beta.1] — 2026-11-21
 
 First public pre-release of Vaultkin. Everything in the sections below ships in it. Windows builds are not code-signed yet (SmartScreen will warn), and macOS builds are not notarized.
