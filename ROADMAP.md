@@ -5,9 +5,9 @@ change of plan. Last update: 2026-11-24.
 
 ## Where it stands
 
-- **Current:** `v1.0.0-beta.1`, the first public pre-release (desktop app
+- **Current:** `v1.0.0-beta.2`, a public pre-release (desktop app
   for Windows, macOS and Linux, plus the browser extension packages).
-  Published 2026-11-22.
+  Published 2026-11-24.
 - **Repo:** public, GPL-3.0-only. CI is green on all three operating systems
   and all three browser engines.
 - Everything shipped so far is listed in [CHANGELOG.md](CHANGELOG.md).
@@ -33,7 +33,8 @@ change of plan. Last update: 2026-11-24.
 
 - **Name check:** trademark and domain for "Vaultkin".
 - **Manual checks on real hardware:** pairing the extension in Chrome with
-  the installed app, Windows Hello unlock, WebDAV sync with a real server.
+  the installed app, Windows Hello unlock, WebDAV sync with a real server,
+  installing and updating, Recovery Kit restore and QR scanning.
 
 ## Next (toward 1.0.0)
 

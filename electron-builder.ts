@@ -118,6 +118,9 @@ const config: Configuration = {
     oneClick: false,
     allowToChangeInstallationDirectory: true,
     createDesktopShortcut: true,
+    // No spaces: GitHub renames them in assets, and latest.yml / SHA256SUMS.txt
+    // would then name a file that doesn't exist.
+    artifactName: "${productName}-Setup-${version}.${ext}",
   },
 
   linux: {
