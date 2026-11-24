@@ -3,7 +3,7 @@
 ## תוכן עניינים
 - [המסך שחור / לבן ריק](#המסך-שחור--לבן-ריק)
 - [שגיאות בהתקנה](#שגיאות-בהתקנה)
-- [`npm install` נכשל](#npm-install-נכשל)
+- [`pnpm install` נכשל](#pnpm-install-נכשל)
 - [סיסמה שגויה / "Incorrect master password"](#סיסמה-שגויה)
 - [ה-vault לא נטען](#ה-vault-לא-נטען)
 - [Sync לא עובד](#sync-לא-עובד)
@@ -22,14 +22,7 @@
 אם בכל זאת המסך שחור:
 1. **רענון חזק**: `Ctrl+Shift+R` (`⌘+Shift+R` ב-Mac).
 2. **DevTools** (F12) → Console: האם יש שגיאות אדומות? צלם וצרף ל-issue.
-3. **localStorage corrupt**?
-   ```js
-   // ב-DevTools console:
-   localStorage.clear();
-   indexedDB.deleteDatabase("securevault");
-   location.reload();
-   ```
-   ⚠️ זה ימחק את ה-vault המקומי. אם יש לך גיבוי בענן (WebDAV) — תיטען משם בלוגין הבא.
+3. **אל תנקה את נתוני האתר ואל תמחק את מסד הנתונים כדי לפתור את זה.** זה מוחק את ה-vault המקומי, והוא לא חוזר מעצמו.
 4. **Cache של service worker מקולקל**:
    - `chrome://serviceworker-internals/` → unregister
    - או DevTools → Application → Service Workers → Unregister.
@@ -38,33 +31,13 @@
 
 ## שגיאות בהתקנה
 
-### `npm install` נכשל
+### `pnpm install` נכשל
 
-**סימפטומים נפוצים:**
-- שגיאה ב-`argon2-browser` או `keytar`.
-- שגיאת native compile (`gyp ERR!`).
-
-**פתרונות:**
+ודא Node 20+ ו-pnpm 9+, ואז התקן לפי ה-lockfile:
 ```bash
-# 1. ודא Node 20+
 node -v
-
-# 2. נקה cache + node_modules
-rm -rf node_modules package-lock.json
-npm cache clean --force
-npm install
-
-# 3. אם keytar נכשל (בעיה נפוצה ב-Linux):
-sudo apt install libsecret-1-dev  # Debian/Ubuntu
-sudo dnf install libsecret-devel  # Fedora
-
-# 4. אם argon2-browser נכשל — ודא שיש python3 + make + g++:
-sudo apt install build-essential python3
-```
-
-### "ERESOLVE could not resolve" / peer dependency conflicts
-```bash
-npm install --legacy-peer-deps
+pnpm -v
+pnpm install --frozen-lockfile
 ```
 
 ---
@@ -79,8 +52,8 @@ npm install --legacy-peer-deps
 3. **ה-payload פגום** — אם פתחת את ה-DB ב-IndexedDB inspector ושינית בייטים, ה-HMAC ייכשל ונקבל שגיאה זו (גם אם הסיסמה נכונה).
 
 **שחזור:**
-- אם יש לך WebDAV backup: מחק את ה-vault המקומי (`localStorage.clear()` + `indexedDB.deleteDatabase("securevault")`), היכנס מחדש, וה-app ימשוך מהענן.
-- אם אין: **אין שחזור**. צור vault חדש מאפס.
+- אם יש לך גיבוי WebDAV: השאר את ה-vault המקומי במקומו ושחזר במכשיר אחר או בפרופיל דפדפן נפרד, לפי [שחזור מ-WebDAV](USER_GUIDE.he.md#שחזור-מ-webdav-במכשיר-חדש). דרושה סיסמת המאסטר של ה-vault המגובה.
+- אם אין גיבוי והסיסמה אבדה, אי אפשר לשחזר את ה-vault.
 
 ### שכחתי לחלוטין את הסיסמה
 אין שחזור. זה הרי מה שעושה את האפליקציה zero-knowledge — אם היה backdoor, היא לא הייתה zero-knowledge.
@@ -98,43 +71,40 @@ npm install --legacy-peer-deps
 - DevTools → Network: האם יש קריאה ל-`indexedDB`?
 - DevTools → Application → IndexedDB: האם יש DB בשם `securevault`?
   - אם כן: בדוק אם ב-`vault` store יש עצם.
-  - אם לא: צור vault חדש.
+  - אם לא: אין vault במכשיר הזה. אם יש גיבוי, שחזר אותו לפני הוספת נתונים חדשים.
 
 ### סימפטום: "Failed to unlock vault. The file may be corrupted."
 - ה-`headerMac` נכשל. או שהvault שונה ידנית, או ש-Argon2 מחזיר ערך שונה (קרה בעבר עם בעיות ב-WASM).
-- נסה את הvault המגובה בענן.
+- שחזר קודם גיבוי WebDAV במכשיר אחר או בפרופיל דפדפן נפרד ([השלבים](USER_GUIDE.he.md#שחזור-מ-webdav-במכשיר-חדש)). אל תמחק את ה-vault המקומי.
 
 ---
 
 ## Sync לא עובד
 
 ### "Sync failed"
-- שמירה לוקאלית **הצליחה** — ה-vault שלך מאובטח. ה-sync יעיף ניסיון נוסף בשמירה הבאה.
+- Push או Pull שנכשלו לא משנים את ה-vault המקומי. הסנכרון ידני, ואין ניסיון חוזר אוטומטי.
 - בדוק:
-  1. **WebDAV URL** נכון ומסתיים ב-`/`.
+  1. **WebDAV URL** מתחיל ב-`https://` והוא הכתובת המלאה של קובץ ה-vault.
   2. **Credentials** נכונים. עם 2FA בנקסטקלאוד — חייבים **App Password**, לא הסיסמה הראשית.
   3. CORS — אם השרת לא שולח `Access-Control-Allow-Origin` נכון, יש בעיה. לרוב זה Nextcloud/ownCloud ובהם מספיק להיכנס דרך Electron במקום דרך הדפדפן.
 
 ### "Sync conflict"
-- שניכם (אתה והמכשיר השני) שיניתם את ה-vault מאז ה-sync האחרון.
-- פתח את ה-Conflict Resolution modal (Settings → Sync → Resolve) ובחר אסטרטגיה.
+- **Pull** מציג את ההבדלים בין ה-vault המקומי לזה שבשרת.
+- בחר שם אסטרטגיה. **Push** לא בודק קונפליקטים ודורס את הקובץ בשרת, לכן קודם Pull.
 
 ---
 
 ## Browser Extension לא רואה entries
 
 ### Checklist
-1. ✅ ה-extension מותקן (`chrome://extensions/`)?
-2. ✅ ה-Extension ID מוזן ב-Settings → Security → Browser Extension?
-3. ✅ ב-`manifest.json` של ה-extension, `externally_connectable.matches` כולל את ה-origin שלך (`http://localhost:5173/*`)?
-4. ✅ לחצת **"Send entries to extension"**?
-5. ✅ ה-cache לא פג (5 דקות מאז שליחה)?
+1. האפליקציה פתוחה וה-vault לא נעול.
+2. ה-extension מותקן ומופעל (`chrome://extensions/`).
+3. ה-Extension ID נכון ב-Settings → Browser extension, ולחצת **Set up browser connection**.
+4. לחצת **Connect** בחלון ה-extension ואישרת באפליקציה.
+5. בגרסת הדפדפן: שלחת שוב **Send entries to extension** (העותק נמחק אחרי 5 דקות חוסר פעילות).
 
 ### Debug
-1. פתח את ה-extension service worker:
-   - `chrome://extensions/` → Vaultkin → "Service worker" link → DevTools.
-2. ב-Console חפש logs: `[SV-Ext] Received N entries from main app`.
-3. אם אין הודעה — ה-message לא הגיע. בדוק `externally_connectable`.
+`chrome://extensions/` → Vaultkin → "Service worker" → Console.
 
 ### האייקון 🔐 לא מופיע על שדות password
 - ה-content script לא רץ. בדוק:
@@ -145,9 +115,7 @@ npm install --legacy-peer-deps
 
 ## Biometric Unlock לא עובד
 
-**ידוע**: בגרסה הנוכחית, biometrics דורש שתפתח עם הסיסמה הראשית בפעם הראשונה אחרי התקנה. הזרימה המלאה (decrypt-with-keys-only) עדיין בפיתוח.
-
-לעקיפה: בכל startup, פתח עם סיסמה. בכניסה הזאת biometrics יוצע — אבל לא יעבוד.
+הפעל **Remember this device** ב-Settings → Security (אפליקציית הדסקטופ). סיסמת המאסטר נדרשת לפחות פעם ב-14 ימים. ב-Windows, חלון Windows Hello עלול להיפתח מאחורי החלון של האפליקציה.
 
 ---
 
@@ -170,41 +138,33 @@ npm install --legacy-peer-deps
 
 ## Tests נכשלים
 
-### `npm test` — vitest fails on crypto
+### `pnpm test` — vitest fails on crypto
 - Node 20+ צריך להכיל `globalThis.crypto.subtle`. אם לא:
   ```bash
   node -v   # ודא 20+
   ```
 - רץ ב-jsdom. אם יש בעיה ב-IndexedDB mock — בדוק ב-`tests/setup.ts`.
 
-### `npm run test:e2e` — Playwright timeouts
+### `pnpm test:e2e` — Playwright timeouts
 - Vite dev server לא רץ:
   ```bash
   # רץ בטרמינל נפרד
-  npm run dev
+  pnpm dev
   # ואז
-  npx playwright test
+  pnpm test:e2e
   ```
-- הסביבה איטית — הגדל timeouts ב-`playwright.config.ts` (נמצא כעת על 60s).
+- הסביבה איטית — הגדל timeouts ב-`config/playwright.config.ts` (נמצא כעת על 60s).
 
 ### Coverage נמוך מהסף
-- `vitest.config.ts` דורש 80% lines + 80% functions + 75% branches + 80% statements.
+- `config/vitest.config.ts` דורש 80% lines + 80% functions + 75% branches + 80% statements.
 - שגיאת CI? הוסף בדיקות, אל תוריד את הסף.
 
 ---
 
 ## Electron לא עולה
 
-### `npm run electron:dev` נכשל
+### `pnpm electron:dev` נכשל
 - האם Vite רץ קודם? ב-`electron:dev` רצים שניהם דרך concurrently. בדוק שאין port conflict על 5173.
-- macOS Catalina+: צריך `Codesign` או disable Gatekeeper (`spctl --master-disable`) **רק לפיתוח**.
-
-### "Cannot find module 'keytar'"
-```bash
-cd node_modules/keytar && npm run rebuild
-# או:
-npm rebuild keytar
-```
 
 ### חלון פותח אבל ריק
 - בדוק את ה-Electron DevTools: `View → Toggle Developer Tools`.

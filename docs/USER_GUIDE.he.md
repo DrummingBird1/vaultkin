@@ -31,33 +31,34 @@
 
 ### דרישות
 - **Node.js 20+** (`node -v`)
-- **npm 10+**
+- **pnpm 9+**
 - macOS / Windows / Linux
 
 ### התקנת תלויות
 ```bash
-cd securevault
-npm install
+git clone https://github.com/DrummingBird1/vaultkin.git
+cd vaultkin
+pnpm install
 ```
 
 ### הרצה במצב פיתוח (דפדפן)
 ```bash
-npm run dev
+pnpm dev
 ```
 פתח `http://localhost:5173`.
 
 ### הרצה כאפליקציית דסקטופ
 ```bash
-npm run electron:dev
+pnpm electron:dev
 ```
 חלון עצמאי + תמיכה ב-TouchID/FaceID + טריי + גישה ל-keychain של המערכת.
 
 ### בנייה לפרודקשן
 ```bash
-npm run build                  # PWA (לדפדפן)
-npm run electron:dist:mac      # macOS DMG (Universal)
-npm run electron:dist:win      # Windows NSIS installer
-npm run electron:dist:linux    # AppImage / deb / rpm
+pnpm build                  # PWA (לדפדפן)
+pnpm electron:dist:mac      # macOS DMG (Universal)
+pnpm electron:dist:win      # Windows NSIS installer
+pnpm electron:dist:linux    # AppImage / deb / rpm
 ```
 
 ---
@@ -216,57 +217,50 @@ npm run electron:dist:linux    # AppImage / deb / rpm
 ## Browser Extension
 
 ### התקנה (פיתוח)
-1. הרץ את האפליקציה הראשית: `npm run dev` ב-`http://localhost:5173`.
-2. פתח `chrome://extensions/`.
-3. הפעל **Developer mode** (ימין למעלה).
-4. **Load unpacked** → בחר את התיקייה `securevault/extension/`.
-5. אייקון 🔐 יופיע ב-toolbar.
-6. העתק את **Extension ID** מהדף.
+1. הרץ `pnpm build:extension`.
+2. פתח `chrome://extensions/` והפעל **Developer mode**.
+3. **Load unpacked** → בחר את התיקייה `dist/extension/`.
+4. העתק את **Extension ID** מהדף.
 
-### חיבור לאפליקציה
-1. ב-Vaultkin: **Settings → Security → Browser extension**.
-2. הדבק את ה-Extension ID.
-3. **Send entries to extension**.
-4. ה-extension מאחסן את ה-entries ב-זיכרון בלבד למשך 5 דקות (ואז מתנקה).
+Firefox 128+: ראה [extension/README.md](../extension/README.md).
 
-### שימוש
-- **בכל דף עם שדה password**: יופיע אייקון 🔐 קטן.
-- לחיצה עליו: אם יש credentials מתאימים ל-domain → אוטופיל.
-- אם יש כמה — picker למבחר.
-- אם locked: הודעה "Click toolbar icon to unlock".
+### חיבור לאפליקציית הדסקטופ
+1. ב-Vaultkin: **Settings → Browser extension**, הדבק את ה-Extension ID.
+2. לחץ **Set up browser connection**.
+3. פתח את חלון ה-extension ולחץ **Connect**.
+4. אשר באפליקציה רק אם הקוד בן 6 הספרות זהה בשני הצדדים.
+
+בגרסת הדפדפן (ללא דסקטופ) יש במקום זה **Send entries to extension**: עותק בזיכרון שנמחק אחרי 5 דקות חוסר פעילות.
 
 ### אבטחה
-- ה-extension לא יודע לפענח את ה-vault לבד.
-- הוא מקבל snapshot שכבר פוענח — רק שדות נחוצים (id/title/url/username/password/totpSecret).
-- 5 דקות idle → cache נמחק אוטומטית.
-- סגירת דפדפן / reload of extension → cache נמחק.
+- ה-extension לא מפענח את ה-vault בעצמו.
+- החיבור לאפליקציית הדסקטופ מוצפן מקצה לקצה, והוא מקבל רק את הפרטים של האתר הנוכחי.
 
 ---
 
 ## QR Backup
 
-ייצוא ה-vault **המוצפן** כסדרת QR codes לסריקה במכשיר אחר.
+ייצוא ה-vault **המוצפן** כסדרת QR codes.
 
 ### מתי להשתמש?
-- העברה לטלפון בלי לעבור דרך שירות ענן.
 - גיבוי פיזי מודפס (הקפד על מקום מאובטח!).
 
 ### איך?
 1. **Settings → Export → "Show as QR codes"**.
 2. כל QR מכיל ~240 בייט. ל-vault ממוצע יוצאים 5-15 QR codes.
 3. גלול / חצים שמאלה-ימינה כדי לראות את כולם.
-4. במכשיר היעד: **Import → "Scan QR codes"** וסרוק לפי הסדר.
+4. שמור את כל הקודים. באפליקציה עדיין אין ייבוא שסורק אותם בחזרה, ולכן **אל תסתמך על QR כגיבוי היחיד**.
 
 ### חשוב
-- ה-QR מכיל את ה-vault **מוצפן**. דרושה הסיסמה הראשית גם אחרי הסריקה.
-- כל QR מסומן `SVQR:N/M:` כדי שה-importer יידע שהוא חלק מסדרה.
+- ה-QR מכיל את ה-vault **מוצפן**. גם קריאה שלו בחזרה דורשת את סיסמת המאסטר.
+- כל QR מסומן `SVQR:N/M:` לפי מקומו בסדרה.
 
 ---
 
 ## Conflict Resolution
 
-כשמסנכרון WebDAV מזהה ש-vault מקומי וגם מרוחק שונו עצמאית:
-1. תופיע modal **"Sync Conflict"**.
+כשמורידים vault מ-WebDAV או מתיקיית סנכרון, שום דבר לא מוחלף עד שבוחרים:
+1. הקלד את סיסמת המאסטר של ה-vault המרוחק, ואז תיפתח ההשוואה.
 2. תראה רשימה:
    - 🔴 **Conflicts** — אותו entry עם שינויים בשני הצדדים
    - 🟡 **Local only** — קיים אצלך, לא במרוחק
@@ -274,7 +268,7 @@ npm run electron:dist:linux    # AppImage / deb / rpm
    - ⚪ **Identical** — תואם בשני הצדדים
 3. בחר אסטרטגיה:
    - **Merge (recommended)** — מאחד הכל, ולקונפליקטים בוחר את ה-`updatedAt` המאוחר יותר.
-   - **Keep local** — דורסים את המרוחק.
+   - **Keep local** — ה-vault המקומי נשאר כמו שהוא. לעדכון השרת לחץ **Push**.
    - **Keep remote** — דורסים את המקומי.
 4. **Apply resolution**.
 
@@ -285,15 +279,25 @@ npm run electron:dist:linux    # AppImage / deb / rpm
 ### הגדרה
 1. **Settings → Sync**.
 2. הזן:
-   - **WebDAV URL** (למשל `https://nextcloud.example.com/remote.php/webdav/securevault/`)
+   - **WebDAV URL** — הכתובת המלאה של קובץ ה-vault (למשל `https://nextcloud.example.com/remote.php/webdav/vaultkin.svault`)
    - **Username**
    - **Password** (App password אם יש 2FA)
-3. **Test connection** → **Save**.
+3. לחץ **Connect**.
 
 ### איך זה עובד?
-- בכל autosave, ה-vault המוצפן מועלה ל-WebDAV.
-- בפתיחה, נטען המאוחר יותר (לוקאלי vs ענן) לפי `updatedAt`.
-- אם שניהם השתנו → conflict resolution UI.
+- סנכרון WebDAV הוא ידני. השמירה האוטומטית לא מעלה אליו.
+- **Push** מעלה את ה-vault המוצפן השמור ו**דורס את הקובץ בשרת**, גם אם מכשיר אחר שינה אותו.
+- **Pull** מוריד את הקובץ מהשרת, מבקש את סיסמת המאסטר שלו ופותח את מסך המיזוג.
+- קבצים מצורפים לא מסונכרנים דרך WebDAV.
+
+### שחזור מ-WebDAV במכשיר חדש
+כתובת השרת ופרטי הכניסה שמורים בתוך ה-vault, ולכן מכשיר חדש לא מכיר אותם.
+1. צור vault חדש.
+2. ב-**Settings → Sync** הזן את ה-WebDAV URL, שם המשתמש והסיסמה, ולחץ **Connect**.
+3. לחץ **Pull**. **אל תלחץ Push קודם**: הוא ידרוס את הגיבוי.
+4. הקלד את סיסמת המאסטר של ה-vault המגובה.
+5. בחר **Keep remote** ואשר. הרשומות יישמרו תחת סיסמת המאסטר של ה-vault החדש.
+6. בדוק את הרשומות לפני Push.
 
 ### Credentials
 - נשמרים **בתוך הכספת המוצפנת** (בהגדרות שלה), ולכן זמינים רק כשהכספת פתוחה ונמחקים מהזיכרון בנעילה.
@@ -307,11 +311,8 @@ npm run electron:dist:linux    # AppImage / deb / rpm
 ### ייבוא
 **Vault → Import**:
 - **Bitwarden JSON**
-- **1Password 1PUX / CSV**
 - **LastPass CSV**
-- **KeePass XML**
-- **Generic CSV**
-- **Vaultkin QR codes**
+- **Generic CSV** (גם ל-1Password ול-KeePass: ייצא מהם ל-CSV. קובצי 1PUX ו-KeePass XML עדיין לא נתמכים)
 
 זיהוי פורמט אוטומטי. בקונפליקטים: **Skip / Overwrite / Keep both**.
 
@@ -328,7 +329,7 @@ npm run electron:dist:linux    # AppImage / deb / rpm
 Master Password
      │
      ▼
-Argon2id (64 MiB, t=3, p=2)  ←──  random 32-byte salt
+Argon2id (64 MiB, t=3, p=1)  ←──  random 32-byte salt
      │
      ▼ derives 64 bytes
 ┌────┴────┐
@@ -365,7 +366,7 @@ Verification on unlock:
 אם בכל זאת קורה:
 1. `Ctrl+Shift+R` — refresh חזק.
 2. F12 → Console — מה השגיאה?
-3. בדוק ש-`npm install` רץ בהצלחה (יש לפעמים בעיות עם native modules).
+3. בדוק ש-`pnpm install` רץ בהצלחה (יש לפעמים בעיות עם native modules).
 
 ### "Incorrect master password"
 - וודא שאתה משתמש בסיסמה הנכונה.
@@ -375,16 +376,15 @@ Verification on unlock:
 ### "Sync failed"
 - שמירה לוקאלית הצליחה — ה-vault שלך מאובטח.
 - בדוק WebDAV URL וcredentials.
-- ינסה שוב בשמירה הבאה.
+- נסה שוב **Push** או **Pull**. אין ניסיון חוזר אוטומטי.
 
-### Biometrics לא עובד
-- בגרסה הנוכחית, biometrics דורש סיסמה ראשית בפעם הראשונה אחרי התקנה.
-- יטופל בעתיד.
+### פתיחה עם Windows Hello / Touch ID לא מוצעת
+- הפעל **Remember this device** ב-Settings → Security.
+- סיסמת המאסטר נדרשת לפחות פעם ב-14 ימים.
 
 ### Browser extension לא רואה entries
-- וודא שה-extension ID נכון (`Settings → Security → Browser extension`).
-- וודא ש-`externally_connectable.matches` ב-`manifest.json` כולל את ה-origin שלך.
-- 5 דקות בלי פעילות → ה-cache התנקה. שלח שוב.
+- בדוק שה-Extension ID נכון, לחץ שוב **Set up browser connection** ואז **Connect** בחלון ה-extension.
+- וודא שהאפליקציה פתוחה וה-vault לא נעול.
 
 ---
 
@@ -392,41 +392,33 @@ Verification on unlock:
 
 ### Tests
 ```bash
-npm test                       # unit tests (vitest)
-npm run test:coverage          # עם coverage report
+pnpm test
+pnpm test:coverage
 ```
 
 ### E2E
 ```bash
-npm install -D @playwright/test
-npx playwright install chromium
-npx playwright test            # כל הטסטים
-npx playwright test --headed   # עם דפדפן גלוי
-npx playwright show-report     # HTML report אחרי הרצה
-```
-
-### Storybook
-```bash
-npm install -D @storybook/react-vite @storybook/addon-essentials \
-  @storybook/addon-interactions @storybook/addon-a11y @storybook/test storybook
-npx storybook dev -p 6006
+pnpm exec playwright install chromium
+pnpm test:e2e
+pnpm test:e2e:headed
+pnpm test:e2e:electron
 ```
 
 ### Lint + typecheck
 ```bash
-npm run lint
-npx tsc --noEmit
+pnpm lint
+pnpm typecheck
 ```
 
 ### CI
-- כל push ל-`main` → typecheck + lint + tests + build (Linux/macOS/Windows).
+- כל push ל-`master` → typecheck + lint + tests + build (Linux/macOS/Windows).
 - כל tag `v*.*.*` → builds Electron לכל הפלטפורמות + GitHub Release (draft).
 
 ---
 
 ## רישוי
 
-**MIT License** — הקוד פתוח. השתמש, שנה, הפץ. שמור על הקרדיט.
+**GPL-3.0-only**. ראה [LICENSE](../LICENSE).
 
 באגים / הצעות → פתח issue ב-GitHub.
 
