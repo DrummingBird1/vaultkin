@@ -1,31 +1,16 @@
 # Code signing policy
 
-Free code signing provided by [SignPath.io](https://about.signpath.io),
-certificate by [SignPath Foundation](https://signpath.org).
+Vaultkin release builds are **not code-signed**. Windows SmartScreen and macOS
+Gatekeeper warn on first run.
 
-## What is signed
+## Verifying a download
 
-Only release builds of Vaultkin for Windows, produced by the `CI` workflow in
-this repository (`.github/workflows/ci.yml`) from a version tag on `master`:
+Release files are built by the `CI` workflow in this repository
+(`.github/workflows/ci.yml`) from a version tag. Each release includes:
 
-- the installer and the app executable (`Vaultkin.exe`);
-- the browser-extension native-messaging host
-  (`resources/bridge-host/vaultkin-bridge-host.exe`).
-
-Nothing built on a developer machine is signed. Each signing request is tied
-to the GitHub Actions run that built the artifact, so the signed binary can be
-traced to a public commit.
-
-## Team roles
-
-| Role      | Members                                           |
-| --------- | ------------------------------------------------- |
-| Committer | [DrummingBird1](https://github.com/DrummingBird1) |
-| Reviewer  | [DrummingBird1](https://github.com/DrummingBird1) |
-| Approver  | [DrummingBird1](https://github.com/DrummingBird1) |
-
-Every change reaches `master` through a pull request. All members use
-multi-factor authentication on GitHub and on SignPath.
+- `SHA256SUMS.txt`, the SHA-256 checksums of the files;
+- build provenance: `gh attestation verify <file> --repo DrummingBird1/vaultkin`;
+- `sbom.json`, the CycloneDX software bill of materials.
 
 ## Privacy
 

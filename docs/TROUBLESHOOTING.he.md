@@ -3,7 +3,7 @@
 ## תוכן עניינים
 - [המסך שחור / לבן ריק](#המסך-שחור--לבן-ריק)
 - [שגיאות בהתקנה](#שגיאות-בהתקנה)
-- [`npm install` נכשל](#npm-install-נכשל)
+- [`pnpm install` נכשל](#pnpm-install-נכשל)
 - [סיסמה שגויה / "Incorrect master password"](#סיסמה-שגויה)
 - [ה-vault לא נטען](#ה-vault-לא-נטען)
 - [Sync לא עובד](#sync-לא-עובד)
@@ -38,33 +38,13 @@
 
 ## שגיאות בהתקנה
 
-### `npm install` נכשל
+### `pnpm install` נכשל
 
-**סימפטומים נפוצים:**
-- שגיאה ב-`argon2-browser` או `keytar`.
-- שגיאת native compile (`gyp ERR!`).
-
-**פתרונות:**
+ודא Node 20+ ו-pnpm 9+, ואז התקן לפי ה-lockfile:
 ```bash
-# 1. ודא Node 20+
 node -v
-
-# 2. נקה cache + node_modules
-rm -rf node_modules package-lock.json
-npm cache clean --force
-npm install
-
-# 3. אם keytar נכשל (בעיה נפוצה ב-Linux):
-sudo apt install libsecret-1-dev  # Debian/Ubuntu
-sudo dnf install libsecret-devel  # Fedora
-
-# 4. אם argon2-browser נכשל — ודא שיש python3 + make + g++:
-sudo apt install build-essential python3
-```
-
-### "ERESOLVE could not resolve" / peer dependency conflicts
-```bash
-npm install --legacy-peer-deps
+pnpm -v
+pnpm install --frozen-lockfile
 ```
 
 ---
@@ -124,17 +104,14 @@ npm install --legacy-peer-deps
 ## Browser Extension לא רואה entries
 
 ### Checklist
-1. ✅ ה-extension מותקן (`chrome://extensions/`)?
-2. ✅ ה-Extension ID מוזן ב-Settings → Security → Browser Extension?
-3. ✅ ב-`manifest.json` של ה-extension, `externally_connectable.matches` כולל את ה-origin שלך (`http://localhost:5173/*`)?
-4. ✅ לחצת **"Send entries to extension"**?
-5. ✅ ה-cache לא פג (5 דקות מאז שליחה)?
+1. האפליקציה פתוחה וה-vault לא נעול.
+2. ה-extension מותקן ומופעל (`chrome://extensions/`).
+3. ה-Extension ID נכון ב-Settings → Browser extension, ולחצת **Set up browser connection**.
+4. לחצת **Connect** בחלון ה-extension ואישרת באפליקציה.
+5. בגרסת הדפדפן: שלחת שוב **Send entries to extension** (העותק נמחק אחרי 5 דקות חוסר פעילות).
 
 ### Debug
-1. פתח את ה-extension service worker:
-   - `chrome://extensions/` → Vaultkin → "Service worker" link → DevTools.
-2. ב-Console חפש logs: `[SV-Ext] Received N entries from main app`.
-3. אם אין הודעה — ה-message לא הגיע. בדוק `externally_connectable`.
+`chrome://extensions/` → Vaultkin → "Service worker" → Console.
 
 ### האייקון 🔐 לא מופיע על שדות password
 - ה-content script לא רץ. בדוק:
@@ -145,9 +122,7 @@ npm install --legacy-peer-deps
 
 ## Biometric Unlock לא עובד
 
-**ידוע**: בגרסה הנוכחית, biometrics דורש שתפתח עם הסיסמה הראשית בפעם הראשונה אחרי התקנה. הזרימה המלאה (decrypt-with-keys-only) עדיין בפיתוח.
-
-לעקיפה: בכל startup, פתח עם סיסמה. בכניסה הזאת biometrics יוצע — אבל לא יעבוד.
+הפעל **Remember this device** ב-Settings → Security (אפליקציית הדסקטופ). סיסמת המאסטר נדרשת לפחות פעם ב-14 ימים. ב-Windows, חלון Windows Hello עלול להיפתח מאחורי החלון של האפליקציה.
 
 ---
 
@@ -170,41 +145,33 @@ npm install --legacy-peer-deps
 
 ## Tests נכשלים
 
-### `npm test` — vitest fails on crypto
+### `pnpm test` — vitest fails on crypto
 - Node 20+ צריך להכיל `globalThis.crypto.subtle`. אם לא:
   ```bash
   node -v   # ודא 20+
   ```
 - רץ ב-jsdom. אם יש בעיה ב-IndexedDB mock — בדוק ב-`tests/setup.ts`.
 
-### `npm run test:e2e` — Playwright timeouts
+### `pnpm test:e2e` — Playwright timeouts
 - Vite dev server לא רץ:
   ```bash
   # רץ בטרמינל נפרד
-  npm run dev
+  pnpm dev
   # ואז
-  npx playwright test
+  pnpm test:e2e
   ```
-- הסביבה איטית — הגדל timeouts ב-`playwright.config.ts` (נמצא כעת על 60s).
+- הסביבה איטית — הגדל timeouts ב-`config/playwright.config.ts` (נמצא כעת על 60s).
 
 ### Coverage נמוך מהסף
-- `vitest.config.ts` דורש 80% lines + 80% functions + 75% branches + 80% statements.
+- `config/vitest.config.ts` דורש 80% lines + 80% functions + 75% branches + 80% statements.
 - שגיאת CI? הוסף בדיקות, אל תוריד את הסף.
 
 ---
 
 ## Electron לא עולה
 
-### `npm run electron:dev` נכשל
+### `pnpm electron:dev` נכשל
 - האם Vite רץ קודם? ב-`electron:dev` רצים שניהם דרך concurrently. בדוק שאין port conflict על 5173.
-- macOS Catalina+: צריך `Codesign` או disable Gatekeeper (`spctl --master-disable`) **רק לפיתוח**.
-
-### "Cannot find module 'keytar'"
-```bash
-cd node_modules/keytar && npm run rebuild
-# או:
-npm rebuild keytar
-```
 
 ### חלון פותח אבל ריק
 - בדוק את ה-Electron DevTools: `View → Toggle Developer Tools`.

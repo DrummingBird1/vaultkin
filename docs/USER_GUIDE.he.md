@@ -31,33 +31,34 @@
 
 ### דרישות
 - **Node.js 20+** (`node -v`)
-- **npm 10+**
+- **pnpm 9+**
 - macOS / Windows / Linux
 
 ### התקנת תלויות
 ```bash
-cd securevault
-npm install
+git clone https://github.com/DrummingBird1/vaultkin.git
+cd vaultkin
+pnpm install
 ```
 
 ### הרצה במצב פיתוח (דפדפן)
 ```bash
-npm run dev
+pnpm dev
 ```
 פתח `http://localhost:5173`.
 
 ### הרצה כאפליקציית דסקטופ
 ```bash
-npm run electron:dev
+pnpm electron:dev
 ```
 חלון עצמאי + תמיכה ב-TouchID/FaceID + טריי + גישה ל-keychain של המערכת.
 
 ### בנייה לפרודקשן
 ```bash
-npm run build                  # PWA (לדפדפן)
-npm run electron:dist:mac      # macOS DMG (Universal)
-npm run electron:dist:win      # Windows NSIS installer
-npm run electron:dist:linux    # AppImage / deb / rpm
+pnpm build                  # PWA (לדפדפן)
+pnpm electron:dist:mac      # macOS DMG (Universal)
+pnpm electron:dist:win      # Windows NSIS installer
+pnpm electron:dist:linux    # AppImage / deb / rpm
 ```
 
 ---
@@ -216,30 +217,24 @@ npm run electron:dist:linux    # AppImage / deb / rpm
 ## Browser Extension
 
 ### התקנה (פיתוח)
-1. הרץ את האפליקציה הראשית: `npm run dev` ב-`http://localhost:5173`.
-2. פתח `chrome://extensions/`.
-3. הפעל **Developer mode** (ימין למעלה).
-4. **Load unpacked** → בחר את התיקייה `securevault/extension/`.
-5. אייקון 🔐 יופיע ב-toolbar.
-6. העתק את **Extension ID** מהדף.
+1. הרץ `pnpm build:extension`.
+2. פתח `chrome://extensions/` והפעל **Developer mode**.
+3. **Load unpacked** → בחר את התיקייה `dist/extension/`.
+4. העתק את **Extension ID** מהדף.
 
-### חיבור לאפליקציה
-1. ב-Vaultkin: **Settings → Security → Browser extension**.
-2. הדבק את ה-Extension ID.
-3. **Send entries to extension**.
-4. ה-extension מאחסן את ה-entries ב-זיכרון בלבד למשך 5 דקות (ואז מתנקה).
+Firefox 128+: ראה [extension/README.md](../extension/README.md).
 
-### שימוש
-- **בכל דף עם שדה password**: יופיע אייקון 🔐 קטן.
-- לחיצה עליו: אם יש credentials מתאימים ל-domain → אוטופיל.
-- אם יש כמה — picker למבחר.
-- אם locked: הודעה "Click toolbar icon to unlock".
+### חיבור לאפליקציית הדסקטופ
+1. ב-Vaultkin: **Settings → Browser extension**, הדבק את ה-Extension ID.
+2. לחץ **Set up browser connection**.
+3. פתח את חלון ה-extension ולחץ **Connect**.
+4. אשר באפליקציה רק אם הקוד בן 6 הספרות זהה בשני הצדדים.
+
+בגרסת הדפדפן (ללא דסקטופ) יש במקום זה **Send entries to extension**: עותק בזיכרון שנמחק אחרי 5 דקות חוסר פעילות.
 
 ### אבטחה
-- ה-extension לא יודע לפענח את ה-vault לבד.
-- הוא מקבל snapshot שכבר פוענח — רק שדות נחוצים (id/title/url/username/password/totpSecret).
-- 5 דקות idle → cache נמחק אוטומטית.
-- סגירת דפדפן / reload of extension → cache נמחק.
+- ה-extension לא מפענח את ה-vault בעצמו.
+- החיבור לאפליקציית הדסקטופ מוצפן מקצה לקצה, והוא מקבל רק את הפרטים של האתר הנוכחי.
 
 ---
 
@@ -307,10 +302,8 @@ npm run electron:dist:linux    # AppImage / deb / rpm
 ### ייבוא
 **Vault → Import**:
 - **Bitwarden JSON**
-- **1Password 1PUX / CSV**
 - **LastPass CSV**
-- **KeePass XML**
-- **Generic CSV**
+- **Generic CSV** (גם ל-1Password ול-KeePass: ייצא מהם ל-CSV. קובצי 1PUX ו-KeePass XML עדיין לא נתמכים)
 - **Vaultkin QR codes**
 
 זיהוי פורמט אוטומטי. בקונפליקטים: **Skip / Overwrite / Keep both**.
@@ -328,7 +321,7 @@ npm run electron:dist:linux    # AppImage / deb / rpm
 Master Password
      │
      ▼
-Argon2id (64 MiB, t=3, p=2)  ←──  random 32-byte salt
+Argon2id (64 MiB, t=3, p=1)  ←──  random 32-byte salt
      │
      ▼ derives 64 bytes
 ┌────┴────┐
@@ -365,7 +358,7 @@ Verification on unlock:
 אם בכל זאת קורה:
 1. `Ctrl+Shift+R` — refresh חזק.
 2. F12 → Console — מה השגיאה?
-3. בדוק ש-`npm install` רץ בהצלחה (יש לפעמים בעיות עם native modules).
+3. בדוק ש-`pnpm install` רץ בהצלחה (יש לפעמים בעיות עם native modules).
 
 ### "Incorrect master password"
 - וודא שאתה משתמש בסיסמה הנכונה.
@@ -377,14 +370,13 @@ Verification on unlock:
 - בדוק WebDAV URL וcredentials.
 - ינסה שוב בשמירה הבאה.
 
-### Biometrics לא עובד
-- בגרסה הנוכחית, biometrics דורש סיסמה ראשית בפעם הראשונה אחרי התקנה.
-- יטופל בעתיד.
+### פתיחה עם Windows Hello / Touch ID לא מוצעת
+- הפעל **Remember this device** ב-Settings → Security.
+- סיסמת המאסטר נדרשת לפחות פעם ב-14 ימים.
 
 ### Browser extension לא רואה entries
-- וודא שה-extension ID נכון (`Settings → Security → Browser extension`).
-- וודא ש-`externally_connectable.matches` ב-`manifest.json` כולל את ה-origin שלך.
-- 5 דקות בלי פעילות → ה-cache התנקה. שלח שוב.
+- בדוק שה-Extension ID נכון, לחץ שוב **Set up browser connection** ואז **Connect** בחלון ה-extension.
+- וודא שהאפליקציה פתוחה וה-vault לא נעול.
 
 ---
 
@@ -392,41 +384,33 @@ Verification on unlock:
 
 ### Tests
 ```bash
-npm test                       # unit tests (vitest)
-npm run test:coverage          # עם coverage report
+pnpm test
+pnpm test:coverage
 ```
 
 ### E2E
 ```bash
-npm install -D @playwright/test
-npx playwright install chromium
-npx playwright test            # כל הטסטים
-npx playwright test --headed   # עם דפדפן גלוי
-npx playwright show-report     # HTML report אחרי הרצה
-```
-
-### Storybook
-```bash
-npm install -D @storybook/react-vite @storybook/addon-essentials \
-  @storybook/addon-interactions @storybook/addon-a11y @storybook/test storybook
-npx storybook dev -p 6006
+pnpm exec playwright install chromium
+pnpm test:e2e
+pnpm test:e2e:headed
+pnpm test:e2e:electron
 ```
 
 ### Lint + typecheck
 ```bash
-npm run lint
-npx tsc --noEmit
+pnpm lint
+pnpm typecheck
 ```
 
 ### CI
-- כל push ל-`main` → typecheck + lint + tests + build (Linux/macOS/Windows).
+- כל push ל-`master` → typecheck + lint + tests + build (Linux/macOS/Windows).
 - כל tag `v*.*.*` → builds Electron לכל הפלטפורמות + GitHub Release (draft).
 
 ---
 
 ## רישוי
 
-**MIT License** — הקוד פתוח. השתמש, שנה, הפץ. שמור על הקרדיט.
+**GPL-3.0-only**. ראה [LICENSE](../LICENSE).
 
 באגים / הצעות → פתח issue ב-GitHub.
 

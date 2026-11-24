@@ -1,13 +1,13 @@
 # Vaultkin roadmap
 
 Source of truth for where Vaultkin is going. Updated with each release or
-change of plan. Last update: 2026-11-21.
+change of plan. Last update: 2026-11-24.
 
 ## Where it stands
 
 - **Current:** `v1.0.0-beta.1`, the first public pre-release (desktop app
   for Windows, macOS and Linux, plus the browser extension packages).
-  Tagged 2026-11-21; the release is published once its build checks out.
+  Published 2026-11-22.
 - **Repo:** public, GPL-3.0-only. CI is green on all three operating systems
   and all three browser engines.
 - Everything shipped so far is listed in [CHANGELOG.md](CHANGELOG.md).
@@ -31,23 +31,15 @@ change of plan. Last update: 2026-11-21.
 
 ## Needs the owner
 
-- **Windows code signing:** apply to the SignPath Foundation (free for open
-  source; policy in [CODE_SIGNING_POLICY.md](CODE_SIGNING_POLICY.md)). Until
-  it is approved, Windows builds are unsigned and SmartScreen warns.
 - **Name check:** trademark and domain for "Vaultkin".
-- **Repo security setting:** turn on Private Vulnerability Reporting.
 - **Manual checks on real hardware:** pairing the extension in Chrome with
   the installed app, Windows Hello unlock, WebDAV sync with a real server.
 
 ## Next (toward 1.0.0)
 
-1. Wire SignPath signing into the release workflow once approved, including
-   the extension host executable.
-2. First run of the macOS universal host on real Apple hardware (CI job on
-   the release tag).
-3. Store listings: Chrome Web Store, Edge Add-ons, Firefox AMO, with
+1. Store listings: Chrome Web Store, Edge Add-ons, Firefox AMO, with
    screenshots.
-4. Fix whatever the beta turns up, then tag `v1.0.0`.
+2. Fix whatever the beta turns up, then tag `v1.0.0`.
 
 ## Backlog
 
@@ -62,6 +54,9 @@ change of plan. Last update: 2026-11-21.
 
 ## Dropped
 
+- Windows code signing through SignPath: not a 1.0 requirement. Windows builds
+  stay unsigned and SmartScreen warns
+  (see [CODE_SIGNING_POLICY.md](CODE_SIGNING_POLICY.md)).
 - Mobile apps and a hosted server: out of scope by design (desktop app plus
   extension, zero-knowledge, no server).
 - Remote favicons: removed because they leaked the vault's site list

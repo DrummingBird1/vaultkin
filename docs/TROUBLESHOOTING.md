@@ -5,7 +5,7 @@
 ## Contents
 - [Black / blank white screen](#black--blank-white-screen)
 - [Installation errors](#installation-errors)
-- [`npm install` fails](#npm-install-fails)
+- [`pnpm install` fails](#pnpm-install-fails)
 - [Wrong password / "Incorrect master password"](#wrong-password)
 - [The vault does not load](#the-vault-does-not-load)
 - [Sync does not work](#sync-does-not-work)
@@ -40,33 +40,13 @@ If the screen is still black:
 
 ## Installation errors
 
-### `npm install` fails
+### `pnpm install` fails
 
-**Common symptoms:**
-- An error in `argon2-browser` or `keytar`.
-- A native compile error (`gyp ERR!`).
-
-**Fixes:**
+Make sure you have Node 20+ and pnpm 9+, then install from the lockfile:
 ```bash
-# 1. Make sure you have Node 20+
 node -v
-
-# 2. Clear the cache and node_modules
-rm -rf node_modules package-lock.json
-npm cache clean --force
-npm install
-
-# 3. If keytar fails (common on Linux):
-sudo apt install libsecret-1-dev  # Debian/Ubuntu
-sudo dnf install libsecret-devel  # Fedora
-
-# 4. If argon2-browser fails, make sure python3 + make + g++ are installed:
-sudo apt install build-essential python3
-```
-
-### "ERESOLVE could not resolve" / peer dependency conflicts
-```bash
-npm install --legacy-peer-deps
+pnpm -v
+pnpm install --frozen-lockfile
 ```
 
 ---
@@ -126,17 +106,14 @@ Your options:
 ## The browser extension does not see entries
 
 ### Checklist
-1. ✅ Is the extension installed (`chrome://extensions/`)?
-2. ✅ Is the Extension ID entered in Settings → Security → Browser Extension?
-3. ✅ Does `externally_connectable.matches` in the extension's `manifest.json` include your origin (`http://localhost:5173/*`)?
-4. ✅ Did you click **"Send entries to extension"**?
-5. ✅ Has the cache not expired (5 minutes since sending)?
+1. The app is running and the vault is unlocked.
+2. The extension is installed and enabled (`chrome://extensions/`).
+3. The Extension ID is correct in Settings → Browser extension, and you clicked **Set up browser connection**.
+4. You clicked **Connect** in the extension popup and approved it in the app.
+5. Web build only: send **Send entries to extension** again (the copy is erased after 5 minutes idle).
 
 ### Debug
-1. Open the extension's service worker:
-   - `chrome://extensions/` → Vaultkin → "Service worker" link → DevTools.
-2. In the Console look for logs: `[SV-Ext] Received N entries from main app`.
-3. If there is no message, the message did not arrive. Check `externally_connectable`.
+`chrome://extensions/` → Vaultkin → "Service worker" → Console.
 
 ### The 🔐 icon does not appear on password fields
 - The content script is not running. Check:
@@ -147,9 +124,7 @@ Your options:
 
 ## Biometric unlock does not work
 
-**Known**: in the current version, biometrics requires you to unlock with the master password the first time after installation. The full flow (decrypt-with-keys-only) is still in development.
-
-Workaround: unlock with the password on each startup. Biometrics will be offered on that login, but it will not work.
+Turn on **Remember this device** in Settings → Security (desktop app). The master password is required at least every 14 days. On Windows, the Windows Hello prompt may open behind the app window.
 
 ---
 
@@ -172,41 +147,33 @@ Workaround: unlock with the password on each startup. Biometrics will be offered
 
 ## Tests fail
 
-### `npm test`: vitest fails on crypto
+### `pnpm test`: vitest fails on crypto
 - Node 20+ must provide `globalThis.crypto.subtle`. If it does not:
   ```bash
   node -v   # make sure it is 20+
   ```
 - Tests run in jsdom. If there is a problem with the IndexedDB mock, check `tests/setup.ts`.
 
-### `npm run test:e2e`: Playwright timeouts
+### `pnpm test:e2e`: Playwright timeouts
 - The Vite dev server is not running:
   ```bash
   # in a separate terminal
-  npm run dev
+  pnpm dev
   # then
-  npx playwright test
+  pnpm test:e2e
   ```
-- The environment is slow: raise the timeouts in `playwright.config.ts` (currently 60s).
+- The environment is slow: raise the timeouts in `config/playwright.config.ts` (currently 60s).
 
 ### Coverage below the threshold
-- `vitest.config.ts` requires 80% lines + 80% functions + 75% branches + 80% statements.
+- `config/vitest.config.ts` requires 80% lines + 80% functions + 75% branches + 80% statements.
 - CI error? Add tests; do not lower the threshold.
 
 ---
 
 ## Electron does not start
 
-### `npm run electron:dev` fails
+### `pnpm electron:dev` fails
 - Is Vite running first? `electron:dev` runs both through concurrently. Check there is no port conflict on 5173.
-- macOS Catalina+: you need codesigning, or disable Gatekeeper (`spctl --master-disable`) **for development only**.
-
-### "Cannot find module 'keytar'"
-```bash
-cd node_modules/keytar && npm run rebuild
-# or:
-npm rebuild keytar
-```
 
 ### The window opens but is empty
 - Check the Electron DevTools: `View → Toggle Developer Tools`.

@@ -33,33 +33,34 @@ your master password never leaves your device, and your data is encrypted before
 
 ### Requirements
 - **Node.js 20+** (`node -v`)
-- **npm 10+**
+- **pnpm 9+**
 - macOS / Windows / Linux
 
 ### Install dependencies
 ```bash
-cd securevault
-npm install
+git clone https://github.com/DrummingBird1/vaultkin.git
+cd vaultkin
+pnpm install
 ```
 
 ### Run in development mode (browser)
 ```bash
-npm run dev
+pnpm dev
 ```
 Open `http://localhost:5173`.
 
 ### Run as a desktop app
 ```bash
-npm run electron:dev
+pnpm electron:dev
 ```
 A standalone window, with TouchID/FaceID support, a tray icon and access to the system keychain.
 
 ### Production build
 ```bash
-npm run build                  # PWA (browser)
-npm run electron:dist:mac      # macOS DMG (Universal)
-npm run electron:dist:win      # Windows NSIS installer
-npm run electron:dist:linux    # AppImage / deb / rpm
+pnpm build                  # PWA (browser)
+pnpm electron:dist:mac      # macOS DMG (Universal)
+pnpm electron:dist:win      # Windows NSIS installer
+pnpm electron:dist:linux    # AppImage / deb / rpm
 ```
 
 ---
@@ -218,30 +219,24 @@ A second password you set up. If someone forces you to open the vault, you type 
 ## Browser extension
 
 ### Install (development)
-1. Run the main app: `npm run dev` at `http://localhost:5173`.
-2. Open `chrome://extensions/`.
-3. Turn on **Developer mode** (top right).
-4. **Load unpacked** → choose the `securevault/extension/` folder.
-5. A 🔐 icon appears in the toolbar.
-6. Copy the **Extension ID** from the page.
+1. Run `pnpm build:extension`.
+2. Open `chrome://extensions/` and turn on **Developer mode**.
+3. **Load unpacked** → choose the `dist/extension/` folder.
+4. Copy the **Extension ID** from the page.
 
-### Connecting to the app
-1. In Vaultkin: **Settings → Security → Browser extension**.
-2. Paste the Extension ID.
-3. **Send entries to extension**.
-4. The extension keeps the entries in memory only, for 5 minutes (then clears them).
+Firefox 128+: see [extension/README.md](../extension/README.md).
 
-### Usage
-- **On any page with a password field**: a small 🔐 icon appears.
-- Clicking it autofills if there are matching credentials for the domain.
-- If there are several, a picker lets you choose.
-- If locked: the message "Click toolbar icon to unlock".
+### Connecting to the desktop app
+1. In Vaultkin: **Settings → Browser extension**, paste the Extension ID.
+2. Click **Set up browser connection**.
+3. Open the extension popup and click **Connect**.
+4. Approve in the app only if the 6-digit code matches on both sides.
+
+The web build (no desktop app) has **Send entries to extension** instead: an in-memory copy that is erased after 5 minutes idle.
 
 ### Security
 - The extension cannot decrypt the vault on its own.
-- It receives an already-decrypted snapshot with only the fields it needs (id/title/url/username/password/totpSecret).
-- 5 minutes idle → the cache is erased automatically.
-- Closing the browser or reloading the extension → the cache is erased.
+- The desktop connection is end-to-end encrypted, and the extension receives only the logins for the current site.
 
 ---
 
@@ -309,10 +304,8 @@ When WebDAV sync finds that the local and remote vaults were both changed indepe
 ### Import
 **Vault → Import**:
 - **Bitwarden JSON**
-- **1Password 1PUX / CSV**
 - **LastPass CSV**
-- **KeePass XML**
-- **Generic CSV**
+- **Generic CSV** (also for 1Password and KeePass: export to CSV there; 1PUX and KeePass XML files are not supported yet)
 - **Vaultkin QR codes**
 
 The format is detected automatically. For conflicts: **Skip / Overwrite / Keep both**.
@@ -330,7 +323,7 @@ The format is detected automatically. For conflicts: **Skip / Overwrite / Keep b
 Master Password
      │
      ▼
-Argon2id (64 MiB, t=3, p=2)  ←──  random 32-byte salt
+Argon2id (64 MiB, t=3, p=1)  ←──  random 32-byte salt
      │
      ▼ derives 64 bytes
 ┌────┴────┐
@@ -367,7 +360,7 @@ Verification on unlock:
 If it still happens:
 1. `Ctrl+Shift+R` for a hard refresh.
 2. F12 → Console: what is the error?
-3. Check that `npm install` completed (native modules sometimes cause problems).
+3. Check that `pnpm install` completed (native modules sometimes cause problems).
 
 ### "Incorrect master password"
 - Make sure you are using the right password.
@@ -379,14 +372,13 @@ If it still happens:
 - Check the WebDAV URL and credentials.
 - It will retry on the next save.
 
-### Biometrics does not work
-- In the current version, biometrics needs the master password the first time after installation.
-- This will be addressed in the future.
+### Windows Hello / Touch ID unlock is not offered
+- Turn on **Remember this device** in Settings → Security.
+- The master password is required at least every 14 days.
 
 ### The browser extension does not see entries
-- Check that the extension ID is correct (`Settings → Security → Browser extension`).
-- Check that `externally_connectable.matches` in `manifest.json` includes your origin.
-- After 5 minutes without activity the cache is cleared. Send again.
+- Check the Extension ID, click **Set up browser connection** again, then **Connect** in the extension popup.
+- Make sure the app is running and the vault is unlocked.
 
 More in [TROUBLESHOOTING.md](TROUBLESHOOTING.md).
 
@@ -396,41 +388,33 @@ More in [TROUBLESHOOTING.md](TROUBLESHOOTING.md).
 
 ### Tests
 ```bash
-npm test                       # unit tests (vitest)
-npm run test:coverage          # with a coverage report
+pnpm test
+pnpm test:coverage
 ```
 
 ### E2E
 ```bash
-npm install -D @playwright/test
-npx playwright install chromium
-npx playwright test            # all tests
-npx playwright test --headed   # with a visible browser
-npx playwright show-report     # HTML report after a run
-```
-
-### Storybook
-```bash
-npm install -D @storybook/react-vite @storybook/addon-essentials \
-  @storybook/addon-interactions @storybook/addon-a11y @storybook/test storybook
-npx storybook dev -p 6006
+pnpm exec playwright install chromium
+pnpm test:e2e
+pnpm test:e2e:headed
+pnpm test:e2e:electron
 ```
 
 ### Lint + typecheck
 ```bash
-npm run lint
-npx tsc --noEmit
+pnpm lint
+pnpm typecheck
 ```
 
 ### CI
-- Every push to `main` → typecheck + lint + tests + build (Linux/macOS/Windows).
+- Every push to `master` → typecheck + lint + tests + build (Linux/macOS/Windows).
 - Every `v*.*.*` tag → Electron builds for all platforms + a GitHub Release (draft).
 
 ---
 
 ## License
 
-**MIT License**: the code is open. Use it, change it, share it. Keep the credit.
+**GPL-3.0-only**. See [LICENSE](../LICENSE).
 
 Bugs and suggestions → open an issue on GitHub.
 
