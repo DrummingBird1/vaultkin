@@ -362,15 +362,15 @@ function startApp(): void {
     if (!fromMainWindow(event) || typeof text !== "string" || text.length > 100_000)
       return { ok: false, excluded: false };
     const excluded = await writeSecretExcludedFromHistory(text);
-    if (!excluded) clipboard.writeText(text);
+    if (!excluded) await clipboard.writeText(text);
     lastSecretHash = sha(text);
     return { ok: true, excluded };
   });
-  ipcMain.handle("sv-clipboard-clear-secret", (event) => {
+  ipcMain.handle("sv-clipboard-clear-secret", async (event) => {
     if (!fromMainWindow(event) || !lastSecretHash) return false;
-    const mine = sha(clipboard.readText()) === lastSecretHash;
+    const mine = sha(await clipboard.readText()) === lastSecretHash;
     lastSecretHash = null;
-    if (mine) clipboard.clear();
+    if (mine) await clipboard.clear();
     return mine;
   });
 

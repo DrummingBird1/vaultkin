@@ -46,6 +46,8 @@ module.exports = {
         // SPA shell that loads one bundle; keep them visible as warnings.
         "network-dependency-tree-insight": "warn",
         "unused-javascript": "warn",
+        // @lhci/cli 0.16 made this a preset error; same advisory intent.
+        "valid-source-maps": "warn",
       },
     },
     upload: {

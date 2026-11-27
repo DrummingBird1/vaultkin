@@ -31,7 +31,7 @@ jobs:
     name: Dependency policy (scheduled)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: ./.github/actions/setup
       - name: Lint lockfile (registry / integrity policy)
         run: pnpm run lockfile:lint
@@ -45,7 +45,7 @@ jobs:
         continue-on-error: true
       - name: Generate SBOM (CycloneDX)
         run: pnpm run sbom
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: sbom-scheduled
           path: sbom.json
@@ -55,7 +55,7 @@ jobs:
     name: E2E (scheduled)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: ./.github/actions/setup
       - name: Install Playwright browsers
         run: pnpm exec playwright install --with-deps chromium firefox webkit
@@ -67,7 +67,7 @@ jobs:
         run: pnpm run test:e2e
         env:
           CI: true
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: playwright-report-scheduled
