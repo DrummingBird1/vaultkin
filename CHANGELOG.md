@@ -1,6 +1,11 @@
 # Changelog
 
-## [1.0.0-beta.2]
+## [Unreleased]
+
+### Fixed
+- The Windows installer's file name matches the update metadata and checksums.
+
+## [1.0.0-beta.2] — 2026-11-24
 
 Builds are not code-signed: Windows SmartScreen and macOS Gatekeeper warn.
 
