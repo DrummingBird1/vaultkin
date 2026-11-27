@@ -7,6 +7,7 @@
 - i18next 27, jsdom 31, vite-plugin-pwa 2, React 19.3 and other minor updates. GitHub Actions: checkout 7, upload-artifact 7, download-artifact 8, codecov 7, action-gh-release 3.
 
 ### Fixed
+- Browser extension: the timer that wipes its login cache after 5 idle minutes never ran, because the `alarms` permission was missing. Expired logins were not used, but stayed in memory until Chrome stopped the background worker. Dropped the unused `scripting` and `storage` permissions.
 - The Windows installer's file name matches the update metadata and checksums.
 
 ## [1.0.0-beta.2] — 2026-11-24

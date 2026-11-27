@@ -62,7 +62,8 @@ then run `release/win-unpacked/Vaultkin.exe` and check:
 - **Chrome Web Store / Edge Add-ons.** Upload
   `Vaultkin-extension-chrome-<tag>.zip`.
   - Permissions to justify: `<all_urls>` (autofill on any site),
-    `nativeMessaging` (desktop app), `scripting`, `storage`, `clipboardWrite`.
+    `nativeMessaging` (desktop app), `activeTab`, `alarms`, `clipboardWrite`.
+    The full listing text is in [store/CHROME_WEB_STORE.md](store/CHROME_WEB_STORE.md).
   - Privacy: link `PRIVACY.md`.
 - **Firefox AMO.** Upload `Vaultkin-extension-firefox-<tag>.zip`.
   - Add-on id: `securevault@securevault.app`. It must stay fixed, because
