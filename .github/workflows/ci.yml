@@ -79,6 +79,7 @@ jobs:
   test:
     name: Tests (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 25
     strategy:
       fail-fast: false
       matrix:
@@ -88,7 +89,10 @@ jobs:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup
       - name: Run tests with coverage
-        run: pnpm run test:coverage --reporter=verbose --reporter=junit
+        # The tests take ~2 min. A run on macOS once hung for 6 h after every test
+        # had passed; fail fast instead, and list what kept the process alive.
+        timeout-minutes: 15
+        run: pnpm run test:coverage --reporter=verbose --reporter=junit --reporter=hanging-process
         env:
           CI: true
 
