@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Changed
+- Electron 45 (from 43). The secret clipboard uses Electron's new asynchronous clipboard API.
+- i18next 27, jsdom 31, vite-plugin-pwa 2, React 19.3 and other minor updates. GitHub Actions: checkout 7, upload-artifact 7, download-artifact 8, codecov 7, action-gh-release 3.
+
 ### Fixed
 - The Windows installer's file name matches the update metadata and checksums.
 

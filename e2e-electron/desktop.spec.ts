@@ -197,12 +197,24 @@ test("secret copies are kept out of Windows clipboard history, and cleared only 
   test.skip(process.platform !== "win32", "Windows clipboard history only");
   const r = await win.evaluate(() => window.electron!.clipboard!.writeSecret("copied-Secret-é1"));
   expect(r).toEqual({ ok: true, excluded: true });
-  const formats = await app.evaluate(({ clipboard }) => ({
-    text: clipboard.readText(),
-    exclude: clipboard.has("ExcludeClipboardContentFromMonitorProcessing"),
-    history: clipboard.has("CanIncludeInClipboardHistory"),
-  }));
-  expect(formats).toEqual({ text: "copied-Secret-é1", exclude: true, history: true });
+  // Electron 44+ only reads MIME types, so the Windows formats are read with .NET.
+  const formats = JSON.parse(
+    execFileSync(
+      "powershell.exe",
+      [
+        "-NoProfile",
+        "-NonInteractive",
+        "-STA",
+        "-Command",
+        "Add-Type -AssemblyName System.Windows.Forms; $c=[System.Windows.Forms.Clipboard]; " +
+          "@{exclude=$c::ContainsData('ExcludeClipboardContentFromMonitorProcessing'); " +
+          "history=$c::ContainsData('CanIncludeInClipboardHistory')} | ConvertTo-Json -Compress",
+      ],
+      { encoding: "utf8" },
+    ),
+  );
+  const text = await app.evaluate(({ clipboard }) => clipboard.readText());
+  expect({ text, ...formats }).toEqual({ text: "copied-Secret-é1", exclude: true, history: true });
   // Clear wipes our secret...
   expect(await win.evaluate(() => window.electron!.clipboard!.clearSecret())).toBe(true);
   expect(await app.evaluate(({ clipboard }) => clipboard.readText())).toBe("");

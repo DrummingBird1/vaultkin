@@ -299,7 +299,7 @@ function IssueList({
                 >
                   <span className="block text-sm font-medium truncate">{e?.title ?? "—"}</span>
                   <span className="block text-xs text-(--text-tertiary) truncate">
-                    {[e?.username, t(`watchtower.detail.${i.detailKey}`, i.params)]
+                    {[e?.username, t(`watchtower.detail.${i.detailKey}`, i.params ?? {})]
                       .filter(Boolean)
                       .join(" · ")}
                   </span>
